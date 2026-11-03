@@ -17126,6 +17126,18 @@
    "pr": 0
   },
   {
+   "name": "Catalogue: Keyword tests — measured uplift (FeedSpark's own kwresults read-outs, median per metric, cost metrics inverted)",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "function renderKwr() {",
+   "pr": 0
+  },
+  {
+   "name": "Catalogue: the procurement view puts the keyword tests under Optimised vs not",
+   "file": "docs/FeedSpark_Catalog.html",
+   "pattern": "var PROC = ['lift', 'fix', 'waste', 'kwr',",
+   "pr": 0
+  },
+  {
    "name": "Catalogue: a Shopping market names the Wunderkind feed it also runs",
    "file": "docs/FeedSpark_Catalog.html",
    "pattern": "lab = both === L.length ? 'Shopping + Wunderkind'",

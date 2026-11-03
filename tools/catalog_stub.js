@@ -132,7 +132,17 @@ function build() {
     { mkt: 'fi', channel: 'google', kind: 'none', cmpid: 'northwind_fi', roas: { client: CLIENT, market: 'FI' }, why: 'nogoogle', google: [], kinds: ['wunderkind'] }]) },
     feedhero: { [CLIENT]: { markets: 3, live: 5, paused: 1, google: 2, read: 3, kinds: { google: 2, meta: 1, pinterest: 1, tiktok: 1 }, km: { google: ['GB', 'IE'], meta: ['GB'], pinterest: ['GB'], tiktok: ['DK'], wunderkind: ['GB', 'IE', 'DK'] }, mk: { shop: ['GB', 'IE'], wunderkind: ['DK'], other: [], paused: [], unread: [] } } } };
   const eur = (o) => JSON.parse(JSON.stringify(o).replace(/GBP/g, 'EUR').replace(/"market":"GB"/g, '"market":"IE"'));
-  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads, roster2, xmlIE: outputXml(IE_N), marketIE: eur(r.market), liveIE: eur(r.live) };
+  // FeedSpark's keyword-test read-outs (GET /api/kwresults?client=, KV kwresults' shape) — synthetic rounds: four for
+  // GB, one for IE (left out on the GB card, counted in All markets), one whose wording holds no figure, one for another
+  // brand that the loose ?client= match lets through and the card must drop
+  const kwr = { ok: true, total: 6, results: [
+    { id: 'k1', client: CLIENT, mkt: 'GB', period: 'Sep II', when: '2026-09-30T09:00:00Z', subject: CLIENT + ' GB x Feedspark - Sep II - Keyword Optimisation', metrics: ['Impressions: 12.4% Increase', 'Clicks: +8.0%', 'CTR up 3.1%'], verdict: 'positive', good: 3, bad: 0 },
+    { id: 'k2', client: CLIENT, mkt: 'GB', period: 'Sep I', when: '2026-09-15T09:00:00Z', subject: CLIENT + ' GB x Feedspark - Sep I - Keyword Optimisation', metrics: ['Impressions: 4.6% Increase', 'Clicks: 2.0% decrease', 'CPC down 5%'], verdict: 'mixed', good: 2, bad: 1 },
+    { id: 'k3', client: CLIENT, mkt: 'GB', period: 'Aug II', when: '2026-08-31T09:00:00Z', subject: CLIENT + ' GB x Feedspark - Aug II - Keyword Optimisation', metrics: ['Clicks: 10% uplift', 'Impressions rose 6.5%'], verdict: 'positive', good: 2, bad: 0 },
+    { id: 'k4', client: CLIENT, mkt: 'GB', period: 'Aug I', when: '2026-08-15T09:00:00Z', subject: CLIENT + ' GB x Feedspark - Aug I - Keyword Optimisation', metrics: [], verdict: 'unknown', good: 0, bad: 0 },
+    { id: 'k5', client: CLIENT, mkt: 'IE', period: 'Sep II', when: '2026-09-30T10:00:00Z', subject: CLIENT + ' IE x Feedspark - Sep II - Keyword Optimisation', metrics: ['Clicks: +20%'], verdict: 'positive', good: 1, bad: 0 },
+    { id: 'k6', client: 'Southwind', mkt: 'GB', period: 'Sep II', when: '2026-09-30T11:00:00Z', subject: 'Southwind GB', metrics: ['Clicks: -40%'], verdict: 'negative', good: 0, bad: 1 }] };
+  return { xml, csv, roster, info, row, market: r.market, live: r.live, stock, ads, roster2, kwr, xmlIE: outputXml(IE_N), marketIE: eur(r.market), liveIE: eur(r.live) };
 }
 // the fetch-stub lines the tripwires splice into their STUB string (url + j() are theirs); every line
 // sits behind the Catalogue guard so no other page is served an engine or a feed it never asked for
@@ -177,6 +187,7 @@ function stubLines() {
     + "  if(url.indexOf('/api/roas/live')>=0&&url.indexOf('cmpid=" + CMPID_IE + "')>=0){var ag2=(url.match(/[?&]agg=([^&]+)/)||[])[1];var L2=" + JSON.stringify(d.liveIE) + ";return j(L2[decodeURIComponent(ag2||'')]||{ok:false,error:'stub'});}\n"
     + "  if(url.indexOf('/api/roas/live')>=0){var ag=(url.match(/[?&]agg=([^&]+)/)||[])[1];var L=" + JSON.stringify(d.live) + ";return j(L[decodeURIComponent(ag||'')]||{ok:false,error:'stub'});}\n"
     + "  if(url.indexOf('/api/rules/stock')>=0)return j(" + JSON.stringify(d.stock) + ");\n"
+    + "  if(url.indexOf('/api/kwresults')>=0)return j(" + JSON.stringify(d.kwr) + ");\n"
     // the read arrives in two calls — the first a chunk (done:false), the page calls again for the rest
     + "  if(url.indexOf('/api/catalog/ads')>=0){window.__adsCalls=(window.__adsCalls||0)+1;if(window.__adsCalls===1)return j({ok:true,done:false,cmpid:" + JSON.stringify(d.ads.cmpid) + ",got:3,total:" + d.ads.total + ",pages:2,next:2});return j(" + JSON.stringify(d.ads) + ");}\n"
     + "  if(url.indexOf('/api/roas?client=')>=0&&/market=IE(&|$)/.test(url))return j(" + JSON.stringify(d.marketIE) + ");\n"

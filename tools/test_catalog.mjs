@@ -469,7 +469,7 @@ console.log('· the commercial view (a buyer choosing between feed vendors)');
   const liftSide = new Function(lift('liftSide') + '; return liftSide;')();
   t('optimised vs not reads FeedHero’s words both ways (Optimized / Non Optimized, optimised / not optimised)', liftSide('Optimized') === 'o' && liftSide('Non Optimized') === 'n' && liftSide('Optimised') === 'o' && liftSide('Not optimised') === 'n' && liftSide('Non-optimised') === 'n' && liftSide('Unsorted') === null);
   const mods = (PG.match(/var MODS = \[([\s\S]*?)\]\];/) || [])[1] || '';
-  t('twenty-one modules on the dashboard (the six commercial ones, Image pixels, Custom labels, Product type depth) registered', (mods.match(/\['[a-z]+', /g) || []).length === 21 && mods.indexOf("['pix'") >= 0 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
+  t('twenty-two modules on the dashboard (the six commercial ones, keyword tests, Image pixels, Custom labels, Product type depth) registered', (mods.match(/\['[a-z]+', /g) || []).length === 22 && mods.indexOf("['pix'") >= 0 && ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee'].every((k) => mods.indexOf("['" + k + "'") >= 0));
   t('👔 Procurement view is a preset of the same per-device module state, and ?view=procurement opens it', /var PROC = \['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'\]/.test(PG) && /v: 'proc'/.test(PG) && /qp\('view'\)/.test(PG));
   t('the fee a buyer types never leaves the device — no request in the fee check', !/fetch\(|api\(/.test(lift('renderFee') + lift('feeSet')) && /lsSet\('fcc-cat-fee'/.test(PG));
   t('optimised vs not is labelled a comparison, not a controlled test', /side by side, not a controlled test/.test(lift('liftHtml')));
