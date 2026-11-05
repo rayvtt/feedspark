@@ -1,71 +1,74 @@
 {
   "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once. Every item must be dated within the last 3 months (Ray's rule, 18 Sep 2026).",
-  "id": "2026-11-04",
-  "generated": "2026-11-04T05:50:00Z",
-  "headline": "Shopify puts the first hard numbers on AI-referred orders, and Google says PMax may hand brand searches to Search",
-  "intro": "A quiet day on the platform changelogs, but Shopify's Q3 call gave the first measured read on what agent traffic does at checkout and Google's PMax help page now says brand queries may be routed away from PMax.",
+  "id": "2026-11-05",
+  "generated": "2026-11-05T05:55:00Z",
+  "headline": "Google takes UCP direct checkout to Canada, and Amazon opens a free feed portal for any store to list in its search",
+  "intro": "Two platform moves on 4 Nov matter to a feed team: Google's agentic checkout left the US for its second market with a Merchant Center route promised for next year, and Amazon now takes any eligible store's shopping feed for free listing in its search and Alexa for Shopping.",
   "items": [
     {
-      "title": "Shopify Q3 call: orders from AI searches up 3.3x, AI-referred sessions convert 64% more often than organic search",
-      "source": "PPC Land, reporting Shopify's Q3 2026 earnings call",
-      "url": "https://ppc.land/shopify-revenue-gains-32-to-3-7bn-as-ai-referred-orders-rise-3-3x",
-      "date": "2026-11-03",
+      "title": "Google brings UCP direct checkout to AI Mode and the Gemini app in Canada, with a Merchant Center integration from next year",
+      "source": "Google Canada blog (Sabrina Geremia, VP and Country Managing Director)",
+      "url": "https://blog.google/intl/en-ca/products/explore-get-answers/a-new-way-to-shop-introducing-a-more-intuitive-agentic-shopping-experience-for-consumers-and-retailers-in-canada",
+      "date": "2026-11-04",
       "impact": "med",
       "tags": [
-        "Shopify",
-        "agentic commerce",
-        "Shopify Catalog",
-        "Shop Pay",
-        "AI traffic"
+        "Google",
+        "UCP",
+        "AI Mode",
+        "Gemini",
+        "agentic checkout",
+        "Merchant Center"
       ],
-      "what": "On its Q3 call on 3 Nov Shopify gave the first measured read on agent-driven commerce across its merchant base, per PPC Land's write-up. Orders from AI searches rose 3.3x year on year, from a base Shopify called small and did not quantify. AI traffic to merchant storefronts rose 2.6x. AI-referred sessions converted 64% more often than organic search, and searches powered by Shopify Catalog converted at twice the rate of general AI search. 74% of AI-attributed purchases came from categories outside the top 100, the long tail. Shop Pay is now usable inside Claude, Instinct and Grok for any merchant. Shopify attributed the figures to its global search API usage and said volume is still small.",
-      "sowhat": "This is the benchmark a client will hold feed work to: AI-referred sessions that convert better than organic, and Catalog-structured data converting at twice the rate of unstructured. The 74% long-tail figure argues for keyword and attribute depth across the whole range, not just hero lines. YuMOVE's master feed comes out of Shopify, so check its Catalog eligibility and whether its Shop Pay agent checkout is live before the holiday peak. Treat the multiples as directional: the base is small and Shopify said so."
+      "what": "From 4 Nov, direct checkout powered by the Universal Commerce Protocol is rolling out to Canadian shoppers on AI Mode in Google Search and the Gemini app. Launch retailers are lululemon, select Shopify merchants, Shoppers Drug Mart and Simons; shoppers pay with Google Pay using details already in Google Wallet, and retailers remain the seller of record. Loyalty rewards follow in the coming months. Google says that starting next year it will make simplified UCP integration available directly within Merchant Center, with no date given. Search Engine Journal notes Google has not said how UCP orders are attributed in Merchant Center or Google Ads, or how they interact with Shopping and PMax.",
+      "sowhat": "Canada is the second market after the US, and the Merchant Center route is how most of our clients will reach it: the feed, not a Shopify app, becomes the entry point. Reiss CA is the one Google Shopping feed we run into Canada, so it is the account to watch for UCP eligibility and for the UCP agentic performance reporting Google added to the Merchant API in October. For the UK estate nothing changes today, but the question to answer before Google names a UK date is whether each feed's price, availability, shipping and returns data are complete enough to be bought from without a human seeing the site."
     },
     {
-      "title": "Google: PMax may now filter out brand and navigational queries and serve them through dedicated Search campaigns",
-      "source": "Search Engine Roundtable, confirmed on Google's Ads help page",
-      "url": "https://www.seroundtable.com/google-ads-pmax-brand-queries-42438.html",
-      "date": "2026-11-03",
+      "title": "Amazon launches the Shop Direct Merchant Workspace: any eligible store can submit a shopping feed and list in Amazon search and Alexa for Shopping, free",
+      "source": "About Amazon (retail news)",
+      "url": "https://www.aboutamazon.com/news/retail/amazon-shop-direct-merchant-workspace",
+      "date": "2026-11-04",
       "impact": "med",
+      "tags": [
+        "Amazon",
+        "Shop Direct",
+        "Buy for Me",
+        "Alexa for Shopping",
+        "product feeds"
+      ],
+      "what": "Amazon opened a free self-service portal where eligible merchants register for Shop Direct, connect their store and submit product feeds in widely adopted shopping feed formats, through Feedonomics, Salsify, CEDCommerce, VersaFeed or the Selling Partner API. Listed products appear in Amazon.com search results labelled Shop Direct and in Alexa for Shopping, and where eligible can be bought by Amazon's agent, Buy for Me. No fees, opt out at any time; shipping, returns and customer service stay with the merchant. US customers only; Amazon published no merchant or product counts and did not define eligibility. PPC Land reports the accepted feed type is the Google product data feed.",
+      "sowhat": "The Google Shopping feed we already run is the asset Amazon is asking for, so for Reiss US and Superdry US this is a channel decision for the client rather than new feed work: whether they want their range surfaced in Amazon search and bought by Amazon's agent off their own site, with Amazon owning the customer touchpoint. Worth raising with both US leads before peak, with the caveat that earlier this year some brands found themselves listed in Shop Direct without opting in. UK markets are not covered."
+    },
+    {
+      "title": "Google Ads publishes a Promotion Mode help page: an open beta that lowers Target ROAS and adds budget for a sale window on Search and PMax, retail in November",
+      "source": "Search Engine Roundtable, with Google's help page",
+      "url": "https://www.seroundtable.com/google-ads-promotion-mode-help-document-42446.html",
+      "date": "2026-11-04",
+      "impact": "watch",
       "tags": [
         "Google Ads",
         "Performance Max",
-        "brand search",
-        "Shopping"
+        "Promotion Mode",
+        "Black Friday",
+        "bidding"
       ],
-      "what": "Google added a new exception to its help page on how Performance Max interacts with other campaigns. It now reads: Performance Max campaigns may also filter out navigational or brand-specific search queries to prioritize serving them through dedicated Search campaigns, so brand-related queries are handled by campaigns offering more precise control. Google's advice: make sure dedicated brand Search campaigns have sufficient budget and eligible ads, and consider adding Search Themes to the PMax campaign. Spotted by Hana Kobzova of PPC News Feed and reported by Barry Schwartz on 3 Nov. The page carries no date and does not say whether feed-based or Shopping-only PMax is treated differently.",
-      "sowhat": "Every Google Shopping feed we run sits behind PMax for most clients, so a share of brand-term volume and its revenue may move out of the feed campaigns and into brand Search before Black Friday. The ROAS module reads trailing windows, so watch for a step down in PMax revenue with a matching step up in brand Search rather than a real loss. Raise it with each client's PPC agency this week: brand Search budgets, eligible ads and PMax Search Themes are their levers, not ours, but a PMax read that drops for this reason must not be read as a feed problem."
+      "what": "Barry Schwartz flagged a new Google Ads help document for Promotion Mode on 4 Nov. Google's page says Promotion Mode is in an open beta, supported for standard Search and Performance Max campaigns using campaign-level Target ROAS, and lets advertisers temporarily lower their Target ROAS and apply an optional extra daily budget during a promotional window, with targets and budgets returning to their previous settings automatically when the promotion ends. Google's own note: it is initially powered by Smart Bidding Exploration for Search inventory only, and Retail will be available in November 2026. Shopping campaigns are not named.",
+      "sowhat": "This is the campaign-side twin of the sale switch we run on the feed. Superdry's Stock levers card already schedules the BAU to SALE move on range completion and hero sizes; when the PPC agency lifts bids with Promotion Mode over Black Friday the feed has to carry the matching sale_price and Merchant Center promotions, or the extra budget buys clicks on full-price listings. A line for the pre-peak call with each client's PPC agency, nothing for us to change until Google's retail date lands."
     },
     {
-      "title": "Mastercard discloses an agentic commerce partnership with OpenAI on its Q3 call; Shop Pay already runs on Agent Pay",
-      "source": "The Paypers, reporting Mastercard's Q3 2026 earnings call",
-      "url": "https://thepaypers.com/payments/news/mastercard-partners-with-openai-on-agent-pay-and-ai-transformation",
-      "date": "2026-11-03",
-      "impact": "watch",
-      "tags": [
-        "Mastercard",
-        "OpenAI",
-        "Agent Pay",
-        "agentic commerce",
-        "payments"
-      ],
-      "what": "On its Q3 call Mastercard said it has partnered with OpenAI across Agent Pay, payments, services and AI transformation, per The Paypers. CEO Michael Miebach called agentic commerce early days: volumes are limited but rising week on week, and the holiday season is expected to accelerate them. The Agent Pay stack is Agent Pay itself, Verifiable Intent, Agentic Trust Intelligence and Agent Connect. Mastercard said Shopify's Shop Pay uses Agent Pay with network tokens on multiple agentic platforms, and that it backs full tokenisation for agent purchases rather than one-time virtual card numbers. No primary Mastercard release was published; the detail is from the call.",
-      "sowhat": "The payment rail for agent purchases is standardising around network tokens, with Shopify's Shop Pay already running on it and OpenAI now partnered. Nothing for a feed team to do this week, but it is the line that explains to a client why Instant Checkout in ChatGPT is a matter of when, not if, and why the feed and Catalog data behind it needs to be ready first. A QBR slide, not a brief."
-    },
-    {
-      "title": "Microsoft Clarity: checkout appears in 25% of AI-agent sessions against 15% of human sessions, across 5.2 million sessions",
-      "source": "PPC Land, on Microsoft Clarity's agent activity report",
-      "url": "https://ppc.land/checkout-appears-in-25-of-ai-agent-sessions-vs-15-for-humans-clarity-finds/",
-      "date": "2026-10-29",
+      "title": "Blend Commerce audit: bot protection turned away an AI shopping agent at 29 of 200 UK and US retailers, including Tesco, Argos and Next",
+      "source": "Blend Commerce, AI Shopping Audit 2026 (reported by PPC Land, 5 Nov)",
+      "url": "https://blendcommerce.com/blogs/shopify/ai-shopping-audit-2026",
+      "date": "2026-10-06",
       "impact": "watch",
       "tags": [
         "AI agents",
-        "analytics",
-        "Microsoft Clarity",
-        "agentic browsing"
+        "bot protection",
+        "agentic commerce",
+        "product data",
+        "UK retail"
       ],
-      "what": "Microsoft Clarity published What AI Agents Do on Websites, a read of 5.2 million sessions, alongside the general release of its Agent Activity Dashboard on 29 Oct. Checkout events appeared in 25.21% of agentic sessions against 14.65% of human sessions. The agents measured come from the agentic browsers of OpenAI, Google and Anthropic. Clarity's own caveat: agent sessions cluster on retail and travel sites, which inflates the checkout share against an all-site human baseline. Figures are Clarity's; no other analytics vendor has published a comparable read yet.",
-      "sowhat": "Pairs with the HUMAN Security read on Muse traffic carried on 2 Nov: agent sessions are showing up in client analytics as unusually checkout-heavy, low-browse visits. If a client's PPC agency or analytics team reports a conversion-rate shift with no campaign change behind it, agent traffic is one cause to rule in. Worth a line in the next Reiss and Superdry reviews, the two accounts with US markets where these agentic browsers launched first. Vendor data, so quote it as Clarity's finding, not an industry figure."
+      "what": "Blend, a Shopify conversion agency, sent an unmodified Chromium shopping agent to 100 UK and 100 US retailers between 8 and 15 September and scored 17 checks. 29 refused it twice, a list it says includes Home Depot, Best Buy, Macy's, Tesco, Argos and Next, while robots.txt at 24 of those 29 allows the ChatGPT, Perplexity and Claude crawlers. Product pages were readable at 171 of 200; a GTIN was in the product data on 18% of those, shipping on 22%, returns on 20%. 38 of 200 had a live agent checkout endpoint, 37 on Shopify. Fashion scored lowest of twenty sectors. Report dated 6 Oct; PPC Land covered Blend's 4 Nov statement. Blend's own figures; its table does not fully reconcile with the 29.",
+      "sowhat": "Our own PDP scanner is already blocked by Reiss (Akamai), Schuh and Hobbycraft (Cloudflare), so those three are the accounts most likely to be refusing shopping agents too, before any feed question arises. The ask is the same one Blend makes: have each client's security team say which named agents are on the allow list. Microsoft Clarity's Agentic Analytics, announced 4 Nov, is one free way for a client to test whether an agent can complete a task on their site. Vendor marketing, so quote the direction, not the decimals."
     }
   ]
 }
