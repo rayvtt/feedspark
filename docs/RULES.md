@@ -1202,6 +1202,54 @@ both, the Google line never on Meta, Meta's own threshold, each channel's plan /
 Meta switch list and records, the worker keys) + `tools/check_stocklevers.js` (a real click on the switch, the matrix
 re-read, a plan saved onto `p:Superdry|meta` with Google's untouched, the remembered pick, and back to Google).
 
+## 3s. The page redesigned — health first, insight over data (`/stock`)
+
+Ray, 10 Nov 2026: *"rethink the entire stock dashboard module to surface data that actually makes sense. The only module
+I can use right now is the 'stimulate the stock rules,' and that works well. The rest does not give me the end goals I
+need for screenshots, showcases, or client reports … keep the 'stimulate the stock rule.' Cut, revamp, re‑insight, and
+re‑ideate the rest."*
+
+The page now answers the question a client asks — *what happens to my in-stock catalogue on its way to Google, and is
+it right?* — in this order:
+
+1. **Stock health — in stock → live in Google** (`#av-card`, rebuilt in place). One reader per market, `shOf`, serves
+   the table, the tiles, the waterfall and the CSV, so the page can never say two things about one market. It runs off
+   the stored join only (`RULES.heldView`), so every market reads instantly.
+   - **Five tiles:** in stock · live in Google · held by range completion · held for other reasons · ad spend kept off.
+   - **One row per market:** in stock · live % · held back, with how much range completion explains and the ⬇ List ·
+     the range-completion line · ad spend kept off · a **verdict**.
+   - **The verdicts:**
+     - **All live:** under 2% held back.
+     - **Check:** 5% or more of in stock is held for a reason range completion does not explain, with whether it is
+       mostly missing from the feed or sent out of stock.
+     - **Protecting:** range completion explains what is held.
+     - **Held, no line:** products are held but no single line explains them.
+   - **Order:** the market to check leads. Markets nothing can be measured on yet are one line per reason, not a row
+     each.
+2. **Source stock — FeedHero suppfeed** (Superdry only) — unchanged.
+3. **Where the in-stock catalogue goes** (`#wf-card`, new).
+   - **The waterfall:** the markets in view summed, in stock → −range completion → −other reasons → live, with where
+     the held back go (not in the feed vs sent out of stock).
+   - **The market bars:** one 100% bar per market (live / range completion / other), most held back first. This is
+     the multi-market picture for a client.
+4. **Simulate the stock rules** — unchanged.
+5. **Stock levers — BAU ↔ SALE** — unchanged, now after the simulator.
+6. **Hero sizes by product type** — kept as the mapping tool.
+7. **How it's read** — six plain blocks saying where every figure comes from, plus a link to every rule in run order
+   on /rules.
+
+**Cut:** the coverage matrix, the cut-offs table, the hero-size runs table, each market's setup (the rule lists) and
+"how a rule is placed". Every one of them listed rules rather than said what they do; the rules themselves live on
+/rules, one click from "How it's read". The rule search left with the setups.
+
+A fresh device opens Stock health, the waterfall and the simulator; the rest fold (`fcc-stock-fold`).
+
+Harness:
+- `tools/check_stockeven.js` (42): the card order, the cut cards gone, the five tiles summed from the stub's own counts,
+  the verdict order, the one-line unmeasured market, the waterfall's four steps adding up, the market bars at 100% each.
+- `tools/check_stockfold.js` (26): the new defaults and folded lines.
+- `tools/test_rules.mjs` (285).
+
 ## 4. Findings
 
 Every finding names the market and the rules.

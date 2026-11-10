@@ -11018,18 +11018,6 @@
    "pr": 558
   },
   {
-   "name": "Stock page: coverage matrix market x stock control",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "id=\"cov\"",
-   "pr": 558
-  },
-  {
-   "name": "Stock page: cut-offs shown as what the name states",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "Cut-offs the rule names state",
-   "pr": 558
-  },
-  {
    "name": "Rules: browser tripwires render /rules + /stock off the synthetic stub",
    "file": "tools/check_mobile.js",
    "pattern": "const RULES_STUB = require('./rules_stub.js').stubLines();",
@@ -11105,12 +11093,6 @@
    "name": "Stock: the pop-out on every stock rule",
    "file": "docs/FeedSpark_Stock.html",
    "pattern": "fhA(m.cmpid, r.n, r.t)",
-   "pr": 558
-  },
-  {
-   "name": "Stock: the pop-out on the cut-offs table",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "fhA(c.cmpid, c.rule, c.t)",
    "pr": 558
   },
   {
@@ -12467,12 +12449,6 @@
    "pr": 0
   },
   {
-   "name": "Stock even: a market's setup summary is one line",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "'<div class=\"toolbar set-top\"><span class=\"why\">' + esc(m.sentence) + '</span>'",
-   "pr": 0
-  },
-  {
    "name": "Stock even: the phone search field on a row of its own",
    "file": "docs/FeedSpark_Stock.html",
    "pattern": ".ctl .q{flex:1 1 100%}",
@@ -12737,18 +12713,6 @@
    "pr": 0
   },
   {
-   "name": "Stock: ONE in-stock card — seven columns under two named halves (ad spend merged in, Ray 1 Oct 2026)",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "<th colspan=\"3\">In stock · master feed → output feeds</th><th colspan=\"3\" class=\"hbg\">Held back from Google</th>",
-   "pr": 0
-  },
-  {
-   "name": "Stock: every market row carries held back, range completion and its ad spend",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "avCell(m, 'master') + avCell(m, 'g') + avCell(m, 'fb') + hbCell(m) + rcCell(m) + svCell(m)",
-   "pr": 0
-  },
-  {
    "name": "Stock: the range-completion cell — the line in the data, else a rule name's cut-off",
    "file": "docs/FeedSpark_Stock.html",
    "pattern": "function rcCell(m) {",
@@ -12993,12 +12957,6 @@
    "name": "Stock levers: the engine loaded from /stock/levers.js",
    "file": "docs/FeedSpark_Stock.html",
    "pattern": "return fetch('/stock/levers.js', { credentials: 'same-origin' })",
-   "pr": 0
-  },
-  {
-   "name": "Stock levers: the card renders with the page (first under the header)",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "    renderChips(); renderLev(); renderAv();",
    "pr": 0
   },
   {
@@ -13503,15 +13461,15 @@
    "pr": 603
   },
   {
-   "name": "Stock: every card folds (Ray, 7 Oct 2026: \"each module info on Stock Management is collapsible pls - too many at once\") — the overview and the levers open on a fresh device",
+   "name": "Stock: every card folds — Stock health, the waterfall and the simulator open on a fresh device (redesign, 10 Nov 2026)",
    "file": "docs/FeedSpark_Stock.html",
-   "pattern": "var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'cov-card': 1, 'lev-card': 1 }, FOLD = {};",
+   "pattern": "var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'av-card': 1, 'wf-card': 1, 'sim-card': 1 }",
    "pr": 603
   },
   {
    "name": "Stock: a card's title is ONE fold button (chevron, title, the line that survives the fold)",
    "file": "docs/FeedSpark_Stock.html",
-   "pattern": "<h3><button class=\"fold\" type=\"button\" aria-expanded=\"true\" title=\"Fold or open this card\"><span class=\"fch\" aria-hidden=\"true\"></span>Which stock controls each market runs<span class=\"fsum\"></span></button></h3>",
+   "pattern": "<h3><button class=\"fold\" type=\"button\" aria-expanded=\"true\" title=\"Fold or open this card\"><span class=\"fch\" aria-hidden=\"true\"></span>Stock health — in stock → live in Google",
    "pr": 603
   },
   {
@@ -13521,15 +13479,9 @@
    "pr": 603
   },
   {
-   "name": "Stock: a jump to the market setups opens them first",
+   "name": "Stock: Stock health is FIRST on the page (redesign, 10 Nov 2026)",
    "file": "docs/FeedSpark_Stock.html",
-   "pattern": "if (el) { foldOpen(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }",
-   "pr": 603
-  },
-  {
-   "name": "Stock: which controls each market runs — FIRST on the page (Ray, 7 Oct 2026: \"this is good actually ! should be pushed to top\")",
-   "file": "docs/FeedSpark_Stock.html",
-   "pattern": "<main class=\"wrap\">\n  <!-- WHICH STOCK CONTROLS EACH MARKET RUNS — first on the page",
+   "pattern": "<main class=\"wrap\">\n  <!-- IN STOCK, HELD BACK, AND THE AD SPEND",
    "pr": 603
   },
   {
@@ -13537,12 +13489,6 @@
    "file": "docs/FeedSpark_Stock.html",
    "pattern": "id=\"sv-scn\"",
    "forbidden": true,
-   "pr": 603
-  },
-  {
-   "name": "Stock tripwire: every card folds, as a person uses it",
-   "file": "tools/check_stockfold.js",
-   "pattern": "const OPEN0 = ['cov-card', 'lev-card'];",
    "pr": 603
   },
   {
@@ -17303,6 +17249,54 @@
    "name": "Stock simulator: compared with today in three plain lines, ✕ Hide per device",
    "file": "docs/FeedSpark_Stock.html",
    "pattern": "'<li><i class=\"up\"></i><span><b>' + n0(t.newly) + '</b> products live today would be held back</span></li>'",
+   "pr": 0
+  },
+  {
+   "name": "Stock: ONE reader per market for Stock health — the table, tiles, waterfall and CSV (shOf)",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "function shOf(m) {",
+   "pr": 0
+  },
+  {
+   "name": "Stock: the verdict — all live / check / protecting / held, no line",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "var SH_ALL = 2, SH_LEAK = 5;",
+   "pr": 0
+  },
+  {
+   "name": "Stock: markets not measured are one line per reason, the market to check leads",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "var VO = { leak: 0, held: 1, prot: 2, ok: 3 }, meas = [], wait = {};",
+   "pr": 0
+  },
+  {
+   "name": "Stock: where the in-stock catalogue goes — the waterfall and one bar per market",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "function renderWf() {",
+   "pr": 0
+  },
+  {
+   "name": "Stock: the page renders health first, the levers after the simulator",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderLev(); renderHmap(); renderHow();",
+   "pr": 0
+  },
+  {
+   "name": "Stock: how it's read — the method in one card, every rule one click away on /rules",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "<a class=\"btn\" id=\"how-rules\" href=\"/rules\"",
+   "pr": 0
+  },
+  {
+   "name": "Stock tripwire: the redesigned page folds as a person uses it",
+   "file": "tools/check_stockfold.js",
+   "pattern": "const OPEN0 = ['av-card', 'wf-card', 'sim-card'];",
+   "pr": 0
+  },
+  {
+   "name": "Stock tripwire: the redesigned page, every figure recomputed from the stub",
+   "file": "tools/check_stockeven.js",
+   "pattern": "console.log('· the page as redesigned — Stock health first, the cut cards gone');",
    "pr": 0
   }
  ]

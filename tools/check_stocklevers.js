@@ -59,7 +59,8 @@ const ok = (n, c, got) => {
   else { fail++; console.log('  ✗ ' + n + (got !== undefined ? '  got: ' + JSON.stringify(got) : '')); }
 };
 // the levers route answers from a store the page's own PUTs write into (as the server would, stamping a moved step)
-const stubFor = (lines) => `try{localStorage.clear();}catch(e){}
+// every card open, as a person who unfolded them sees it — the levers card is folded on a fresh device since the redesign
+const stubFor = (lines) => `try{localStorage.clear();}catch(e){}${RS.openCards(HTML)}
 window.__puts=[];window.__copied='';var LB=${JSON.stringify(LB)};
 try{Object.defineProperty(navigator,'clipboard',{value:{writeText:function(s){window.__copied=s;return Promise.resolve();}},configurable:true});}catch(e){}
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};

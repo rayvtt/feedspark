@@ -33,8 +33,10 @@ const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'apps_widget.htm
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const PAGE = fs.readFileSync(process.env.STOCK_PAGE || path.join(D, 'FeedSpark_Stock.html'), 'utf8').split('<link rel="stylesheet" href="/design/fcc.css">').join('<style>' + FCC_CSS + '</style>');
 const HTML = PAGE.indexOf('</body>') >= 0 ? PAGE.replace('</body>', WIDGETS + '</body>') : PAGE + '\n' + WIDGETS;
-const CARDS = ['cov-card', 'lev-card', 'av-card', 'sim-card', 'hero-card', 'hmap-card', 'cut-card', 'setup-card', 'how-card'];
-const OPEN0 = ['cov-card', 'lev-card'];
+// the page as redesigned (Ray, 10 Nov 2026): Stock health, the suppfeed view, where the catalogue goes, the simulator, the
+// levers, the hero-size mapping, how it's read — a fresh device opens the first read (health, the waterfall, the simulator)
+const CARDS = ['av-card', 'supp-card', 'wf-card', 'sim-card', 'lev-card', 'hmap-card', 'how-card'];
+const OPEN0 = ['av-card', 'wf-card', 'sim-card'];
 
 let pass = 0, fail = 0;
 const ok = (n, c, got) => {
@@ -80,33 +82,34 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     console.log('· a fresh device');
     let { ctx, p, errs } = await open(browser, 1440, 1000);
     let S = byId(await state(p));
-    ok('the overview and the levers open — every other card folded', CARDS.every((id) => S[id].folded === (OPEN0.indexOf(id) < 0)), CARDS.map((id) => id + ':' + (S[id].folded ? 'folded' : 'open')));
+    ok('Stock health, where the catalogue goes and the simulator open — every other card folded', CARDS.every((id) => S[id].folded === (OPEN0.indexOf(id) < 0)), CARDS.map((id) => id + ':' + (S[id].folded ? 'folded' : 'open')));
     ok('…each title says so to a screen reader (aria-expanded)', CARDS.every((id) => S[id].exp === (S[id].folded ? 'false' : 'true')), CARDS.map((id) => S[id].exp));
     const fd = CARDS.filter((id) => S[id].folded);
     ok('a folded card is ONE row (under 60px), its body not painted', fd.every((id) => S[id].h > 0 && S[id].h < 60 && !S[id].body), fd.map((id) => [id, S[id].h, S[id].body]));
     ok('…and keeps a line saying what is in it, never an empty row', fd.every((id) => S[id].sumShown && S[id].sum.length > 8), fd.map((id) => [id, S[id].sum]));
-    ok('the lines read the card: markets and what Google is not sent; the simulator\'s next step; hero-size rules; product types mapped; cut-offs; markets in view',
-      /^· 2 markets/.test(S['av-card'].sum) && /held back from Google/.test(S['av-card'].sum) && /kept off/.test(S['av-card'].sum) && /hero-size rule/.test(S['hero-card'].sum) && /product types? mapped/.test(S['hmap-card'].sum)
-      && /read its products/.test(S['sim-card'].sum) && /cut-off/.test(S['cut-card'].sum) && /market/.test(S['setup-card'].sum) && /stock control/.test(S['how-card'].sum), fd.map((id) => S[id].sum));
+    ok('the lines read the card: the suppfeed\'s not-live count; the levers\' markets; product types mapped; where every figure comes from',
+      /in stock by the suppfeed, not live in Google/.test(S['supp-card'].sum) && /market/.test(S['lev-card'].sum) && /product types? mapped/.test(S['hmap-card'].sum) && /where every figure comes from/.test(S['how-card'].sum), fd.map((id) => S[id].sum));
     ok('an open card shows no line in its title (its content says it)', OPEN0.every((id) => !S[id].sumShown && !S[id].folded), OPEN0.map((id) => S[id]));
     ok('the page header offers ⊕ Expand all (some cards are folded)', (await p.$eval('#fold-all', (b) => b.textContent.trim())) === '⊕ Expand all');
-    const cv = await p.evaluate(() => { const c = document.getElementById('cov-card'); c.querySelector('.fold').click(); const f = c.querySelector('.fsum'); return { folded: c.classList.contains('folded'), t: f.textContent.trim() }; });
-    ok('the overview folded reads its markets and rules (2 markets read · 20 stock rules · 1 not read yet)', cv.folded && cv.t === '· 2 markets · 20 stock rules · 1 not read yet', cv);
-    await p.click('#cov-card .fold');
+    const cv = await p.evaluate(() => { const c = document.getElementById('av-card'); c.querySelector('.fold').click(); const f = c.querySelector('.fsum'); return { folded: c.classList.contains('folded'), t: f.textContent.trim() }; });
+    ok('Stock health folded keeps its finding: 86.9% live in Google · 3,800 held back · 1 protecting', cv.folded && cv.t === '· 86.9% of in stock live in Google · 3,800 held back · 1 protecting', cv);
+    const wv = await p.evaluate(() => { const c = document.getElementById('wf-card'); c.querySelector('.fold').click(); const t = c.querySelector('.fsum').textContent.trim(); c.querySelector('.fold').click(); return t; });
+    ok('…and the waterfall folded keeps its three shares', /^· 86\.9% live · 12\.7% range completion · 0\.3% other reasons$/.test(wv), wv);
+    await p.click('#av-card .fold');
 
     console.log('· a click, the keyboard, and the device keeping it');
-    await p.click('#av-card .fold');
-    S = byId(await state(p));
-    ok('a click on a folded title opens the card — its table painted, its line gone', !S['av-card'].folded && S['av-card'].body && !S['av-card'].sumShown && S['av-card'].exp === 'true', S['av-card']);
     await p.click('#lev-card .fold');
-    await p.focus('#hero-card .fold'); await p.keyboard.press('Enter');
     S = byId(await state(p));
-    ok('…a click folds an open one (the levers); Enter on a focused title opens it (hero-size runs) — the title is a real button', S['lev-card'].folded && !S['hero-card'].folded, [S['lev-card'].folded, S['hero-card'].folded]);
+    ok('a click on a folded title opens the card — its table painted, its line gone', !S['lev-card'].folded && S['lev-card'].body && !S['lev-card'].sumShown && S['lev-card'].exp === 'true', S['lev-card']);
+    await p.click('#av-card .fold');
+    await p.focus('#hmap-card .fold'); await p.keyboard.press('Enter');
+    S = byId(await state(p));
+    ok('…a click folds an open one (Stock health); Enter on a focused title opens it (hero-size mapping) — the title is a real button', S['av-card'].folded && !S['hmap-card'].folded, [S['av-card'].folded, S['hmap-card'].folded]);
     const mem = await stored(p);
-    ok('the device stores exactly what was chosen by hand', mem && mem['av-card'] === 1 && mem['lev-card'] === 0 && mem['hero-card'] === 1 && !('setup-card' in mem), mem);
+    ok('the device stores exactly what was chosen by hand', mem && mem['av-card'] === 0 && mem['lev-card'] === 1 && mem['hmap-card'] === 1 && !('how-card' in mem), mem);
     await p.reload(); await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000, state: 'attached' }); await p.waitForTimeout(350);
     S = byId(await state(p));
-    ok('…and keeps it through a reload (in stock open, the levers folded, hero-size runs open, the rest as they were)', !S['av-card'].folded && S['lev-card'].folded && !S['hero-card'].folded && S['setup-card'].folded && !S['cov-card'].folded, CARDS.map((id) => id + ':' + (S[id].folded ? 'f' : 'o')));
+    ok('…and keeps it through a reload (Stock health folded, the levers and the mapping open, the rest as they were)', S['av-card'].folded && !S['lev-card'].folded && !S['hmap-card'].folded && S['how-card'].folded && !S['wf-card'].folded, CARDS.map((id) => id + ':' + (S[id].folded ? 'f' : 'o')));
 
     console.log('· every card at once');
     await p.click('#fold-all');
@@ -114,29 +117,18 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     ok('⊕ Expand all opens every card, and the button now offers ⊖ Collapse all', CARDS.every((id) => !S[id].folded) && (await p.$eval('#fold-all', (b) => b.textContent.trim())) === '⊖ Collapse all', CARDS.map((id) => S[id].folded));
     await p.click('#fold-all');
     S = byId(await state(p));
-    ok('⊖ Collapse all folds every card — the overview and the levers too — and offers ⊕ Expand all again', CARDS.every((id) => S[id].folded) && (await p.$eval('#fold-all', (b) => b.textContent.trim())) === '⊕ Expand all', CARDS.map((id) => S[id].folded));
+    ok('⊖ Collapse all folds every card — Stock health too — and offers ⊕ Expand all again', CARDS.every((id) => S[id].folded) && (await p.$eval('#fold-all', (b) => b.textContent.trim())) === '⊕ Expand all', CARDS.map((id) => S[id].folded));
     const ph = await p.evaluate(() => document.documentElement.scrollHeight);
-    ok('…a page of nine cards folded stands about one screen tall', ph < 1400, ph);
+    ok('…a page of seven cards folded stands about one screen tall', ph < 1400, ph);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
-    console.log('· links and jumps open what they point at, for the visit');
-    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry&mech=threshold'));
-    S = byId(await state(p));
-    ok('a deep link to a stock control (?mech=threshold) opens the market setups', !S['setup-card'].folded && S['setup-card'].body, S['setup-card']);
-    ok('…without rewriting what the device chose (nothing stored)', JSON.stringify(await stored(p)) === '{}', await stored(p));
-    await ctx.close();
-    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry#hero-card'));
+    console.log('· links open what they point at, for the visit');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry#lev-card'));
     await p.waitForTimeout(250);
-    const hc = await p.evaluate(() => { const c = document.getElementById('hero-card'), r = c.getBoundingClientRect(); return { folded: c.classList.contains('folded'), top: Math.round(r.top), vh: innerHeight }; });
+    const hc = await p.evaluate(() => { const c = document.getElementById('lev-card'), r = c.getBoundingClientRect(); return { folded: c.classList.contains('folded'), top: Math.round(r.top), vh: innerHeight }; });
     ok('a #hash opens the card it names and brings it into view', !hc.folded && hc.top >= -2 && hc.top < hc.vh / 2, hc);
-    await ctx.close();
-    ({ ctx, p, errs } = await open(browser, 1440, 1000));
-    await p.click('#cov tbody td[data-cell^="Superdry|DE|threshold"]');
-    await p.waitForTimeout(600);
-    const jc = await p.evaluate(() => { const c = document.getElementById('setup-card'), el = document.getElementById('set-superdry_de'); return { folded: c.classList.contains('folded'), el: !!el, top: el ? Math.round(el.getBoundingClientRect().top) : null, vh: innerHeight }; });
-    ok('a click on a coverage cell opens the market setups at that market', !jc.folded && jc.el && jc.top !== null && jc.top >= -2 && jc.top < jc.vh, jc);
-    ok('…for the visit — the device’s choice is not rewritten', !('setup-card' in ((await stored(p)) || {})), await stored(p));
+    ok('…without rewriting what the device chose (nothing stored)', JSON.stringify(await stored(p)) === '{}', await stored(p));
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
@@ -144,14 +136,14 @@ const stored = (p) => p.evaluate(() => { try { return JSON.parse(localStorage.ge
     ({ ctx, p, errs } = await open(browser, 390, 844, '?brand=Superdry', { isMobile: true, hasTouch: true, deviceScaleFactor: 2 }));
     await p.waitForTimeout(800);
     S = byId(await state(p));
-    ok('the same fold on the phone: the overview and the levers open, the rest folded', CARDS.every((id) => S[id].folded === (OPEN0.indexOf(id) < 0)), CARDS.map((id) => id + ':' + (S[id].folded ? 'f' : 'o')));
+    ok('the same fold on the phone: Stock health, the waterfall and the simulator open, the rest folded', CARDS.every((id) => S[id].folded === (OPEN0.indexOf(id) < 0)), CARDS.map((id) => id + ':' + (S[id].folded ? 'f' : 'o')));
     const dg = await p.evaluate(() => (window.FCCDigest ? window.FCCDigest.state() : null));
     ok('the phone’s skim view leaves these headings to the page (none of the cards is one of its sections)', dg && !(dg.keys || []).some((k) => /-card/.test(k)), dg);
     const exp = (id) => p.$eval('#' + id + ' .fold', (b) => b.getAttribute('aria-expanded'));
-    const t0 = await exp('av-card'); await p.tap('#av-card .fold'); await p.waitForTimeout(150);
-    const t1 = [t0, await exp('av-card')];
+    const t0 = await exp('lev-card'); await p.tap('#lev-card .fold'); await p.waitForTimeout(150);
+    const t1 = [t0, await exp('lev-card')];
     ok('a tap on the title opens the card — once', t1[0] === 'false' && t1[1] === 'true', t1);
-    // a tap at the far end of a short title's row ("How a rule is placed") — past its words. Whether that spot is the title's button
+    // a tap at the far end of a short title's row ("How it’s read") — past its words. Whether that spot is the title's button
     // (the phone layer may stretch it across the row) or the heading beside it (which the skim view hands to the button),
     // the card must end up toggled ONCE, never twice back to where it was
     // "its words" = the title's own text node, not the folded line's summary beside it (the summary is not the title)

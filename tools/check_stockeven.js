@@ -97,15 +97,23 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     await ctx.close();
   }
 
-  console.log('· no KPI band — the page opens on its first card');
+  // ---- THE PAGE AS REDESIGNED (Ray, 10 Nov 2026: "rethink the entire stock dashboard module to surface data that actually
+  // makes sense … keep the 'stimulate the stock rule'. Cut, revamp, re-insight") — Stock health first, the waterfall, the
+  // simulator, the levers, the hero-size mapping, How it's read; the coverage matrix, cut-offs, hero-size runs, market
+  // setups and "how a rule is placed" are gone. Every figure below is recomputed here from the stub's own counts.
+  console.log('· the page as redesigned — Stock health first, the cut cards gone');
   {
     const { ctx, p, errs } = await open(browser, 1440);
-    const top = await p.evaluate(() => { const f = Array.from(document.querySelectorAll('main.wrap > *')).filter((e) => !e.hidden && e.getBoundingClientRect().height > 0)[0]; return { band: !!document.getElementById('kpis') || !!document.querySelector('main .kpis'), first: f ? f.id : '', card: f ? f.classList.contains('card') : false }; });
-    ok('no KPI band on the page; the first thing under the header is a card — which controls each market runs (Ray, 7 Oct 2026: "should be pushed to top")', !top.band && top.card && top.first === 'cov-card', top);
-    const kept = await p.evaluate(() => ({ book: !!document.querySelector('#av-sum [data-sv="book"]'), google: /Google/.test((document.getElementById('av-sum') || {}).textContent || ''), cov: document.querySelectorAll('#cov tbody tr').length, heroes: document.querySelectorAll('#heroes tbody tr[data-sv]').length, cuts: document.querySelectorAll('#cuts tbody tr[data-sv]').length }));
-    ok('every figure the band carried still stands on a card: the ad-spend book and Google’s in-stock tile, the coverage matrix, the hero-size runs, the cut-offs (the findings card left on 23 Oct 2026)', kept.book && kept.google && kept.cov > 0 && kept.heroes > 0 && kept.cuts > 0, kept);
+    const top = await p.evaluate(() => ({ order: Array.from(document.querySelectorAll('main.wrap > section.card')).map((c) => c.id),
+      gone: ['cov', 'cuts', 'heroes', 'setups', 'mechs', 'how', 'q', 'kpis'].filter((id) => document.getElementById(id)) }));
+    ok('the cards, in order: Stock health · suppfeed · where the catalogue goes · simulator · levers · hero-size mapping · how it’s read', top.order.join() === 'av-card,supp-card,wf-card,sim-card,lev-card,hmap-card,how-card', top.order);
+    ok('the coverage matrix, cut-offs, hero-size runs, market setups, rule search and "how a rule is placed" table are gone', top.gone.length === 0, top.gone);
 
-    console.log('· rows of summary tiles fill their card');
+    console.log('· Stock health — five tiles, the sums of the markets measured');
+    const T = await p.evaluate(() => Array.from(document.querySelectorAll('#av-sum .it')).map((it) => ({ h: (it.querySelector('.h') || {}).textContent, b: (it.querySelector('b') || {}).textContent, s: (it.querySelector('.s') || {}).textContent, sv: it.getAttribute('data-sv') })));
+    // the stub: Superdry GB 29,100 in stock, 3,800 held (3,700 under the ≈35% line); Reiss GB 24,900 in stock, 2,100 held, no line
+    ok('in stock 54,000 (29,100 + 24,900) over 2 markets · live 89.1% (48,100) · range completion 3,700 · other reasons 2,200 (100 + 2,100) · ad spend the book', T.length === 5
+      && T[0].b === '54,000' && /2 markets/.test(T[0].s) && T[1].b === '89.1%' && /48,100/.test(T[1].s) && T[2].b === '3,700' && T[3].b === '2,200' && /1 market to check/.test(T[3].s) && T[4].sv === 'book' && /£808/.test(T[4].b), T);
     for (const id of ['av-sum', 'hm-sum']) {
       const t = await p.evaluate((id) => {
         const box = document.getElementById(id), r = box.getBoundingClientRect();
@@ -115,44 +123,44 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
       ok('#' + id + ': ' + t.its.length + ' tiles, one row, one width each, the last one flush with the card', t.its.length >= 2 && rows.length === 1 && same(t.its.map((b) => b.w)) && Math.abs(t.its[t.its.length - 1].right - t.r) <= 1 && Math.abs(t.its[0].x - t.l) <= 1, t);
     }
 
-    console.log('· the in-stock card — seven columns, nothing clipped, one row height (the ad spend merged in)');
+    console.log('· Stock health — one row per measured market, a verdict each, the rest one line');
     const av = await p.evaluate(() => {
       const t = document.getElementById('av-t'), fr = t.parentElement;
-      const ths = Array.from(t.querySelectorAll('thead tr:last-child th'));
-      const rows = Array.from(t.querySelectorAll('tbody tr')).map((tr) => ({ h: tr.getBoundingClientRect().height, list: !!tr.querySelector('[data-hbdl]'), cells: tr.cells.length,
-        rc: tr.cells[5] ? tr.cells[5].textContent.replace(/\s+/g, ' ').trim() : '', hb: tr.cells[4] ? tr.cells[4].textContent.replace(/\s+/g, ' ').trim() : '', sv: !!(tr.cells[6] && tr.cells[6].hasAttribute('data-sv')) }));
-      const clip = Array.from(t.querySelectorAll('th,td')).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.textContent.trim().slice(0, 30));
-      return { cols: ths.length, feeds: ths.slice(1, 4).map((x) => x.getBoundingClientRect().width), frame: fr.clientWidth, sw: fr.scrollWidth, rows, clip,
-        card: !!document.getElementById('sv-card'), inCard: !!document.querySelector('#av-card #sv-rules #sv-t'),
-        // Ray, 7 Oct 2026, crossing them out on the card: "these button doesnt apply/ make sense" — the scenario and period
-        // switches live in the forecast panel only; the column head names the forecast it shows
-        tools: Array.from(document.querySelectorAll('#av-card .chead .tools > *')).map((x) => x.id || x.className), sw: !!document.querySelector('#av-card #sv-scn, #av-card #sv-per'),
-        th: ((document.getElementById('sv-th') || {}).textContent || '').replace(/\s+/g, ' ').trim() };
+      const rows = Array.from(t.querySelectorAll('tbody tr')).map((tr) => ({ wait: tr.classList.contains('sh-wait'), mk: tr.cells[0].textContent.replace(/\s+/g, ' ').trim(), cells: tr.cells.length,
+        live: tr.cells[2] ? tr.cells[2].textContent.replace(/\s+/g, ' ').trim() : '', hb: tr.cells[3] ? tr.cells[3].textContent.replace(/\s+/g, ' ').trim() : '', rc: tr.cells[4] ? tr.cells[4].textContent.replace(/\s+/g, ' ').trim() : '',
+        sv: !!(tr.cells[5] && tr.cells[5].hasAttribute('data-sv')), vd: ((tr.querySelector('.vd') || {}).textContent || '').trim(), vdk: ((tr.querySelector('.vd') || {}).className || ''), list: !!tr.querySelector('[data-hbdl]') }));
+      const clip = Array.from(t.querySelectorAll('thead th')).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.textContent.trim().slice(0, 30));
+      return { cols: t.querySelectorAll('thead th').length, frame: fr.clientWidth, sw: fr.scrollWidth, rows, clip, inCard: !!document.querySelector('#av-card #sv-rules #sv-t'),
+        tools: Array.from(document.querySelectorAll('#av-card .chead .tools > *')).map((x) => x.id), th: ((document.getElementById('sv-th') || {}).textContent || '').replace(/\s+/g, ' ').trim() };
     });
-    ok('one card: the ad-spend card is gone; its rule-by-rule table in the card\'s fold', !av.card && av.inCard, av);
-    ok('…no scenario or period switch in the card\'s header (Ray: "these button doesnt apply") — only ⬇ CSV; the column head names the forecast shown', !av.sw && av.tools.join(',') === 'av-csv' && /^Ad spend kept off\s*conservative 5% · a month$/.test(av.th), [av.tools, av.th]);
-    ok('seven columns, the three feeds one width', av.cols === 7 && same(av.feeds), [av.cols, av.feeds.map(Math.round)]);
-    ok('the table fits its card at 1440px — nothing to scroll sideways', av.sw <= av.frame + 1, [av.sw, av.frame]);
-    ok('no header or cell has its text clipped', av.clip.length === 0, av.clip);
-    ok('the stub draws a market with the ⬇ List and one without', av.rows.some((r) => r.list) && av.rows.some((r) => !r.list), av.rows);
-    ok('every market row one height, whatever its cells hold', same(av.rows.map((r) => r.h), 1), av.rows.map((r) => [Math.round(r.h), r.list]));
-    ok('range completion: the line read off the products (≈), a rule name\'s cut-off, and "not counted yet" — each state drawn', av.rows.some((r) => /^≈\s*\d+%/.test(r.rc) && /in the data/.test(r.rc)) && av.rows.some((r) => /^RC < \d+%/.test(r.rc) && /in a rule name/.test(r.rc)) && av.rows.some((r) => /not counted yet/.test(r.hb)), av.rows.map((r) => [r.hb, r.rc]));
-    ok('a market\'s ad-spend cell opens its largest rule\'s working (data-sv)', av.rows.filter((r) => r.sv).length >= 2, av.rows.map((r) => r.sv));
+    const R = av.rows.filter((r) => !r.wait), W = av.rows.filter((r) => r.wait);
+    ok('seven columns: market · in stock · live in Google · held back · range-completion line · ad spend kept off · verdict', av.cols === 7, av.cols);
+    ok('the table fits its card at 1440px, no heading clipped', av.sw <= av.frame + 1 && av.clip.length === 0, [av.sw, av.frame, av.clip]);
+    ok('the market to check leads: Reiss GB — Check (8.4% held, no line explains it), then Superdry GB — Protecting', R.length === 2 && R[0].mk === 'Reiss GB' && R[0].vd === 'Check' && /leak/.test(R[0].vdk) && R[1].mk === 'Superdry GB' && R[1].vd === 'Protecting', R.map((r) => [r.mk, r.vd]));
+    ok('Superdry GB: 86.9% live (25,300) · 3,800 held, 97.4% by range completion · ≈35% in the data · its ⬇ List', /^86\.9%\s*25,300$/.test(R[1].live) && /3,800\s*13\.1% · 97\.4% by RC/.test(R[1].hb) && /≈\s*35%/.test(R[1].rc) && R[1].list, R[1]);
+    ok('Reiss GB: no RC line in the data — the cut-off a rule name states', /no RC line/.test(R[0].hb) && /^RC < \d+%/.test(R[0].rc), R[0]);
+    ok('a market nothing can be measured on is ONE line naming it and why (Superdry DE — not counted yet)', W.length === 1 && /Not measured yet/.test(W[0].mk) && /DE/.test(W[0].mk) && /not counted yet/.test(W[0].mk), W);
+    ok('a measured market\'s ad-spend cell opens its largest rule\'s working (data-sv)', R.filter((r) => r.sv).length === 2, R.map((r) => r.sv));
+    ok('only ⬇ CSV in the card\'s header; the column head names the forecast shown; the rule-by-rule table in the card\'s fold', av.tools.join(',') === 'av-csv' && /^Ad spend kept off\s*conservative 5% · a month$/.test(av.th) && av.inCard, [av.tools, av.th]);
     await p.evaluate(() => { document.getElementById('sv-rules').open = true; });
     await p.waitForTimeout(100);
     const sv = await p.evaluate(() => Array.from(document.querySelectorAll('#sv-t tbody tr')).map((tr) => ({ h: tr.getBoundingClientRect().height, mk: tr.cells[0].textContent.trim(), id: (tr.getAttribute('data-sv') || '').split('|')[0] })));
     ok('the rule-by-rule fold opens onto its rules, one height each', sv.length >= 2 && sv.every((r) => r.h > 0) && same(sv.map((r) => r.h), 1), sv.map((r) => Math.round(r.h)));
-    for (const id of ['sv-t', 'cuts', 'heroes']) {
-      const g = await p.evaluate((id) => Array.from(document.querySelectorAll('#' + id + ' tbody tr[data-sv]')).map((tr) => ({ mk: tr.cells[0].textContent.trim(), id: tr.getAttribute('data-sv').split('|')[0], gi: tr.classList.contains('gi') })), id);
+    {
+      const g = await p.evaluate(() => Array.from(document.querySelectorAll('#sv-t tbody tr[data-sv]')).map((tr) => ({ mk: tr.cells[0].textContent.trim(), id: tr.getAttribute('data-sv').split('|')[0], gi: tr.classList.contains('gi') })));
       const runs = g.filter((r, i) => !i || g[i - 1].id !== r.id);
-      ok('#' + id + ': each market named once, on the first row of its run (' + runs.length + ' markets, ' + g.length + ' rows)', g.length > 0 && g.filter((r) => r.mk).length === runs.length && g.every((r, i) => !!r.mk === (!i || g[i - 1].id !== r.id)), g);
-      ok('#' + id + ': the rows that continue a run are divided by a quieter line', g.every((r, i) => r.gi === (i < g.length - 1 && g[i + 1].id === r.id)), g);
+      ok('#sv-t: each market named once, on the first row of its run (' + runs.length + ' markets, ' + g.length + ' rows)', g.length > 0 && g.filter((r) => r.mk).length === runs.length && g.every((r, i) => !!r.mk === (!i || g[i - 1].id !== r.id)), g);
+      ok('#sv-t: the rows that continue a run are divided by a quieter line', g.every((r, i) => r.gi === (i < g.length - 1 && g[i + 1].id === r.id)), g);
     }
-    ok('the stub has a market with more than one sized rule (so "named once" meets a run)', sv.some((r, i) => i && sv[i - 1].id === r.id));
 
-    console.log('· the coverage matrix — one width per stock control');
-    const cw = await p.evaluate(() => { const th = Array.from(document.querySelectorAll('#cov thead th')); return th.slice(1, -1).map((x) => x.getBoundingClientRect().width); });
-    ok('every stock-control column is one width', cw.length >= 6 && same(cw), cw.map((w) => Math.round(w)));
+    console.log('· where the in-stock catalogue goes — the waterfall and the market bars');
+    const wf = await p.evaluate(() => ({ labs: Array.from(document.querySelectorAll('#wf-svg svg text')).map((t) => t.textContent), rects: document.querySelectorAll('#wf-svg svg rect').length,
+      cap: document.getElementById('wf-cap').textContent, h: document.getElementById('wf-h').textContent,
+      bars: Array.from(document.querySelectorAll('#wf-bars .wf-row')).map((r) => ({ nm: r.querySelector('.nm').textContent, pc: r.querySelector('.pc').textContent, w: Array.from(r.querySelectorAll('.bar i')).map((i) => parseFloat(i.style.width)) })) }));
+    ok('four steps: 54,000 in stock → −3,700 range completion → −2,200 other reasons → 48,100 live (89.1%)', wf.rects === 4 && wf.labs.indexOf('54,000') >= 0 && wf.labs.indexOf('−3,700') >= 0 && wf.labs.indexOf('−2,200') >= 0 && wf.labs.indexOf('48,100 · 89.1%') >= 0, wf.labs);
+    ok('…in stock = range completion + other reasons + live (3,700 + 2,200 + 48,100)', 3700 + 2200 + 48100 === 54000);
+    ok('…the held back named by where they go: 5,890 not in the Google feed, 10 sent out of stock', /5,900 held back, 5,890 are not in the Google feed at all and 10 are sent as out of stock/.test(wf.cap), wf.cap);
+    ok('one bar per measured market, most held back first, each adding up to its in stock', wf.bars.length === 2 && /Superdry GB/.test(wf.bars[0].nm) && wf.bars[0].pc === '13.1%' && wf.bars[1].pc === '8.4%' && wf.bars.every((b) => Math.abs(b.w.reduce((a, c) => a + c, 0) - 100) < 0.05), wf.bars);
 
     console.log('· hero sizes by product type — one chip width, a short source word');
     const chips = await p.evaluate(() => Array.from(document.querySelectorAll('#hm-t .sz')).map((el) => ({ t: el.textContent.trim(), w: el.getBoundingClientRect().width })));
@@ -165,33 +173,28 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     const guideNote = await p.evaluate(() => { const g = document.getElementById('hm-guide'); return { lines: g.querySelectorAll('.ex-note').length, tip: (g.querySelector('#hm-ex') || {}).title || '' }; });
     ok('the example\'s note is the follow select\'s tooltip, not a line of prose', guideNote.lines === 0 && /starting point/i.test(guideNote.tip), guideNote);
 
-    console.log('· needs a look is gone (Ray, 23 Oct 2026: "also, remove this")');
-    const gone = await p.evaluate(() => ({ card: !!document.getElementById('find-card'), list: !!document.getElementById('finds'), word: /Needs a look/.test(document.querySelector('main').textContent) }));
-    ok('no findings card on /stock — the cut-offs card stands on its own row', !gone.card && !gone.list && !gone.word, gone);
-
-    console.log('· each market\'s setup — a one-line summary');
-    const su = await p.evaluate(() => Array.from(document.querySelectorAll('#setups > details')).map((d) => ({ h: d.querySelector('summary').getBoundingClientRect().height, why: !!d.querySelector('summary .why'), body: !!d.querySelector(':scope > .set-top .why'), fh: !!d.querySelector(':scope > .set-top a.fh') })));
-    ok('each summary is one line, its sentence and FeedHero link open with the rules', su.length >= 2 && su.every((s) => s.h <= 34 && !s.why && s.body && s.fh), su);
-    const cols = await p.evaluate(() => Array.from(document.querySelectorAll('#setups table.t thead tr:first-child th')).slice(0, 8).map((th) => th.textContent.trim()));
-    ok('the setup table carries no column that repeats "every" / "all" down every row (batch rides under the channel)', cols.indexOf('Batch') < 0 && cols.indexOf('Channel') >= 0, cols);
+    console.log('· how it’s read — the method in six plain blocks, the rules one click away');
+    const how = await p.evaluate(() => ({ n: document.querySelectorAll('#how-card .how-g > div').length, a: (document.getElementById('how-rules') || {}).getAttribute && document.getElementById('how-rules').getAttribute('href'), last: (Array.from(document.querySelectorAll('main.wrap > section.card')).pop() || {}).id }));
+    ok('six blocks, a link to every rule in run order, and it is the last card', how.n === 6 && /^\/rules/.test(how.a) && how.last === 'how-card', how);
+    ok('no findings card ("Needs a look" stays gone)', await p.evaluate(() => !document.getElementById('find-card') && !/Needs a look/.test(document.querySelector('main').textContent)));
     ok('no page errors', errs.length === 0, errs);
 
-    console.log('· beside the open forecast panel the in-stock tiles stay even');
-    await p.click('#av-t tbody td[data-sv]');   // a click on a market's ad spend (not a link or a button) docks its rule's working
+    console.log('· beside the open forecast panel the Stock health tiles stay even');
+    await p.click('#av-t tbody td[data-sv]');
     await p.waitForTimeout(350);
     const on = await p.evaluate(() => document.body.classList.contains('sv-on'));
     if (on) {
       const tr = rowsOf(await tiles(p, 'av-sum'));
-      ok('with the panel docked, the in-stock tiles sit in even rows, one width each', tr.length >= 1 && even(tr) && same([].concat(...tr).map((b) => b.w)), tr.map((r) => r.map((b) => Math.round(b.w))));
+      ok('with the panel docked, the tiles sit in even rows, one width each', tr.length >= 1 && even(tr) && same([].concat(...tr).map((b) => b.w)), tr.map((r) => r.map((b) => Math.round(b.w))));
     } else ok('the forecast panel opened on a market row (needed for the next measure)', false, 'panel did not open');
     await ctx.close();
   }
 
-  console.log('· 1100px — the in-stock tiles even, and the negative control');
+  console.log('· 1100px — the Stock health tiles even, and the negative control');
   {
     const { ctx, p } = await open(browser, 1100);
     let rs = rowsOf(await tiles(p, 'av-sum'));
-    ok('the in-stock tiles sit in even rows at 1100px, one width each', rs.length >= 1 && even(rs) && same([].concat(...rs).map((b) => b.w)), rs.map((r) => r.map((b) => Math.round(b.w))));
+    ok('the Stock health tiles sit in even rows at 1100px, one width each', rs.length >= 1 && even(rs) && same([].concat(...rs).map((b) => b.w)), rs.map((r) => r.map((b) => Math.round(b.w))));
     // NEGATIVE CONTROL — a fixed-width fill forced onto the same tiles leaves them 3 + 1, and the measure must catch it
     await p.addStyleTag({ content: '#av-sum{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}' });
     await p.waitForTimeout(100);
@@ -200,12 +203,12 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     await ctx.close();
   }
 
-  console.log('· a phone — the search field on a row of its own');
+  console.log('· a phone — the header controls fit');
   {
     const { ctx, p, errs } = await open(browser, 390, 844);
     ok('no KPI band on the phone either', !(await p.$('#kpis')));
-    const q = await p.evaluate(() => { const r = document.getElementById('q').getBoundingClientRect(), c = document.querySelector('.hero .ctl').getBoundingClientRect(); return { w: r.width, cw: c.width }; });
-    ok('the search field spans the control row (it had shrunk to its first two letters)', q.w >= q.cw - 2, q);
+    const q = await p.evaluate(() => { const c = document.querySelector('.hero .ctl').getBoundingClientRect(); return { r: Math.round(Array.from(document.querySelectorAll('.hero .ctl > *')).reduce((m, e) => Math.max(m, e.getBoundingClientRect().right), 0)), cw: Math.round(c.right) }; });
+    ok('the header controls fit the phone (the rule search left with the market setups)', !(await p.$('#q')) && q.r <= q.cw + 1, q);
     await p.evaluate(() => window.FCCDigest && window.FCCDigest.expandAll && window.FCCDigest.expandAll());
     await p.waitForTimeout(150);
     for (const id of ['av-sum', 'hm-sum']) {
@@ -214,7 +217,7 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
       ok('#' + id + ' on a phone: even rows, or an odd tile out spanning the row rather than leaving a gap', tr.length >= 1 && tr.every((r, i) => r.length === tr[0].length || (i === tr.length - 1 && r.length === 1 && r[0].w > tr[0][0].w * 1.8)), tr.map((r) => r.map((b) => Math.round(b.w))));
     }
     const pan = await p.evaluate(() => { const fr = document.getElementById('av-t').parentElement; return { sw: fr.scrollWidth, cw: fr.clientWidth, ox: getComputedStyle(fr).overflowX }; });
-    ok('the in-stock table pans inside its own frame on a phone (pan, don\'t crush)', pan.sw > pan.cw && /auto|scroll/.test(pan.ox), pan);
+    ok('the Stock health table pans inside its own frame on a phone (pan, don\'t crush)', pan.sw > pan.cw && /auto|scroll/.test(pan.ox), pan);
     const over = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     ok('no sideways overflow', over <= 0, over);
     ok('no page errors', errs.length === 0, errs);

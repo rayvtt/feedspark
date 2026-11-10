@@ -275,6 +275,37 @@ window.addEventListener('load',restore);
   table.t tr.sv-cur td:first-child{box-shadow:inset 3px 0 0 var(--chart-1)}
   .sv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:0 0 12px}
   .sv-sum:empty{display:none}
+  /* STOCK HEALTH (Ray, 10 Nov 2026): five tiles, one row; a verdict per market; the waterfall + market bars */
+  .sh-sum{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .sh-sum .it b{display:block;font-size:22px;font-weight:800;letter-spacing:-.015em;color:var(--ink);line-height:1.15}
+  .sh-sum .it .h{display:block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .sh-sum .it .s{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+  .sh-sum .it b .sv-money{font:inherit;color:inherit}
+  @media(max-width:900px){.sh-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .vd{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:100px;white-space:nowrap;border:1px solid var(--line)}
+  .vd i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+  .vd.ok i,.vd.prot i{background:var(--good)} .vd.leak i{background:var(--chart-2)} .vd.held i{background:var(--orange)} .vd.na i{background:var(--av-na)}
+  .vd.leak{color:var(--orange-ink)}
+  .vdw{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;white-space:normal;max-width:260px}
+  .wf-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+  @media(max-width:1000px){.wf-g{grid-template-columns:minmax(0,1fr)}}
+  .wf-g.one{grid-template-columns:minmax(0,640px)}
+  .wf-g.one>.wf-box:last-child{display:none}
+  #av-t tr.sh-wait td{font-size:12.5px;padding-top:9px;padding-bottom:9px}
+  #av-t tr.sh-wait .vd{margin-right:6px}
+  .wf-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);min-width:0}
+  #wf-svg svg{display:block;width:100%;height:auto}
+  .wf-row{display:grid;grid-template-columns:76px minmax(0,1fr) 56px;align-items:center;gap:8px;margin:5px 0;font-size:12px}
+  .wf-row .nm{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wf-row .bar{display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--wash)}
+  .wf-row .bar i{display:block;height:100%}
+  .wf-row .pc{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+  .wl,.wf-row i.wl{background:var(--chart-1)} .wr,.wf-row i.wr{background:var(--chart-2)} .wo,.wf-row i.wo{background:#C9A227}
+  #wf-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .how-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  @media(max-width:1000px){.how-g{grid-template-columns:minmax(0,1fr)}}
+  .how-g h4{margin:0 0 4px;font-size:13px;font-weight:800;color:var(--ink)}
+  .how-g p{margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-2)}
   .sv-sum .it{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--wash);min-width:0}
   @media(max-width:760px){.sv-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.sv-sum>.it:last-child:nth-child(odd){grid-column:1/-1}#av-sum{grid-template-columns:minmax(0,1fr)}}
   .sv-sum .it b{display:block;font-size:20px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
@@ -652,10 +683,9 @@ window.addEventListener('load',restore);
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Feed operations</div>
   <h1>Stock management<small>read from the rules</small></h1>
-  <p class="sub" data-instr>How each market decides what shoppers are told is in stock — built from the FeedHero rules that write availability, stock quantity, range completion, hero sizes, stock labels, stock exclusions, local inventory and the new-in / aged lifecycle. Every line below is a real rule, in the order it runs. The rule report does not carry a rule's conditions: a cut-off such as "stock &lt; 11" is read out of the rule's own name and always shown beside it, never as the rule's logic.</p>
+  <p class="sub" data-instr>What happens to each market's in-stock catalogue on its way to Google Shopping: how much of it goes live, how much the stock rules hold back and why, and the ad spend that keeps off products that would not sell. Read from the client's master feed, the Google feed and the FeedHero stock rules — nothing here changes a rule.</p>
   <div class="ctl">
     <select class="fld" id="brand" aria-label="Brand"><option value="">All brands</option></select>
-    <input class="q" id="q" type="search" placeholder="Search stock rules…  ( / )" aria-label="Search stock rules" autocomplete="off">
     <button class="btn" id="sync-now" type="button" title="Owner-only — re-reads the roster's rules, the same rotation the cron runs">⚡ Sync now</button>
     <button class="btn" id="csv" type="button" title="Every stock rule in view">⬇ CSV</button>
     <a class="btn" id="to-rules" href="/rules" title="Every rule, not only the stock ones">⚙ All rules</a>
@@ -666,49 +696,17 @@ window.addEventListener('load',restore);
 </div></header>
 
 <main class="wrap">
-  <!-- WHICH STOCK CONTROLS EACH MARKET RUNS — first on the page (Ray, 7 Oct 2026, over this table: "this is good actually !
-       should be pushed to top"). The overview: every market a row, every stock control a column, the rule count in a cell. -->
-  <section class="card" id="cov-card">
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Which stock controls each market runs<span class="fsum"></span></button></h3><p class="ch">Rules per market by what they do. Click a cell to list those rules.</p></div>
-      <div class="tools"><label class="tog"><input type="checkbox" id="chan"> Split by channel</label></div></div>
-    <div class="tw"><table class="t" id="cov"><thead></thead><tbody></tbody></table></div>
-    <div class="legend" id="cov-legend"></div>
-  </section>
-
-  <!-- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically) eahc of
-       those markets have got quite aan interesting mix of stock levers : 1 . Range Completion (20-40%, currently at 35%) - 2.
-       Stock unit exclusion for Everest (previously >5 units per size, now N/A) - 3. Hero Sizes (current activated, follow the
-       mapping above) - build an facilitor interface to action BAU vs. SALE perido"). The brand's plan per lever, every
-       market's reading off its own rules, the sale periods and the switch each way — briefed, copied, marked made. -->
-  <section class="card" id="lev-card" hidden>
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Stock levers — BAU ↔ SALE<span class="fsum"></span></button></h3><p class="ch" id="lev-sub">Each brand’s BAU and SALE settings for its stock levers, against what every market runs today.</p></div>
-      <div class="tools"><button class="btn" id="lev-copy" type="button" title="The levers, each market’s reading and the sale periods, in words — for an email or a call">⧉ Copy summary</button><button class="btn" id="lev-csv" type="button" title="Every market × lever: what it runs, the plan, and whether it is off plan">⬇ CSV</button></div></div>
-    <div class="chips lev-brands" id="lev-brands" hidden></div>
-    <div class="hm-warn" id="lev-warn" hidden></div>
-    <div class="lev-chrow" id="lev-chrow" hidden><span class="lb">Channel</span><span class="seg lev-ch" id="lev-ch" role="group" aria-label="The channel the levers are read on"></span><span class="lvc" id="lev-chnote"></span></div>
-    <div class="sv-sum" id="lev-sum"></div>
-    <div class="toolbar" id="lev-bar" hidden><div class="chips" id="lev-f"></div><button class="btn" id="lev-adopt" type="button" hidden title="Make what these markets run today their own BAU — the decision that each one’s mix is the plan">Keep markets as they run</button><span class="seg lev-view" id="lev-view" role="group" aria-label="How the markets are listed" hidden></span></div>
-    <div class="tw" id="lev-tw" hidden><table class="t" id="lev-t"><thead></thead><tbody></tbody></table></div>
-    <div class="legend" id="lev-legend" hidden><span><i class="lvn"></i>A rule runs it, on plan</span><span><i class="lvo"></i>Off plan</span><span>— · N/A: no rule runs it</span><span>≈ measured from the products</span><span><i class="lvd"></i>dashed: more than one rule reads as it — connect one</span><span><b>missing</b>: the lever’s connected rule is not in that market</span><span><span class="tg">own</span> the market’s own values</span></div>
-    <div class="lev-plan" id="lev-plan"><div class="empty">Loading…</div></div>
-    <div class="lev-per" id="lev-per"></div>
-    <div class="lev-rec" id="lev-rec"></div>
-    <p class="note" id="lev-foot"></p>
-  </section>
-
   <!-- IN STOCK, HELD BACK, AND THE AD SPEND THAT KEEPS OFF THEM — ONE CARD (Ray, 1 Oct 2026: "add in how many instock I have
        been excluded from Masterfeed to Google Shopping as well, and indicate what the current range completion percentage is
        that I have created. Then merge the Adspend kept off section into this interface as wel - makes sense that it should be
        there"). A market reads left to right: what its master holds in stock, what each channel receives, the in-stock products
        Google is not sent, the range-completion line that holds them back, and the spend that keeps off them. -->
   <section class="card" id="av-card">
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>In stock — master feed → output feeds<span class="fsum"></span></button></h3><p class="ch" id="av-sub">What the client sends, what each channel receives, the in-stock products held back from Google and the ad spend kept off them.</p></div>
-      <div class="tools"><button class="btn" id="av-csv" type="button" title="Every market in view: availability, held back from Google, the range-completion line and the ad spend kept off">⬇ CSV</button></div></div>
-    <div class="sv-sum" id="av-sum"></div>
-    <div class="tw"><table class="t" id="av-t"><colgroup><col class="c-mk"><col class="c-av"><col class="c-av"><col class="c-av"><col class="c-hb"><col class="c-rc"><col class="c-sv"></colgroup><thead>
-      <tr class="grp"><th></th><th colspan="3">In stock · master feed → output feeds</th><th colspan="3" class="hbg">Held back from Google</th></tr>
-      <tr><th>Market</th><th>Master feed</th><th>Google Shopping</th><th>Meta</th><th class="num hbg" title="Products the master states in stock that the Google feed does not carry live — not in it, or sent out of stock — joined product by product">In stock, not live</th><th class="num" title="The range-completion level products are held back under, read off the products: the held-back styles sit below it, the live ones above">Range completion</th><th class="num" id="sv-th" title="The ad spend those holds keep off — each market at its largest stock rule. Hover a market’s figure: its forecast opens beside the page, where the share and the period are chosen">Ad spend kept off</th></tr></thead><tbody></tbody></table></div>
-    <div class="legend"><span><i class="in"></i>In stock</span><span><i class="pre"></i>Pre-order / backorder</span><span><i class="out"></i>Out of stock</span><span><i class="na"></i>Not stated</span></div>
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Stock health — in stock → live in Google<span class="fsum"></span></button></h3><p class="ch" id="av-sub">Each market: what the client has in stock, how much of it Google is sent live, what the stock rules hold back and why, and the ad spend kept off it.</p></div>
+      <div class="tools"><button class="btn" id="av-csv" type="button" title="Every market in view: in stock, live in Google, held back and why, the range-completion line, the ad spend kept off and the verdict">⬇ CSV</button></div></div>
+    <div class="sv-sum sh-sum" id="av-sum"></div>
+    <div class="tw"><table class="t" id="av-t"><colgroup><col class="c-mk"><col class="c-n"><col class="c-n"><col class="c-hb"><col class="c-rc"><col class="c-sv"><col class="c-vd"></colgroup><thead>
+      <tr><th>Market</th><th class="num" title="Products the client’s master feed states in stock">In stock</th><th class="num" title="Of those, the products the Google Shopping feed carries live — matched product by product">Live in Google</th><th class="num hbg" title="In stock in the master, not live in Google — and how much of that the range-completion line explains">Held back</th><th class="num" title="The range-completion line the held-back styles sit under, read off the products">Range-completion line</th><th class="num" id="sv-th" title="The ad spend the stock rules keep off products that would not sell — hover a market for its forecast">Ad spend kept off</th><th title="What the figures say, in a word">Verdict</th></tr></thead><tbody></tbody></table></div>
     <details class="sv-rest sv-rules" id="sv-rules"><summary></summary>
       <div class="tw tall"><table class="t" id="sv-t"><thead><tr><th>Market</th><th>Rule</th><th>Does</th><th class="num">Held back</th><th class="num">Spend / product / day</th><th class="num" id="sv-th2">Kept off</th></tr></thead><tbody></tbody></table></div>
       <div class="sv-rest2" id="sv-rest"><p class="sv-rh"></p><div class="tw"><table class="t"><thead><tr><th>Market</th><th>Rule</th><th>Why it is not sized</th></tr></thead><tbody></tbody></table></div></div>
@@ -726,6 +724,18 @@ window.addEventListener('load',restore);
       <tr><th>Market</th><th class="num" title="Products whose stock FeedHero’s suppfeed states — the rest keep the master’s word">Suppfeed decides</th><th class="num" title="Products in stock by the suppfeed (a figure above 0; 0, blank and n/a are out), and by the master for comparison">In stock</th><th class="num hbg" title="In stock by the suppfeed, not live in the Google feed — not in it, or sent out of stock — joined product by product">In stock, not live</th><th class="num" title="The range-completion level the held products sit under, read off FeedHero’s own range_comp">Range completion</th><th class="num" title="This count against the master’s own, in the card above">vs the master</th></tr></thead><tbody></tbody></table></div>
   </section>
 
+
+  <!-- WHERE THE IN-STOCK CATALOGUE GOES (Ray, 10 Nov 2026, approving the redesign): the markets in view summed as a waterfall —
+       in stock → held by range completion → held for other reasons → live — then every market as one 100% bar, so a client
+       sees at a glance which markets send nearly everything and which hold a lot back, and for what. -->
+  <section class="card" id="wf-card">
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Where the in-stock catalogue goes<span class="fsum"></span></button></h3><p class="ch" id="wf-sub">From in stock in the master to live in Google — what range completion holds back, and what is held for other reasons.</p></div></div>
+    <div class="wf-g">
+      <div class="wf-box"><div class="sim-h"><b id="wf-h">Every market in view</b></div><div id="wf-svg"></div><p class="lvc" id="wf-cap"></p></div>
+      <div class="wf-box"><div class="sim-h"><b>Market by market</b><span class="lvc">share of in stock · most held back first</span></div><div id="wf-bars"></div>
+        <div class="legend" id="wf-legend"><span><i class="wl"></i>Live in Google</span><span><i class="wr"></i>Held by range completion</span><span><i class="wo"></i>Held for other reasons</span></div></div>
+    </div>
+  </section>
 
   <!-- SIMULATE THE STOCK RULES (Ray, 23 Oct 2026: "Within the stock module, create a range‑completion emulation. For example, if
        the manager drags between range completions of 5 %, 10 %, 15 % or 20 % (or any other percentage), simulate the amount of
@@ -749,11 +759,26 @@ window.addEventListener('load',restore);
     <p class="note" id="sim-foot">A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes.</p>
   </section>
 
-  <section class="card" id="hero-card">
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Hero sizes — the rules that run, per market<span class="fsum"></span></button></h3><p class="ch">The rules that decide a market's hero sizes — its core, best-selling sizes. Split out from range completion, every one shown in FeedHero's own run order.</p></div></div>
-    <div class="tw"><table class="t" id="heroes"><thead><tr><th>Market</th><th>Rule</th><th class="num">Impacted</th><th>Last change</th></tr></thead><tbody></tbody></table></div>
+  <!-- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically) eahc of
+       those markets have got quite aan interesting mix of stock levers : 1 . Range Completion (20-40%, currently at 35%) - 2.
+       Stock unit exclusion for Everest (previously >5 units per size, now N/A) - 3. Hero Sizes (current activated, follow the
+       mapping above) - build an facilitor interface to action BAU vs. SALE perido"). The brand's plan per lever, every
+       market's reading off its own rules, the sale periods and the switch each way — briefed, copied, marked made. -->
+  <section class="card" id="lev-card" hidden>
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Stock levers — BAU ↔ SALE<span class="fsum"></span></button></h3><p class="ch" id="lev-sub">Each brand’s BAU and SALE settings for its stock levers, against what every market runs today.</p></div>
+      <div class="tools"><button class="btn" id="lev-copy" type="button" title="The levers, each market’s reading and the sale periods, in words — for an email or a call">⧉ Copy summary</button><button class="btn" id="lev-csv" type="button" title="Every market × lever: what it runs, the plan, and whether it is off plan">⬇ CSV</button></div></div>
+    <div class="chips lev-brands" id="lev-brands" hidden></div>
+    <div class="hm-warn" id="lev-warn" hidden></div>
+    <div class="lev-chrow" id="lev-chrow" hidden><span class="lb">Channel</span><span class="seg lev-ch" id="lev-ch" role="group" aria-label="The channel the levers are read on"></span><span class="lvc" id="lev-chnote"></span></div>
+    <div class="sv-sum" id="lev-sum"></div>
+    <div class="toolbar" id="lev-bar" hidden><div class="chips" id="lev-f"></div><button class="btn" id="lev-adopt" type="button" hidden title="Make what these markets run today their own BAU — the decision that each one’s mix is the plan">Keep markets as they run</button><span class="seg lev-view" id="lev-view" role="group" aria-label="How the markets are listed" hidden></span></div>
+    <div class="tw" id="lev-tw" hidden><table class="t" id="lev-t"><thead></thead><tbody></tbody></table></div>
+    <div class="legend" id="lev-legend" hidden><span><i class="lvn"></i>A rule runs it, on plan</span><span><i class="lvo"></i>Off plan</span><span>— · N/A: no rule runs it</span><span>≈ measured from the products</span><span><i class="lvd"></i>dashed: more than one rule reads as it — connect one</span><span><b>missing</b>: the lever’s connected rule is not in that market</span><span><span class="tg">own</span> the market’s own values</span></div>
+    <div class="lev-plan" id="lev-plan"><div class="empty">Loading…</div></div>
+    <div class="lev-per" id="lev-per"></div>
+    <div class="lev-rec" id="lev-rec"></div>
+    <p class="note" id="lev-foot"></p>
   </section>
-
   <section class="card" id="hmap-card">
     <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span><svg class="hi hi-h" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>Hero sizes by product type<span class="fsum"></span></button></h3><p class="ch" id="hm-sub">Each brand's hero sizes, type by type, against the stock in its master feed.</p></div>
       <div class="tools">
@@ -771,22 +796,21 @@ window.addEventListener('load',restore);
     <div class="hm-legend"><div class="legend" id="hm-legend"><span><span class="sz hero"><svg class="hi" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 7.3 12 12 4l4.7 8 4.3-3.5-1.8 9.5H4.8L3 8.5Z"/><circle cx="12" cy="3.2" r="1" fill="currentColor" stroke="none"/></svg>M<i style="width:70%"></i></span> hero size</span><span><span class="sz">XL<i style="width:40%"></i></span> made in, not hero</span><span>the line under a size = its products in stock</span></div><p class="note" id="hm-foot"></p></div>
     <input type="file" id="hm-file" accept=".csv,.xlsx,.tsv,.txt" hidden>
   </section>
-
-  <section class="card" id="cut-card">
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Cut-offs the rule names state<span class="fsum"></span></button></h3><p class="ch">A stock or range-completion level written into a rule's name. Read from the name — confirm in FeedHero before quoting it.</p></div></div>
-    <div class="tw"><table class="t" id="cuts"><thead><tr><th>Market</th><th>Rule</th><th>Does</th><th class="num">Cut-off</th><th class="num">Impacted</th></tr></thead><tbody></tbody></table></div>
-  </section>
-
-  <section class="card" id="setup-card">
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Each market's stock setup<span class="fsum"></span></button></h3><p class="ch" id="setup-sub">In plain words, then every stock rule in run order.</p></div></div>
-    <div class="toolbar"><div class="chips" id="mechs"></div></div>
-    <div id="setups"></div>
-  </section>
-
+  <!-- HOW IT'S READ — one folded card for the method (Ray, 10 Nov 2026: "rethink the entire stock dashboard module to surface
+       data that actually makes sense … cut, revamp, re-insight"). The rule lists, cut-offs and coverage counts that used to
+       sit on this page live on /rules; this card says where every figure above comes from. -->
   <section class="card" id="how-card">
-    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>How a rule is placed<span class="fsum"></span></button></h3><p class="ch">By the field it writes first, then by what its name says it reads.</p></div></div>
-    <div class="tw"><table class="t" id="how"><thead><tr><th>Stock control</th><th>What it covers</th><th class="num">Rules in view</th></tr></thead><tbody></tbody></table></div>
-    <p class="note" data-instr>A custom label or an exclusion field carries no stock meaning on its own, so those rules count as stock rules only when the field or the name says stock, quantity, availability or range completion; a label named "New In" or "Clearance" is lifecycle. Channel comes from the field too — a <span class="mono">fb_</span> or <span class="mono">social_</span> field serves Meta, <span class="mono">awin_</span> / <span class="mono">olapic_</span> the affiliates, <span class="mono">gb_</span> and pickup fields Google — and a base field such as <span class="mono">stock_status</span> serves every channel.</p>
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>How it’s read<span class="fsum"></span></button></h3><p class="ch">Where every figure on this page comes from.</p></div>
+      <div class="tools"><a class="btn" id="how-rules" href="/rules" title="Every FeedHero rule of these markets, in run order">⚙ Every rule, in run order</a></div></div>
+    <div class="how-g">
+      <div><h4>In stock</h4><p>The products the client’s <b>master feed</b> states in stock, as FeedHero last imported it — the availability word, else the stock quantity.</p></div>
+      <div><h4>Live in Google</h4><p>Of those, the products the <b>Google Shopping feed</b> carries as in stock (or pre-order), matched product by product on the id the feed was built from.</p></div>
+      <div><h4>Held back by range completion</h4><p>Held-back products whose style sits under the <b>range-completion line</b>. The line is read off the products themselves — the held styles below it, the live ones above — because the rule report never carries a rule’s conditions.</p></div>
+      <div><h4>Held for other reasons</h4><p>Everything else not live: not in the Google feed at all, or sent as out of stock, for a reason range completion does not explain — a stock threshold, a category, a data rule. Download the list from the market’s row to see which.</p></div>
+      <div><h4>Ad spend kept off</h4><p>Products held back × what Google Ads spends per product a day in that market (30-day spend ÷ the products in the output feed) × the share of that spend a held-back product would have taken — 5% conservative, 10% aggressive. Each market counts once, at its largest stock rule; never across currencies.</p></div>
+      <div><h4>The verdict</h4><p><b>Protecting</b>: range completion explains what is held back. <b>Check</b>: 5% or more of the in-stock catalogue is held for another reason. <b>All live</b>: under 2% held back. <b>Held, no line</b>: products are held but no single range-completion line explains them.</p></div>
+    </div>
+    <p class="note" id="how-foot"></p>
   </section>
 </main>
 
@@ -939,7 +963,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   setMks(S.mks);
   var MK = {}, CH = {}, DR = {};
   tipInit();
-  $('#q').value = S.q; $('#chan').checked = S.chan;
+
 
   // ---- EVERY CARD FOLDS (Ray, 7 Oct 2026: "each module info on Stock Management is collapsible pls - too many at once").
   // A card's title is ONE button — chevron, title and, folded, a line that survives the fold — so a click anywhere on it
@@ -949,7 +973,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // the rest folded. What a person folds or opens by hand is the device's (localStorage fcc-stock-fold — a screen
   // preference, never shared state); a link or a jump to something inside a folded card opens it for the visit without
   // rewriting that choice. ⊖ Collapse all / ⊕ Expand all always names the action still available.
-  var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'cov-card': 1, 'lev-card': 1 }, FOLD = {};
+  var FOLD_KEY = 'fcc-stock-fold', FOLD_OPEN = { 'av-card': 1, 'wf-card': 1, 'sim-card': 1 }, FOLD = {};
   try { FOLD = JSON.parse(recall(FOLD_KEY) || '{}') || {}; } catch (e) { FOLD = {}; }
   function foldCards() { return $$('main section.card').filter(function (c) { return !!c.querySelector(':scope > .chead .fold'); }); }
   function foldIs(c) { return Object.prototype.hasOwnProperty.call(FOLD, c.id) ? !!FOLD[c.id] : !!FOLD_OPEN[c.id]; }
@@ -975,8 +999,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     c.querySelector(':scope > .chead .fold').addEventListener('click', function () { foldSet(c, c.classList.contains('folded'), true); });
   });
   $('#fold-all').addEventListener('click', function () { var open = this.getAttribute('data-to') === 'open'; foldCards().forEach(function (c) { foldSet(c, open, true); }); });
-  // a deep link to a mechanism lands on the market setups, so they open; a hash opens the card it names (or sits in)
-  if (S.mech) foldSet($('#setup-card'), true, false);
+  // a hash opens the card it names (or sits in)
   var FOLD_HASH = location.hash && location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)) : '';
   function foldHash() {
     if (!FOLD_HASH) return;
@@ -1739,7 +1762,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.mks.length ? ' · ' + mkWord() : '');
-    renderChips(); renderLev(); renderAv(); renderSupp(); renderSv(); renderCov(); renderSim(); renderHeroes(); renderHmap(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
+    renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderLev(); renderHmap(); renderHow();
     if (SV.key) svPanel(false);
     foldBar(); foldHash();
   }
@@ -1875,79 +1898,103 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (!m.ads) return '<td class="num" data-sv="' + key + '" tabindex="0"><span class="av-none">no Google Ads read</span></td>';
     return '<td class="num" data-sv="' + key + '" tabindex="0"><span class="big sv-money">' + money(m.ads.cur, svCalc(f.n, m.ads, SV.pct, svDays())) + '</span><span class="sub2">at least, ' + svPer() + '</span></td>';
   }
+  // ---- STOCK HEALTH (Ray, 10 Nov 2026: "rethink the entire stock dashboard module to surface data that actually makes
+  // sense … for screenshots, showcases, or client reports"). ONE reader for a market — shOf — that the table, the tiles, the
+  // waterfall and the CSV all read, so the page can never say two things about one market. Off the stored join
+  // (RULES.heldView): in stock in the master, live in Google, held back, of which under the range-completion line, the rest
+  // held for another reason, and the verdict:
+  //   all live   — under 2% of in stock held back
+  //   check      — 5% or more of in stock held for a reason range completion does not explain
+  //   protecting — range completion explains what is held back
+  //   held       — held back, no line explains it, under 5% of in stock
+  var SH_ALL = 2, SH_LEAK = 5;
+  function shOf(m) {
+    var h = m && m.av && m.av.held, st = (h && h.state) || 'unread';
+    if (st !== 'ok') return { ok: false, st: st, why: (HBWHY[st] || HBWHY.unread)[0] };
+    var ln = h.line || null, rc = ln ? Math.min(ln.held, h.n) : 0, other = h.n - rc, inS = h.inStock;
+    var o = { ok: true, inStock: inS, live: inS - h.n, n: h.n, rc: rc, other: other, absent: h.absent, out: h.out, line: ln,
+      pct: inS ? h.n / inS * 100 : 0, livePct: inS ? (inS - h.n) / inS * 100 : 0, otherPct: inS ? other / inS * 100 : 0, rcPct: inS ? rc / inS * 100 : 0 };
+    var where = h.absent >= h.out ? 'mostly not in the Google feed at all' : 'mostly sent to Google as out of stock';
+    if (o.pct < SH_ALL) o.v = { k: 'ok', w: 'All live', d: pctS(o.livePct) + ' of in stock is live in Google' };
+    else if (o.otherPct >= SH_LEAK) o.v = { k: 'leak', w: 'Check', d: pctS(o.otherPct) + ' of in stock is held for a reason range completion does not explain — ' + where };
+    else if (ln) o.v = { k: 'prot', w: 'Protecting', d: 'Range completion ≈' + ln.x + '% holds back ' + n0(rc) + (other ? '; ' + n0(other) + ' more for other reasons' : '') };
+    else o.v = { k: 'held', w: 'Held, no line', d: n0(h.n) + ' held back, spread across every range-completion level — ' + where };
+    return o;
+  }
+  function shBook(ms) {
+    var b = { markets: 0, inStock: 0, live: 0, n: 0, rc: 0, other: 0, absent: 0, out: 0, v: { ok: 0, prot: 0, leak: 0, held: 0 } };
+    ms.forEach(function (m) { var o = shOf(m); if (!o.ok) return; b.markets++; ['inStock', 'live', 'n', 'rc', 'other', 'absent', 'out'].forEach(function (k) { b[k] += o[k]; }); b.v[o.v.k]++; });
+    return b;
+  }
+  function vdTag(o) { return o.ok ? '<span class="vd ' + o.v.k + '"><i></i>' + esc(o.v.w) + '</span><span class="vdw">' + esc(o.v.d) + '</span>' : '<span class="vd na"><i></i>Not measured</span><span class="vdw">' + esc(o.why) + '</span>'; }
+  function shRow(m) {
+    var o = shOf(m), nm = '<td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td>';
+    if (!o.ok) return '<tr data-mk="' + esc(m.market) + '">' + nm + '<td class="num"><span class="muted">' + (m.av && m.av.master ? n0(m.av.master.in) : '—') + '</span></td><td class="num" colspan="3"><span class="av-none">' + esc(o.why) + '</span></td>' + svCell(m) + '<td>' + vdTag(o) + '</td></tr>';
+    var h = m.av.held;
+    var tipH = '<b>' + esc(m.client + ' ' + m.market) + ' · held back from Google</b><br>' + n0(o.n) + ' of the ' + n0(o.inStock) + ' products the master states in stock'
+      + '<br>' + (o.line ? n0(o.rc) + ' under the range-completion line (≈' + o.line.x + '%) · ' : '') + n0(o.other) + ' for other reasons'
+      + '<br>' + n0(o.absent) + ' not in the Google feed at all · ' + n0(o.out) + ' sent as out of stock'
+      + '<br><span class="m">matched product by product: the master’s ' + esc(h.join.h || 'id') + ' → the feed’s ' + esc(h.join.on) + ' · counted ' + since(h.t) + ' · ⬇ List downloads the products held back by range completion</span>';
+    return '<tr data-mk="' + esc(m.market) + '">' + nm
+      + '<td class="num"><span class="big">' + n0(o.inStock) + '</span></td>'
+      + '<td class="num"><span class="big">' + pctS(o.livePct) + '</span><span class="sub2">' + n0(o.live) + '</span></td>'
+      + '<td class="num hbs"><div data-tip="' + esc(tipH) + '"><span class="big">' + hbBtn(m, 'hb-dl') + n0(o.n) + '</span><span class="sub2">' + pctS(o.pct) + ' · ' + (o.line ? pctS(o.n ? o.rc / o.n * 100 : 0) + ' by RC' : 'no RC line') + '</span></div></td>'
+      + rcCell(m) + svCell(m) + '<td>' + vdTag(o) + '</td></tr>';
+  }
   function renderAv() {
     var ms = mkts();
-    $('#av-t tbody').innerHTML = ms.map(function (m) {
-      return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '</td>' + avCell(m, 'master') + avCell(m, 'g') + avCell(m, 'fb') + hbCell(m) + rcCell(m) + svCell(m) + '</tr>';
-    }).join('') || '<tr><td class="empty" colspan="7">' + (S.d && S.d.tracked ? 'No market in view.' : 'No rules read yet.') + '</td></tr>';
-    // one tile per channel: master → that feed, in stock over out of stock, on the markets where both are counted; then
-    // what Google is not sent, and the ad spend kept off — the book, each market once at its largest rule, per currency
-    var pair = function (b, lbl) {
-      if (!b.markets) return '';
-      var row = function (k, w) { return '<div class="r"><b>' + pctS(b.master[k] / b.master.n * 100) + '<span class="ar">→</span>' + pctS(b.feed[k] / b.feed.n * 100) + '</b><span>' + w + '</span></div>'; };
-      return '<div class="it av2"><span class="h">Master → ' + lbl + ' · ' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + '</span>' + row('in', 'in stock') + row('out', 'out of stock') + '</div>';
-    };
-    var hb = hbBook(ms), bk = svBook(ms, SV.pct, svDays()), top = bk.byCur[0];
-    var held = hb.markets ? '<div class="it av2"><span class="h">Held back from Google</span><div class="r"><b>' + n0(hb.n) + '</b><span>in stock, not live</span></div>'
-      + '<div class="r"><b>' + pctS(hb.inStock ? hb.n / hb.inStock * 100 : null) + '</b><span>of in stock · ' + hb.markets + ' market' + (hb.markets === 1 ? '' : 's') + '</span></div></div>' : '';
-    var spend = top ? '<div class="it av2" data-sv="book" tabindex="0" title="At least: each market counts once, at its largest rule — hover for the working"><span class="h">Ad spend kept off ' + svPer() + '</span><div class="r"><b class="sv-money">' + money(top.cur, top.amt, 0) + '</b><span>at least · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + '</span></div>'
-      + (bk.byCur.length > 1 ? bk.byCur.slice(1).map(function (b) { return '<div class="r"><b class="sv-money">' + money(b.cur, b.amt, 0) + '</b><span>' + b.markets + ' market' + (b.markets === 1 ? '' : 's') + ' in ' + esc(b.cur) + '</span></div>'; }).join('') : '') + '</div>'
-      : bk.unpriced ? '<div class="it av2"><span class="h">Ad spend kept off</span><div class="r"><b>—</b><span>' + bk.unpriced + ' market' + (bk.unpriced === 1 ? ' waits' : 's wait') + ' for a Google Ads read</span></div></div>' : '';
-    var any = ms.some(function (m) { return m.av && (m.av.master || m.av.g || m.av.fb); });
-    // the phone's skim row names the card in markets and what Google is not sent — never the rows of the folded rule tables
-    $('#av-card').setAttribute('data-m-digest', ms.length + ' market' + (ms.length === 1 ? '' : 's') + (hb.markets ? ' · ' + n0(hb.n) + ' held back from Google' : ''));
-    var gb = avBook(ms, 'g');
-    fsum('av-card', nw(ms.length, 'market') + (gb.markets ? ' · Google in stock ' + pctS(gb.feed.in / gb.feed.n * 100) : '') + (hb.markets ? ' · ' + n0(hb.n) + ' held back from Google' : '')
-      + (top ? ' · at least ' + money(top.cur, top.amt, 0) + ' ' + svPer() + ' kept off' + (bk.byCur.length > 1 ? ' (+' + (bk.byCur.length - 1) + ' currenc' + (bk.byCur.length === 2 ? 'y' : 'ies') + ')' : '') : ''));
-    $('#av-sum').innerHTML = pair(avBook(ms, 'g'), 'Google') + pair(avBook(ms, 'fb'), 'Meta') + held + spend
-      || '<p class="note">' + (any ? 'No market in view has its master and a feed both counted yet.' : 'Nothing counted yet — master feeds are read after FeedHero’s morning imports, output feeds on every scan.') + '</p>';
+    // the markets to look at first lead (check → held, no line → protecting → all live, then the most held back); the
+    // markets nothing can be measured on yet are ONE line per reason, not a row each saying the same thing
+    var VO = { leak: 0, held: 1, prot: 2, ok: 3 }, meas = [], wait = {};
+    ms.forEach(function (m) { var o = shOf(m); if (o.ok) meas.push({ m: m, o: o }); else (wait[o.why] = wait[o.why] || []).push(m.market); });
+    meas.sort(function (a, c) { return VO[a.o.v.k] - VO[c.o.v.k] || c.o.pct - a.o.pct; });
+    var wrows = Object.keys(wait).map(function (w) { return '<tr class="sh-wait"><td class="nm" colspan="7"><span class="vd na"><i></i>Not measured yet</span> <b>' + esc(wait[w].join(', ')) + '</b> <span class="muted">— ' + esc(w) + '</span></td></tr>'; });
+    $('#av-t tbody').innerHTML = meas.map(function (x) { return shRow(x.m); }).join('') + wrows.join('') || '<tr><td class="empty" colspan="7">' + (S.d && S.d.tracked ? 'No market in view.' : 'No rules read yet.') + '</td></tr>';
+    var b = shBook(ms), bk = svBook(ms, SV.pct, svDays()), top = bk.byCur[0];
+    var tile = function (h, v, sub, attrs) { return '<div class="it"' + (attrs || '') + '><span class="h">' + h + '</span><b>' + v + '</b><span class="s">' + sub + '</span></div>'; };
+    $('#av-sum').innerHTML = b.markets ? [
+      tile('In stock', n0(b.inStock), 'in the master · ' + nw(b.markets, 'market')),
+      tile('Live in Google', pctS(b.inStock ? b.live / b.inStock * 100 : 0), n0(b.live) + ' products'),
+      tile('Held by range completion', n0(b.rc), pctS(b.inStock ? b.rc / b.inStock * 100 : 0) + ' of in stock'),
+      tile('Held for other reasons', n0(b.other), pctS(b.inStock ? b.other / b.inStock * 100 : 0) + ' of in stock' + (b.v.leak ? ' · ' + nw(b.v.leak, 'market') + ' to check' : '')),
+      top ? tile('Ad spend kept off', '<span class="sv-money">' + money(top.cur, top.amt, 0) + '</span>', 'at least, ' + svPer() + ' · ' + scnName(SV.pct).toLowerCase() + (bk.byCur.length > 1 ? ' · +' + (bk.byCur.length - 1) + ' currenc' + (bk.byCur.length === 2 ? 'y' : 'ies') : ''), ' data-sv="book" tabindex="0" title="At least: each market counts once, at its largest rule — hover for the working"')
+        : tile('Ad spend kept off', '—', bk.unpriced ? nw(bk.unpriced, 'market') + ' wait for a Google Ads read' : 'no stock rule holds a counted number back')
+    ].join('') : '<p class="note">' + (ms.length ? 'No market in view has its master matched against its Google feed yet — counted after FeedHero’s morning imports.' : 'Nothing counted yet.') + '</p>';
+    var vparts = [['leak', 'to check'], ['prot', 'protecting'], ['held', 'held, no line'], ['ok', 'all live']].filter(function (x) { return b.v[x[0]]; }).map(function (x) { return b.v[x[0]] + ' ' + x[1]; });
+    $('#av-card').setAttribute('data-m-digest', b.markets ? pctS(b.live / b.inStock * 100) + ' live in Google' : nw(ms.length, 'market'));
+    fsum('av-card', b.markets ? pctS(b.live / b.inStock * 100) + ' of in stock live in Google · ' + n0(b.n) + ' held back' + (vparts.length ? ' · ' + vparts.join(', ') : '') : nw(ms.length, 'market'));
   }
-  // ---- coverage: market x mechanism — one hue, darker = more rules (a count, never a colour-only identity: the number is in the cell)
-  function shade(n, mx) { if (!n) return ''; var a = 0.12 + 0.5 * (n / Math.max(1, mx)); return 'background:rgba(37,99,235,' + a.toFixed(2) + ')'; }
-  function renderCov() {
-    var ms = mkts(), M = mechs(), mx = 1;
-    var cell = {};
-    ms.forEach(function (m) { (m.stock || []).forEach(function (r) { var k = m.cmpid + '|' + r.sk; (cell[k] = cell[k] || []).push(r); mx = Math.max(mx, cell[k].length); }); });
-    $('#cov thead').innerHTML = '<tr><th>Market</th>' + M.map(function (x) { return '<th class="num" title="' + esc(x.q) + '">' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + '</th>'; }).join('') + '<th class="num">Total</th></tr>';
-    var unread = ((S.d && S.d.unread) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && inMk(m.market); });
-    $('#cov tbody').innerHTML = ms.map(function (m) {
-      return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '<span class="sub2">' + (m.items ? n0(m.items) + ' products' : '') + '</span></td>' + M.map(function (x) {
-        var list = cell[m.cmpid + '|' + x.k] || [];
-        if (!list.length) return '<td class="num"><span class="muted">—</span></td>';
-        var chs = {}; list.forEach(function (r) { chs[r.ch] = (chs[r.ch] || 0) + 1; });
-        var tip = '<b>' + esc(m.client + ' ' + m.market) + ' · ' + esc(x.label) + '</b><br>' + list.slice(0, 6).map(function (r) { return esc(r.n); }).join('<br>') + (list.length > 6 ? '<br><span class="m">+' + (list.length - 6) + ' more</span>' : '');
-        return '<td class="num cl" style="cursor:pointer;' + shade(list.length, mx) + '" data-cell="' + esc(m.client) + '|' + esc(m.market) + '|' + x.k + '" data-tip="' + esc(tip) + '"><b>' + list.length + '</b>'
-          + (S.chan ? '<span class="sub2">' + Object.keys(chs).map(function (c) { return esc(c === 'all' ? 'every' : (CH[c] || c)) + ' ' + chs[c]; }).join(' · ') + '</span>' : '') + '</td>';
-      }).join('') + '<td class="num"><b>' + (m.stock || []).length + '</b></td></tr>';
-    }).join('') + unread.map(function (m) { return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '<span class="sub2">not read yet</span></td><td colspan="' + (M.length + 1) + '" class="muted">Waiting for its first read.</td></tr>'; }).join('')
-      || '<tr><td class="empty" colspan="' + (M.length + 2) + '">No stock rules read yet.</td></tr>';
-    var nr = 0; ms.forEach(function (m) { nr += (m.stock || []).length; });
-    fsum('cov-card', nw(ms.length, 'market') + ' · ' + nw(nr, 'stock rule') + (unread.length ? ' · ' + unread.length + ' not read yet' : ''));
-    $('#cov-legend').innerHTML = '<span><i style="background:rgba(37,99,235,.14)"></i>1 rule</span><span><i style="background:rgba(37,99,235,.62)"></i>' + mx + ' rules</span><span>— none: the market has no rule doing this</span>';
-  }
-  // ---- Hero sizes: the runs table (engine: src/rules.js heroRuns) — every rule on the 'hero'
-  // mechanism, market by market, in FeedHero's own run order; same shape and filtering as Cut-offs.
-  function renderHeroes() {
-    var list = ((S.d && S.d.heroRuns) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && inMk(c.market); });
-    var hmk = {}; list.forEach(function (c) { hmk[c.cmpid] = 1; });
-    fsum('hero-card', list.length ? nw(list.length, 'hero-size rule') + ' in ' + nw(Object.keys(hmk).length, 'market') : 'no hero-size rule in view');
-    $('#heroes tbody').innerHTML = grp(list, function (c) { return c.cmpid; }).map(function (g) {
-      var c = g.x;
-      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '" tabindex="0"' + gcls(g) + '>' + mkCell(g, c.client, c.market)
-        + '<td class="nm">' + heroIcon() + '<b>' + esc(c.n) + '</b> ' + fhA(c.cmpid, c.n, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + (c.b ? ' · batch ' + esc(c.b) : '')
-        + (c.cut && c.cut.length ? ' · name states <b>' + c.cut.map(function (x) { return (x.m === 'rc' ? 'RC ' : 'stock ') + esc(x.op) + ' ' + x.v + (x.m === 'rc' ? '%' : ''); }).join(', ') + '</b>' : '') + '</span></td>'
-        + '<td class="num">' + impCell(c) + '</td>'
-        + '<td>' + (c.mo ? dstr(c.mo) + '<span class="sub2 nw">' + esc(c.mb || '') + ' · ' + ago(c.mo) + '</span>' : '<span class="muted">—</span>') + '</td></tr>';
-    }).join('') || '<tr><td class="empty" colspan="4">' + (S.d && S.d.tracked ? 'No hero-size rule in view — nothing writes a hero-size field yet.' : 'No rules read yet.') + '</td></tr>';
-  }
-  function renderCuts() {
-    var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && inMk(c.market); });
-    fsum('cut-card', list.length ? nw(list.length, 'cut-off') + ' in rule names' : 'none in view');
-    $('#cuts tbody').innerHTML = grp(list, function (c) { return c.cmpid; }).map(function (g) {
-      var c = g.x;
-      return '<tr data-sv="' + esc(c.cmpid + '|' + c.i) + '"' + gcls(g) + '>' + mkCell(g, c.client, c.market) + '<td class="nm">' + esc(c.rule) + ' ' + fhA(c.cmpid, c.rule, c.t) + '<span class="sub2">#' + (c.i + 1) + ' in run order' + (c.ch && c.ch !== 'all' ? ' · ' + esc(CH[c.ch] || c.ch) : '') + '</span></td><td>' + mechTag(c.sk) + '</td>'
-        + '<td class="num"><b>' + (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : '') + '</b></td><td class="num">' + (c.imp == null ? '—' : n0(c.imp) + (c.of ? '<span class="sub2">of ' + n0(c.of) + '</span>' : '')) + '</td></tr>';
-    }).join('') || '<tr><td class="empty" colspan="5">No rule name in view states a cut-off.</td></tr>';
+  // ---- WHERE THE IN-STOCK CATALOGUE GOES — the waterfall (the markets in view summed) and one 100% bar per market
+  function renderWf() {
+    var ms = mkts(), b = shBook(ms), card = $('#wf-card');
+    if (!b.markets) { $('#wf-svg').innerHTML = '<div class="empty">No market in view is matched against its Google feed yet.</div>'; $('#wf-bars').innerHTML = ''; $('#wf-cap').textContent = ''; fsum('wf-card', ''); return; }
+    $('#wf-h').textContent = b.markets === 1 ? ms.filter(function (m) { return shOf(m).ok; }).map(function (m) { return m.client + ' ' + m.market; })[0] : (S.brand || 'Every brand') + ' · ' + nw(b.markets, 'market') + ' summed';
+    var W = 520, H = 230, L = 10, B = 26, T = 26, bw = 92, gap = (W - L * 2 - bw * 4) / 3, mx = b.inStock || 1;
+    var y = function (v) { return T + (H - T - B) * (1 - v / mx); }, hh = function (v) { return (H - T - B) * v / mx; };
+    var steps = [
+      { l: 'In stock', v: b.inStock, top: b.inStock, c: 'var(--av-na)', lab: n0(b.inStock) },
+      { l: 'Range completion', v: b.rc, top: b.inStock, c: 'var(--chart-2)', lab: '−' + n0(b.rc) },
+      { l: 'Other reasons', v: b.other, top: b.inStock - b.rc, c: '#C9A227', lab: '−' + n0(b.other) },
+      { l: 'Live in Google', v: b.live, top: b.live, c: 'var(--chart-1)', lab: n0(b.live) + ' · ' + pctS(b.live / mx * 100) }];
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(n0(b.inStock) + ' in stock, ' + n0(b.rc) + ' held by range completion, ' + n0(b.other) + ' held for other reasons, ' + n0(b.live) + ' live in Google') + '">';
+    svg += '<line x1="' + L + '" x2="' + (W - L) + '" y1="' + (H - B) + '" y2="' + (H - B) + '" stroke="var(--line)"/>';
+    steps.forEach(function (st, i) {
+      var x = L + i * (bw + gap), y0 = y(st.top), hgt = Math.max(st.v ? 1.5 : 0, hh(st.v));
+      svg += '<rect x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + bw + '" height="' + hgt.toFixed(1) + '" rx="3" fill="' + st.c + '"><title>' + esc(st.l + ': ' + n0(st.v)) + '</title></rect>';
+      if (i < 3) { var nx = x + bw, ny = i === 0 ? y(b.inStock) : i === 1 ? y(b.inStock - b.rc) : y(b.live); svg += '<line x1="' + nx.toFixed(1) + '" x2="' + (nx + gap).toFixed(1) + '" y1="' + ny.toFixed(1) + '" y2="' + ny.toFixed(1) + '" stroke="var(--muted)" stroke-dasharray="3 3"/>'; }
+      svg += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + Math.max(12, y0 - 7).toFixed(1) + '" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)">' + esc(st.lab) + '</text>';
+      svg += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11.5" fill="var(--muted)">' + esc(st.l) + '</text>';
+    });
+    $('#wf-svg').innerHTML = svg + '</svg>';
+    $('#wf-cap').textContent = 'Of the ' + n0(b.n) + ' held back, ' + n0(b.absent) + ' are not in the Google feed at all and ' + n0(b.out) + ' are sent as out of stock.';
+    var rows = ms.map(function (m) { return { m: m, o: shOf(m) }; }).filter(function (x) { return x.o.ok; }).sort(function (a, c) { return c.o.pct - a.o.pct; });
+    $('#wf-card .wf-g').classList.toggle('one', rows.length < 2);
+    $('#wf-bars').innerHTML = rows.map(function (x) {
+      var o = x.o, w = function (v) { return (o.inStock ? v / o.inStock * 100 : 0).toFixed(2) + '%'; };
+      var tip = '<b>' + esc(x.m.client + ' ' + x.m.market) + '</b><br>' + n0(o.inStock) + ' in stock · ' + n0(o.live) + ' live (' + pctS(o.livePct) + ')<br>' + n0(o.rc) + ' held by range completion · ' + n0(o.other) + ' for other reasons';
+      return '<div class="wf-row" data-mk="' + esc(x.m.market) + '" data-tip="' + esc(tip) + '"><span class="nm">' + esc(S.brand ? x.m.market : x.m.client + ' ' + x.m.market) + '</span><span class="bar"><i class="wl" style="width:' + w(o.live) + '"></i><i class="wr" style="width:' + w(o.rc) + '"></i><i class="wo" style="width:' + w(o.other) + '"></i></span><span class="pc">' + pctS(o.pct) + '</span></div>';
+    }).join('');
+    fsum('wf-card', pctS(b.live / b.inStock * 100) + ' live · ' + pctS(b.rc / b.inStock * 100) + ' range completion · ' + pctS(b.other / b.inStock * 100) + ' other reasons');
   }
   // ---- the card: every sized rule, per currency; the rest listed with the reason ----
   function svRows() {
@@ -2111,52 +2158,13 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     svSave(); renderAv(); renderSv();
     if (SV.key) { var cur = SV.key; $$('[data-sv]').forEach(function (x) { var tr = x.getAttribute('data-sv') === cur && x.closest('tr'); if (tr) tr.classList.add('sv-cur'); }); svPanel(false); }
   }
-  function renderMechChips() {
-    var cnt = {}; mkts().forEach(function (m) { (m.stock || []).forEach(function (r) { cnt[r.sk] = (cnt[r.sk] || 0) + 1; }); });
-    $('#mechs').innerHTML = '<button class="chip' + (!S.mech ? ' on' : '') + '" data-mk="">Every control</button>' + mechs().filter(function (x) { return cnt[x.k]; }).map(function (x) {
-      return '<button class="chip' + (S.mech === x.k ? ' on' : '') + '" data-mk="' + x.k + '" title="' + esc(x.q) + '">' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + ' <span class="k">' + cnt[x.k] + '</span></button>';
-    }).join('');
-  }
-  function ruleRow(r, m) {
-    var fl = [];
-    r.iss.forEach(function (c) { fl.push(c === 'none' ? '<span class="tg" data-tip="' + esc('FeedHero: <b>not impacting any items</b> on the last run') + '">idle</span>' : '<span class="tg rd">' + (c === 'target' ? 'target column missing' : c === 'dep' ? 'dependent column missing' : 'issue') + '</span>'); });
-    r.tag.forEach(function (t) { fl.push('<span class="tg or">' + ({ temp: 'temporary', ab: 'A/B test', review: 'review cadence', promo: 'campaign' }[t] || t) + '</span>'); });
-    // a driver that only repeats the rule's own stock control ("range completion" on a range-completion rule) says nothing new
-    var own = String((MK[r.sk] || {}).label || '').toLowerCase();
-    (r.dr || []).forEach(function (k) { if (String(DR[k] || k).toLowerCase() === own) return; fl.push('<span class="tg bl" data-tip="' + esc('The name says it reads <b>' + esc(DR[k] || k) + '</b>') + '">' + esc(DR[k] || k) + '</span>'); });
-    return '<tr data-sv="' + esc(m.cmpid + '|' + r.i) + '"><td class="num">' + (r.i + 1) + '</td><td class="nm"><b>' + esc(r.n) + '</b> ' + fhA(m.cmpid, r.n, r.t) + (r.cut && r.cut.length ? '<span class="sub2">name states <b>' + r.cut.map(function (c) { return (c.m === 'rc' ? 'RC ' : 'stock ') + esc(c.op) + ' ' + c.v + (c.m === 'rc' ? '%' : ''); }).join(', ') + '</b></span>' : '') + '</td>'
-      + '<td>' + mechTag(r.sk) + '</td>'
-      + '<td><span class="set-w" data-tip="' + esc('Writes the field <b>' + esc(r.d) + '</b>') + '">' + esc(r.t) + '</span></td>'
-      + '<td class="set-w">' + (r.ch === 'all' ? '<span class="muted">every</span>' : esc(CH[r.ch] || r.ch)) + (r.b ? '<span class="sub2">batch ' + esc(r.b) + '</span>' : '') + '</td>'
-      + '<td class="num">' + impCell(r) + '</td>'
-      + '<td>' + (r.mo ? dstr(r.mo) + '<span class="sub2 nw">' + esc(r.mb || '') + ' · ' + ago(r.mo) + '</span>' : '<span class="muted">—</span>') + '</td>'
-      + '<td>' + fl.join('') + '</td></tr>';
-  }
-  function renderSetups() {
-    var q = S.q.toLowerCase(), ms = mkts();
-    var html = ms.map(function (m) {
-      var st = (m.stock || []).filter(function (r) {
-        if (S.mech && r.sk !== S.mech) return false;
-        if (q && (r.n + ' ' + r.t + ' ' + r.d + ' ' + (r.mb || '') + ' ' + (r.b || '')).toLowerCase().indexOf(q) < 0) return false;
-        return true;
-      });
-      if ((S.mech || q) && !st.length) return '';
-      var open = ms.length <= 3 || !!S.mks.length || !!q || !!S.mech;
-      // the summary is ONE line (count · market · when read); the plain-words setup and the FeedHero link open with the rules
-      return '<details class="fd"' + (open ? ' open' : '') + ' id="set-' + esc(m.cmpid) + '"><summary><span class="sev s1">' + (m.stock || []).length + '</span><span class="tt"><span class="chev">▶</span>' + esc(m.client + ' ' + m.market) + '</span><span class="wh">' + (m.updated ? 'read ' + since(m.updated) : '') + '</span></summary>'
-        + '<div class="toolbar set-top"><span class="why">' + esc(m.sentence) + '</span>' + fhA(m.cmpid, null, null, 'All rules in FeedHero') + '</div>'
-        + (st.length ? '<div class="tw"><table class="t"><thead><tr><th class="num">#</th><th>Rule</th><th>Does</th><th>Writes</th><th>Channel</th><th class="num">Impacted</th><th>Last change</th><th>Flags</th></tr></thead><tbody>' + st.map(function (r) { return ruleRow(r, m); }).join('') + '</tbody></table></div>' : '<div class="empty">No stock rules — every channel is told whatever the source feed says.</div>')
-        + '</details>';
-    }).join('');
-    $('#setups').innerHTML = html || '<div class="empty">' + (S.d && S.d.tracked ? 'No stock rule matches.' : 'No rules read yet.') + '</div>';
-    $('#setup-sub').textContent = ms.length + ' market' + (ms.length === 1 ? '' : 's') + ' in view — in plain words, then every stock rule in run order.';
-    fsum('setup-card', nw(ms.length, 'market') + ' in view' + (S.mech ? ' · ' + ((MK[S.mech] || {}).label || S.mech) + ' only' : ''));
-  }
   function renderHow() {
-    var cnt = {}; mkts().forEach(function (m) { (m.stock || []).forEach(function (r) { cnt[r.sk] = (cnt[r.sk] || 0) + 1; }); });
-    fsum('how-card', nw(mechs().length, 'stock control') + ', each placed by the field a rule writes, then its name');
-    $('#how tbody').innerHTML = mechs().map(function (x) { return '<tr><td><b>' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + '</b></td><td>' + esc(x.q) + '</td><td class="num">' + n0(cnt[x.k] || 0) + '</td></tr>'; }).join('');
+    var ms = mkts(), nr = 0; ms.forEach(function (m) { nr += (m.stock || []).length; });
+    fsum('how-card', 'where every figure comes from');
+    var a = $('#how-rules'); if (a) a.href = '/rules' + (S.brand ? '?brand=' + encodeURIComponent(S.brand) : '');
+    $('#how-foot').textContent = nw(ms.length, 'market') + ' in view, running ' + nw(nr, 'stock rule') + ' between them — every rule, in the order it runs, is on Rules.';
   }
+
 
   // ---- HELD-BACK PRODUCTS (Ray, 30 Sep 2026: "download list of Range Completion > held back product IDs and Titles
   // and Sizes and availablity (basically they should be products that are in stock in masterfeed but not appear in
@@ -2946,27 +2954,22 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (!mk) setMks([]); else if (i >= 0) setMks(S.mks.filter(function (x) { return x !== mk; })); else setMks(S.mks.concat([mk]));
     setQuery({ market: S.mks.join(',') }); render(); HM.mk = ''; hmLoad();
   });
-  $('#cov').addEventListener('click', function (e) {
-    var c = e.target.closest('[data-cell]'); if (!c) return;
-    var p = c.getAttribute('data-cell').split('|');
-    S.brand = p[0]; setMks([p[1]]); S.mech = p[2]; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: S.market, mech: S.mech });
-    if (S.d && S.d.scope && S.d.scope.brand !== S.brand && S.d.scope.brand) { load(); return; }
-    render(); var el = document.getElementById('set-' + ((mkts()[0] || {}).cmpid || '')); if (el) { foldOpen(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  });
+
   // one row per market, the card as it reads: each feed's counts, what Google is not sent, the line, the spend kept off
   $('#av-csv').addEventListener('click', function () {
     var iso = function (t) { return t ? new Date(t).toISOString() : ''; }, f1 = function (v) { return v == null || !isFinite(v) ? '' : (+v).toFixed(1); };
     var side = function (s) { return s ? [s.n, s.in, s.out, s.pre, s.none, s.other, f1(s.inPct), f1(s.outPct)] : ['', '', '', '', '', '', '', '']; };
     var rows = mkts().map(function (m) {
       var av = m.av || {}, h = av.held || {}, ok = h.state === 'ok', ln = ok ? h.line : null, f = svFloor(m.stock);
-      return [m.client, m.market].concat(side(av.master), side(av.g), side(av.fb), [
+      var o = shOf(m);
+      return [m.client, m.market, o.ok ? o.v.w : 'Not measured', o.ok ? o.v.d : o.why, o.ok ? o.inStock : '', o.ok ? o.live : '', o.ok ? f1(o.livePct) : '', o.ok ? o.rc : '', o.ok ? o.other : ''].concat(side(av.master), side(av.g), side(av.fb), [
         ok ? h.n : '', ok ? h.inStock : '', ok ? f1(h.pct) : '', ok ? h.absent : '', ok ? h.out : '', ok ? '' : (h.state || 'unread'),
         ln ? ln.x : '', ln ? ln.lo : '', ln ? ln.hi : '', (h.stated || []).map(function (c) { return c.rule + ' (RC ' + c.op + ' ' + c.v + '%)'; }).join(' | '),
         f && m.ads ? svCalc(f.n, m.ads, SV.pct, svDays()).toFixed(2) : '', f && m.ads ? m.ads.cur : '', f ? f.rule : '', f ? f.n : '',
         av.imp || '', iso(av.master && av.master.t), iso(av.g && av.g.t), iso(ok ? h.t : null)]);
     });
     var hd = function (p) { return [p + ' products', p + ' in stock', p + ' out of stock', p + ' pre-order / backorder', p + ' not stated', p + ' unreadable', p + ' in stock %', p + ' out of stock %']; };
-    csvDownload('stock_availability' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market'].concat(hd('master'), hd('google'), hd('meta'), [
+    csvDownload('stock_health' + (S.brand ? '_' + S.brand.toLowerCase().replace(/\W+/g, '') : '') + '.csv', ['brand', 'market', 'verdict', 'why', 'in stock (master, matched)', 'live in google', 'live in google %', 'held by range completion', 'held for other reasons'].concat(hd('master'), hd('google'), hd('meta'), [
       'in stock, not live in google', 'master in stock (matched)', 'held back % of in stock', 'not in the google feed', 'sent out of stock', 'held back not counted (why)',
       'range completion line %', 'held at or under %', 'live at or over %', 'rule names state (RC)',
       'ad spend kept off (' + scnName(SV.pct).toLowerCase() + ' ' + SV.pct + '%, ' + svPer() + ')', 'currency', 'largest stock rule', 'held by that rule',
@@ -3039,10 +3042,6 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (!mk.length) { toast('A document is written for at least one market'); return; }
     var o = {}; o['d:' + b] = { name: dd.name, mk: mk, rows: dd.rows }; hmPut(o);
   });
-  $('#chan').addEventListener('change', function () { S.chan = this.checked; remember('fcc-stock-chan', S.chan ? '1' : ''); renderCov(); });
-  $('#mechs').addEventListener('click', function (e) { var b = e.target.closest('[data-mk]'); if (!b) return; S.mech = b.getAttribute('data-mk'); setQuery({ mech: S.mech }); renderMechChips(); renderSetups(); });
-  var qt; $('#q').addEventListener('input', function () { var v = this.value; clearTimeout(qt); qt = setTimeout(function () { S.q = v.trim(); setQuery({ q: S.q }); renderSetups(); }, 150); });
-  document.addEventListener('keydown', function (e) { if (e.key === '/' && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('#q').focus(); } });
   $('#sync-now').addEventListener('click', function () { syncNow(this, (S.d && S.d.roster) || 57, load); });
   $('#csv').addEventListener('click', function () {
     var rows = [];
