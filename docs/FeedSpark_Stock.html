@@ -1391,7 +1391,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var r0 = g.rows[0], c = r0.cells[lk], rd = c.rd, cv = lvCellView(lk, c), md = r0.mode.toUpperCase();
     var by = {}, ord = [];
     g.rows.forEach(function (r) { (r.cells[lk].rd.rules || []).forEach(function (x) { if (!by[x.n]) { by[x.n] = []; ord.push(x.n); } by[x.n].push(r.market); }); });
-    var tip = '<b>' + esc(b) + ' · ' + esc(SL.LEVER[lk].label) + '</b><br>' + esc(g.rows.map(function (r) { return r.market; }).join(', '))
+    var tip = '<b>' + esc(b) + ' · ' + esc(SL.LEVER[lk].label) + ' · ' + esc(SL.CHANNEL[LV.ch].label) + '</b><br>' + esc(g.rows.map(function (r) { return r.market; }).join(', '))
       + '<br>Runs: ' + esc(SL.readWord(lk, rd)) + (rd.why ? '<br><span class="m">' + esc(rd.why) + '</span>' : '')
       + '<br>' + (SL.isSet(c.tgt) ? 'Held to ' + esc(SL.fmtVal(lk, c.tgt)) + ' — ' + (c.tgtOwn ? 'each one’s own ' : 'the brand’s ') + md + ' value' : 'No ' + md + ' value set to hold them to')
       + (c.drift ? '<br><b>Off plan</b> — ' + esc(c.drift.why) : '')
