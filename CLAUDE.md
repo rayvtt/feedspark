@@ -125,6 +125,7 @@ python pack.py unpacked/ output.pptx
 - Source files with `.pdf` extension may be zip-packaged exports — use `unzip` not PDF parsers
 
 ### Client decks — .pptx ONLY (Aug 2026)
+**EVERY DECK OPENS ON A COVER (Ray, 10 Nov 2026: "always generate a cover")** — any deck or slide set, however short (a 3-slide update included): client · market, the deck's title + period, one line on what is inside, the date prepared, "FeedSpark · Private & Confidential", and a visual drawn from the deck's own real data (never stock art, never a figure the deck does not carry). The cover is unnumbered; content slides start at 01.
 **Every new client deck ships as PowerPoint (`.pptx`) — HTML is no longer an output option**
 (Ray's standing rule). Builds run through the `/deck-generator` skill: sections are authored
 with the HTML component library as an internal intermediate, then exported via
