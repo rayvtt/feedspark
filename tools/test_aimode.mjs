@@ -574,7 +574,7 @@ ok(/'<span class="t-sup" title="Edited '\+esc\(tkWhenS\(q\.superseded\.t\)\)[\s\
 console.log('\nthe option strip: what each option includes, and what changed against the one before');
 ok(/AIQUOTE-OPTDELTA/.test(src), 'one named block');
 ok(/function optDelta\(q,b\)/.test(src) && /function optDeltaHtml\(q,b,bn,P\)/.test(src) && /function optDeltaText\(q,b,P\)/.test(src), 'the delta writer, in HTML and in text');
-ok(/never by Tachyon/.test(src) && !/\/api\/claude[^\n]*optDelta/.test(src), 'written by the page off the snapshots — never a model call');
+ok(/never by SparkAI/.test(src) && !/\/api\/claude[^\n]*optDelta/.test(src), 'written by the page off the snapshots — never a model call');
 ok(/'Spark AI \\u00d7'\+ids\.length\+' \('/.test(src), 'includes: Spark AI with its route mix');
 ok(/p\.push\('monthly new products'\+\(u\.label\?' \('\+u\.label\+'\)':''\)\)/.test(src), '…the bundle with its band');
 ok(/if\(q\.aim&&q\.aim\.since\)p\.push\('arrivals since '\+moLbl\(q\.aim\.since\)\)/.test(src), '…the cohort');

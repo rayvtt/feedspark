@@ -486,7 +486,7 @@
     {id:'hi',   name:'Product highlight',   key:'product_highlight',   routes:['feed','scrape','ai','feedhero']},
     {id:'pop',  name:'Popularity rank',     key:'popularity_rank',     routes:['feedhero']}
   ];
-  var AIM_ROUTE_LABEL={off:'Ignore',feed:'Add to master feed',scrape:'Scrape',ai:'Tachyon AI',feedhero:'FeedHero rule'};
+  var AIM_ROUTE_LABEL={off:'Ignore',feed:'Add to master feed',scrape:'Scrape',ai:'SparkAI',feedhero:'FeedHero rule'};
   var AIM_RATE_LABEL={dayRate:'Day rate (£)',hoursPerDay:'Hours in a day',hoursSupplied:'Hours to add a feed field',
     hoursScrape:'Hours per scraped field',scrapeMonthly:'Scrape run (£ / month)',aiSetupDays:'AI set-up (days per field)',
     aiPerField:'AI cost per field (£)',hoursFeedHero:'Hours for a FeedHero rule',aiMinMonthly:'AI minimum (£ / month)',

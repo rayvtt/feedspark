@@ -750,3 +750,4 @@ Ray then drew an arrow from the card's two controls down to Spark AI's arrivals 
 Ray, 8 Oct 2026, on a Superdry GB email: "improve generated text for emailling more simpler". The client email and brief (qBlock) now leave out a section with nothing in it, print Net only when VAT is on, and drop the closing SUMMARY line and the man-power footnote. Marker `EMAIL-SIMPLE`.
 
 Ray, 8 Oct 2026: quotes are named by what is on them, never "AI field generation" — Spark AI, New System, New Feed, Retainer Hours, joined when quoted together (qKindWord: email subjects, the email opening, the plan task title). The Excel export is named "BILLING - <client> - <kinds joined by x> - DDMMYY.xlsx". Markers `QUOTE-KIND`, `BILLING-NAME`.
+- 10 Nov 2026: every mention of Tachyon / Tachyon AI on /aiquote now reads SparkAI (Ray: name change); route key `ai` unchanged.
