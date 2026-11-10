@@ -13022,7 +13022,7 @@
   {
    "name": "Stock levers: keep a market as it runs",
    "file": "docs/FeedSpark_Stock.html",
-   "pattern": "d4['m:' + b + '|' + mkName] = { lv: SL.adopt(r) };",
+   "pattern": "d4[SL.marketKey(b, mkName, LV.ch)] = { lv: SL.adopt(r) };",
    "pr": 0
   },
   {
@@ -13040,7 +13040,7 @@
   {
    "name": "Stock levers: a lever is read on the Google side (Meta, affiliates and labels are not it)",
    "file": "docs/stocklevers_engine.js",
-   "pattern": "function gch(r) { return !r.ch || r.ch === 'all' || r.ch === 'google'; }",
+   "pattern": "function gch(r, lever) { return chOk(r, lever && lever.ch); }",
    "pr": 0
   },
   {
@@ -13223,7 +13223,7 @@
   {
    "name": "Stock levers engine: the brand's records, newest first",
    "file": "docs/stocklevers_engine.js",
-   "pattern": "function recordsOf(store, brand) {",
+   "pattern": "function recordsOf(store, brand, ch) {",
    "pr": 0
   },
   {
@@ -13343,7 +13343,7 @@
   {
    "name": "Stock levers engine: a lever connected before the field was stored has it read off the market it was picked in",
    "file": "docs/stocklevers_engine.js",
-   "pattern": "function resolved(lever, markets) {",
+   "pattern": "function resolved(lever, markets, ch) {",
    "pr": 0
   },
   {
@@ -13463,7 +13463,7 @@
   {
    "name": "Stock levers: a range's own unit rule reads under its scoped lever only (sibbed, in the model and the switch list)",
    "file": "docs/stocklevers_engine.js",
-   "pattern": "var levers = sibbed(planLevers(plan).map(function (l) { return resolved(l, markets); }));",
+   "pattern": "var levers = onCh(sibbed(planLevers(plan).map(function (l) { return resolved(l, markets, ch); })), ch);",
    "pr": 603
   },
   {
@@ -13481,7 +13481,7 @@
   {
    "name": "Stock levers (worker): every brand in scope listed, a plan or not",
    "file": "cloudflare/feedspark-deck/src/stocklevers.js",
-   "pattern": "return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, periods: has('e:'), records: has('r:') };",
+   "pattern": "return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, meta: setm, periods: has('e:'), records: has('r:') };",
    "pr": 603
   },
   {
@@ -17161,12 +17161,12 @@
    "pattern": "t.mk = { shop: [], wunderkind: [], other: [], paused: [], unread: [] };",
    "pr": 0
   },
-    {
-      "name": "Breakdown: Hide (blank) on the pivot's rows or columns, out of the table and its totals",
-      "file": "docs/FeedSpark_Breakdown.html",
-      "pattern": "if (S.L.pivot.nbC && cs) { var dc = B.dropBlank(S.st, cs, m); m = dc.m; hid.c = dc.n; }",
-      "pr": 0
-    },
+  {
+   "name": "Breakdown: Hide (blank) on the pivot's rows or columns, out of the table and its totals",
+   "file": "docs/FeedSpark_Breakdown.html",
+   "pattern": "if (S.L.pivot.nbC && cs) { var dc = B.dropBlank(S.st, cs, m); m = dc.m; hid.c = dc.n; }",
+   "pr": 0
+  },
   {
    "name": "Worker: the catalogue roster carries FeedHero's live feeds by kind",
    "file": "cloudflare/feedspark-deck/src/worker.js",
@@ -17256,6 +17256,36 @@
    "name": "Golden: the PDF keeps the document's http(s) links clickable (pdfLinks → pdf.link)",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "links.forEach(function (l) { pdf.link(l.x * mm, l.y * mm, l.w * mm, l.h * mm, { url: l.url }); });"
+  },
+  {
+   "name": "Stock levers: read on ONE channel — Google Shopping or Meta, each its own plan",
+   "file": "docs/stocklevers_engine.js",
+   "pattern": "function chOk(r, ch) { var c = r && r.ch; return !c || c === 'all' || c === chKey(ch); }",
+   "pr": 0
+  },
+  {
+   "name": "Stock levers: the measured RC line is Google's alone, never Meta's",
+   "file": "docs/stocklevers_engine.js",
+   "pattern": "if (chKey(lever && lever.ch) !== 'google') return null;",
+   "pr": 0
+  },
+  {
+   "name": "Stock levers: the page's channel switch, remembered per device",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "var LV = { ch: (recall('fcc-stock-lvch') === 'meta' ? 'meta' : 'google')",
+   "pr": 0
+  },
+  {
+   "name": "Stock levers: every read and write goes through the channel",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "SL.model(LV.store, b, mk, lvRoster(b), lvToday(), LV.ch)",
+   "pr": 0
+  },
+  {
+   "name": "Stock levers: the worker stores a Meta plan and Meta market values",
+   "file": "cloudflare/feedspark-deck/src/stocklevers.js",
+   "pattern": "if ((m = /^p:([^|]{1,80})(?:\\|meta)?$/.exec(k))) {",
+   "pr": 0
   }
  ]
 }

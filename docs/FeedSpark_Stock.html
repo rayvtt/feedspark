@@ -534,6 +534,14 @@ window.addEventListener('load',restore);
   #lev-t .mkc.own{box-shadow:inset 0 -2px 0 var(--orange)}
   #lev-t .mkc:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
   #lev-bar .lev-view{margin-left:auto}
+  /* THE CHANNEL the levers are read on (Ray, 10 Nov 2026) — Google Shopping or Meta, each its own plan and readings */
+  .lev-chrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:2px 0 12px}
+  .lev-chrow .lb{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .lev-chrow .seg button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .lev-chrow .seg button .k{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .lev-chrow .seg button.on .k{color:var(--orange-ink)}
+  .lev-chrow .lvc{font-size:12px;color:var(--muted);flex:1 1 260px;min-width:0}
+  #lev-t .nofeed{color:var(--muted);font-style:italic}
   #lev-t .mle{display:flex;flex-direction:column;gap:10px}
   #lev-t .mlh{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-2)}
   #lev-t .mlg{display:grid;gap:10px}
@@ -667,6 +675,7 @@ window.addEventListener('load',restore);
       <div class="tools"><button class="btn" id="lev-copy" type="button" title="The levers, each market’s reading and the sale periods, in words — for an email or a call">⧉ Copy summary</button><button class="btn" id="lev-csv" type="button" title="Every market × lever: what it runs, the plan, and whether it is off plan">⬇ CSV</button></div></div>
     <div class="chips lev-brands" id="lev-brands" hidden></div>
     <div class="hm-warn" id="lev-warn" hidden></div>
+    <div class="lev-chrow" id="lev-chrow" hidden><span class="lb">Channel</span><span class="seg lev-ch" id="lev-ch" role="group" aria-label="The channel the levers are read on"></span><span class="lvc" id="lev-chnote"></span></div>
     <div class="sv-sum" id="lev-sum"></div>
     <div class="toolbar" id="lev-bar" hidden><div class="chips" id="lev-f"></div><button class="btn" id="lev-adopt" type="button" hidden title="Make what these markets run today their own BAU — the decision that each one’s mix is the plan">Keep markets as they run</button><span class="seg lev-view" id="lev-view" role="group" aria-label="How the markets are listed" hidden></span></div>
     <div class="tw" id="lev-tw" hidden><table class="t" id="lev-t"><thead></thead><tbody></tbody></table></div>
@@ -1005,7 +1014,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // plan, a market's own values, the sale periods — a key per decision). What each market RUNS is read off the rules this
   // page already loaded (S.d) and the range-completion line the master-stock agent measured. The FCC changes no FeedHero
   // rule: it says which to change, where, and keeps who switched what.
-  var LV = { store: {}, brands: [], base: 0, pend: {}, after: [], t: null, busy: false, err: '', warn: '', ed: '', med: '', form: false, f: '', M: null, rf: null, recAll: false, rk: '', rkm: '', rka: false, rksel: null };
+  var LV = { ch: (recall('fcc-stock-lvch') === 'meta' ? 'meta' : 'google'), store: {}, brands: [], base: 0, pend: {}, after: [], t: null, busy: false, err: '', warn: '', ed: '', med: '', form: false, f: '', M: null, rf: null, recAll: false, rk: '', rkm: '', rka: false, rksel: null };
   var LVREC_N = 8;   // the record lists its newest eight; "Show all" opens the rest
   var SL = null;
   function slLoad() {
@@ -1102,6 +1111,24 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     return '<input class="fld" data-lvf="' + mode + '" inputmode="decimal" autocomplete="off" value="' + esc(lvShow(lk, v)) + '" placeholder="' + esc(ph || (kind === 'pct' ? 'e.g. 35' : 'e.g. 5, or N/A')) + '" aria-label="' + esc(al) + '">';
   }
 
+  // THE CHANNEL SWITCH (Ray, 10 Nov 2026: "allow selection of whether it's Google Shopping [or] Meta, specifically for
+  // multi-market brands, especially at the stock level, where I summarize the current setting for each stock lever") —
+  // each button counts the markets carrying that channel's own stock rules; the note says what a market without a feed
+  // wired on the channel reads, so a quiet Meta column is never taken for "no rules"
+  function lvChRow(b, mk, M) {
+    var row = $('#lev-chrow'); row.hidden = false;
+    var own = function (ch) { return mk.filter(function (m) { return (m.stock || []).some(function (r) { return r.ch === ch; }); }).length; };
+    var feed = function (ch) { return mk.filter(function (m) { return SL.hasFeed(m, ch); }).length; };
+    $('#lev-ch').innerHTML = SL.CHANNELS.map(function (c) {
+      var n = own(c.k), f = feed(c.k), on = LV.ch === c.k;
+      return '<button type="button" data-lvch="' + c.k + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" title="' + esc(c.label + ': ' + f + ' of ' + mk.length + ' read markets have a ' + c.label + ' feed wired; ' + n + ' run stock rules of their own for it') + '">' + esc(c.label) + '<span class="k">' + n + ' of ' + mk.length + '</span></button>';
+    }).join('');
+    var nf = (M.sum && M.sum.nofeed) || [];
+    $('#lev-chnote').textContent = (LV.ch === 'meta'
+      ? 'Meta’s own rules ("Social: …", fb_ fields) and those every channel shares. The range-completion line measured from the Google feed is never read as Meta’s.'
+      : 'Google Shopping’s own rules and those every channel shares — Meta and affiliate rules are left to their own channel.')
+      + (nf.length ? ' No ' + SL.CHANNEL[LV.ch].label + ' feed wired in the FCC for ' + lvList(nf, 6) + ' — read off their rules all the same.' : '');
+  }
   function renderLev() {
     var card = $('#lev-card'); if (!card) return;
     card.hidden = false;
@@ -1112,6 +1139,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     wn.hidden = !LV.warn; wn.textContent = LV.warn || '';
     var b = S.brand;
     var clear = function (msg) { sum.innerHTML = ''; per.innerHTML = ''; rec.innerHTML = ''; tw.hidden = true; lg.hidden = true; bar.hidden = true; foot.textContent = ''; plan.innerHTML = '<div class="empty">' + msg + '</div>'; };
+    $('#lev-chrow').hidden = true;
     if (!SL || !S.d) { br.hidden = true; clear(LV.err ? esc(LV.err) : 'Loading…'); fsum('lev-card', ''); return; }
     // All brands: every brand carries the four levers (Ray, 7 Oct 2026: "every client should have these stock levers"),
     // one tap away, each saying how much of its plan is set
@@ -1119,7 +1147,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       $('#lev-sub').textContent = 'Every brand’s four stock levers — range completion, hero sizes, stock threshold, stock exclusion — against what each market runs.';
       var bl = LV.brands || [];
       br.hidden = !bl.length;
-      br.innerHTML = bl.map(function (x) { var mn = lvRoster(x.client).length; return '<button class="chip" type="button" data-lvb="' + esc(x.client) + '">' + esc(x.client) + '<span class="k">' + (mn ? mn + ' market' + (mn === 1 ? '' : 's') + ' · ' : '') + (x.levers ? x.levers + ' of 4 planned' : 'no plan yet') + (x.periods ? ' · ' + x.periods + ' sale period' + (x.periods === 1 ? '' : 's') : '') + '</span></button>'; }).join('');
+      br.innerHTML = bl.map(function (x) { var mn = lvRoster(x.client).length; return '<button class="chip" type="button" data-lvb="' + esc(x.client) + '">' + esc(x.client) + '<span class="k">' + (mn ? mn + ' market' + (mn === 1 ? '' : 's') + ' · ' : '') + (x.levers ? x.levers + ' of 4 planned' : 'no plan yet') + (x.meta ? ' · Meta ' + x.meta + ' of 4' : '') + (x.periods ? ' · ' + x.periods + ' sale period' + (x.periods === 1 ? '' : 's') : '') + '</span></button>'; }).join('');
       clear('Pick a brand to see its four levers, market by market.');
       fsum('lev-card', nw(bl.length, 'brand') + ' — pick one to see its levers');
       return;
@@ -1127,16 +1155,17 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     br.hidden = true;
     // no plan saved is no reason to show nothing: every market still reads all four levers off its rules, and the plan's
     // values say "not set" until somebody sets them (the first save writes the plan)
-    var p = SL.planOf(LV.store, b);
-    var mk = lvMarkets(b), M = LV.M = SL.model(LV.store, b, mk, lvRoster(b), lvToday());
-    var s = M.sum, levs = M.levers;
-    $('#lev-sub').textContent = 'What each ' + b + ' market runs today for its four stock levers' + (p ? ' against the brand’s BAU and SALE plan — and the switch between them.' : ' — no BAU / SALE plan set yet: set one in Brand plan below.');
+    var p = SL.planOf(LV.store, b, LV.ch);
+    var mk = lvMarkets(b), M = LV.M = SL.model(LV.store, b, mk, lvRoster(b), lvToday(), LV.ch);
+    var s = M.sum, levs = M.levers, chL = SL.CHANNEL[LV.ch].label;
+    lvChRow(b, mk, M);
+    $('#lev-sub').textContent = 'What each ' + b + ' market runs today for its four stock levers on ' + chL + (p ? ', against the brand’s ' + chL + ' BAU and SALE plan — and the switch between them.' : ' — no ' + chL + ' BAU / SALE plan set yet: set one in Brand plan below.');
     // ---- the four tiles
     var nx = M.periods.filter(function (q) { return q.next.dir; }).sort(function (a, c) { return a.next.on < c.next.on ? -1 : 1; })[0];
     var nxB = nx ? (nx.next.missed ? 'missed' : lvWhen(nx.next.days)) : '—';
     var nxS = nx ? esc(nx.name) + ' → ' + (nx.next.dir === 'sale' ? 'SALE' : 'BAU') + ' · ' + lvDate(nx.next.on) : 'No sale period planned';
     var planN = (s.planned || []).length, setN = planN - (s.unset || []).length;
-    fsum('lev-card', nw(s.markets, 'market') + ' · ' + (planN ? (s.drift ? s.drift + ' off plan' : 'none off plan') : 'no plan set yet') + (s.sale ? ' · ' + s.sale + ' in SALE' : '')
+    fsum('lev-card', chL + ' · ' + nw(s.markets, 'market') + ' · ' + (planN ? (s.drift ? s.drift + ' off plan' : 'none off plan') : 'no plan set yet') + (s.sale ? ' · ' + s.sale + ' in SALE' : '')
       + (nx ? ' · ' + nx.name + ' → ' + (nx.next.dir === 'sale' ? 'SALE' : 'BAU') + ' ' + nxB : ''));
     sum.innerHTML = [
       '<div class="it"><b>' + (s.sale ? 'SALE · ' + s.sale : 'BAU') + '</b><span>' + (s.sale ? s.sale + ' of ' + s.markets + ' markets in SALE' : 'All ' + s.markets + ' markets in BAU') + (s.late ? ' · ' + s.late + ' due to switch' : '') + '</span></div>',
@@ -1144,8 +1173,8 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       '<div class="it"><b>' + esc(nxB) + '</b><span>' + nxS + '</span></div>',
       '<div class="it"><b>' + (planN ? setN + ' of ' + planN : '—') + '</b><span>' + (planN ? 'planned levers with a SALE value' : 'no lever planned yet') + '</span></div>'].join('');
     // ---- the plan, lever by lever — under the matrix, named so it never reads as more of it
-    plan.innerHTML = '<div class="perh lvp-h"><h4>Brand plan</h4></div>' + levs.map(function (l) {
-      var L = SL.LEVER[l.k], sg = SL.isSet(l.sale) || !SL.isSet(l.bau) ? null : SL.suggest(p, mk, l.k), band = l.k === 'rc' && l.lo != null && l.hi != null ? l.lo + '–' + l.hi + '%' : '';
+    plan.innerHTML = '<div class="perh lvp-h"><h4>Brand plan · ' + esc(chL) + '</h4></div>' + levs.map(function (l) {
+      var L = SL.LEVER[l.k], sg = SL.isSet(l.sale) || !SL.isSet(l.bau) ? null : SL.suggest(p, mk, l.k, LV.ch), band = l.k === 'rc' && l.lo != null && l.hi != null ? l.lo + '–' + l.hi + '%' : '';
       var head = '<div class="lvh"><h4>' + (l.k === 'hero' ? heroIcon() : '') + esc(L.label) + (l.scope ? ' · ' + esc(l.scope) : '') + '</h4>' + (band ? '<span class="tg">band ' + esc(band) + '</span>' : '') + '</div>';
       if (LV.ed === l.k) {
         return '<div class="lv ed" data-lk="' + l.k + '">' + head
@@ -1194,7 +1223,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       ? gs.map(function (g) { var ed = g.rows.filter(function (r) { return LV.med === r.market; })[0]; return lvGroupRow(g, levs, b, items) + (ed ? lvEditRow(ed, levs, b, span) : ''); }).join('')
       : rows.map(function (r) { return lvRow(r, levs, b, items[r.market]) + (LV.med === r.market ? lvEditRow(r, levs, b, span) : ''); }).join(''))
       : '<tr><td colspan="' + span + '" class="empty">Every market runs its plan.</td></tr>';
-    foot.textContent = 'Read off each market’s own FeedHero rules — the FCC changes no rule; the switch list says which to change, and where.';
+    foot.textContent = 'Read off each market’s own FeedHero rules on ' + chL + ' — its own rules and those every channel shares; another channel’s rule is never this one’s lever. The FCC changes no rule; the switch list says which to change, and where.';
   }
   function lvForm(roster) {
     var sel = LV.fmk || roster;
@@ -1207,7 +1236,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   var LVST = { planned: 'planned', briefed: 'briefed', done: 'done' };
   function lvStep(q, dir, b, mk) {
-    var st = (q[dir] && q[dir].st) || 'planned', sw = SL.switchList(LV.M.plan, LV.store, b, mk, q.mk, dir);
+    var st = (q[dir] && q[dir].st) || 'planned', sw = SL.switchList(LV.M.plan, LV.store, b, mk, q.mk, dir, LV.ch);
     var nx = q.next, due = nx.dir === dir ? (nx.missed ? '<span class="tg rd">missed — the period is over</span>' : '<span class="tg' + (nx.days <= 0 ? ' rd' : nx.days <= 7 ? ' or' : '') + '">' + esc(lvWhen(nx.days)) + '</span>') : '';
     var who = q[dir] && q[dir].by ? ' title="' + esc((st === 'done' ? 'Switched' : 'Briefed') + ' by ' + q[dir].by + (q[dir].at ? ' · ' + new Date(q[dir].at).toLocaleString('en-GB') : '')) + '"' : '';
     var lab = dir === 'sale' ? '→ SALE · ' + lvDate(q.from) : '→ BAU · ' + lvDate(q.to);
@@ -1220,7 +1249,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   // a switch marked made can be written into the record in one click — its changes, dated today; once it is, it says so
   function lvRecStep(q, dir, n) {
-    var src = 'e:' + q.id + '|' + dir, got = ((LV.M && LV.M.records) || []).filter(function (r) { return r.src === src; });
+    var src = 'e:' + q.id + '|' + dir + (LV.ch === 'meta' ? '|meta' : ''), got = ((LV.M && LV.M.records) || []).filter(function (r) { return r.src === src; });
     if (got.length) return '<span class="tg gr" title="' + esc(got.length + ' record' + (got.length === 1 ? '' : 's') + ', ' + lvDateY(got[0].d)) + '">✓ recorded</span>';
     return n ? '<button class="btn" type="button" data-act="lv-rsw" title="Write this switch’s changes into the record, dated today">＋ Record it</button>' : '';
   }
@@ -1240,7 +1269,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   function lvPeriod(q, b, mk) {
     var md = q.next, now = lvToday(), live = now >= q.from && now <= q.to;
-    var swS = SL.switchList(LV.M.plan, LV.store, b, mk, q.mk, 'sale');
+    var swS = SL.switchList(LV.M.plan, LV.store, b, mk, q.mk, 'sale', LV.ch);
     return '<div class="per" data-p="' + esc(q.id) + '"><div class="ph"><b>' + esc(q.name) + '</b><span class="lvc">' + esc(lvDate(q.from) + ' → ' + lvDate(q.to)) + ' · ' + q.mk.length + ' market' + (q.mk.length === 1 ? '' : 's') + ': ' + esc(q.mk.join(', ')) + '</span>'
       + (live ? '<span class="tg or">on now</span>' : md.dir === null ? '<span class="tg gr">done</span>' : '') + '<span class="sp"></span><button class="btn" type="button" data-act="lv-del" title="Delete this sale period">🗑</button></div>'
       + lvStep(q, 'sale', b, mk) + lvStep(q, 'bau', b, mk)
@@ -1296,14 +1325,14 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   // a lever connected (or, with null, disconnected): the plan saved with its rule — everything else as it was
   function lvSetRule(lk, rule) {
-    var b = S.brand, p = SL.planOf(LV.store, b);
+    var b = S.brand, p = SL.planOf(LV.store, b, LV.ch);
     LV.rk = ''; LV.rksel = null;
     lvPlanPut(b, p, function (l) { if (l.k !== lk) return l; var o = Object.assign({}, l); if (rule) o.rule = rule; else delete o.rule; return o; });
   }
   // the brand's plan saved with one change: all four levers (SL.planLevers — a legacy key saved under the lever it is now),
   // the note as it was; a brand with no plan yet gets one
   function lvPlanPut(b, p, fn) {
-    var d = {}; d['p:' + b] = { levers: SL.planLevers(p).map(fn), note: (p && p.note) || '' }; lvPut(d);
+    var d = {}; d[SL.planKey(b, LV.ch)] = { levers: SL.planLevers(p).map(fn), note: (p && p.note) || '' }; lvPut(d);
   }
   // a value as short as it can be said — the plan line in a lever's head
   function lvShort(lk, v) { if (!SL.isSet(v)) return 'not set'; if (v === 'off') return SL.isUnits(lk) ? 'N/A' : 'off'; if (v === 'on') return 'on'; return SL.LEVER[lk].kind === 'pct' ? v + '%' : SL.LEVER[lk].op + ' ' + v; }
@@ -1323,7 +1352,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function lvCell(lk, c, r, b) {
     var rd = c.rd, cv = lvCellView(lk, c), v = cv.v, st = cv.st;
     var md = r.mode.toUpperCase();
-    var tip = '<b>' + esc(b + ' ' + r.market) + ' · ' + esc(SL.LEVER[lk].label) + '</b><br>Runs: ' + esc(SL.readWord(lk, rd))
+    var tip = '<b>' + esc(b + ' ' + r.market) + ' · ' + esc(SL.LEVER[lk].label) + ' · ' + esc(SL.CHANNEL[LV.ch].label) + '</b><br>Runs: ' + esc(SL.readWord(lk, rd))
       + (rd.why ? '<br><span class="m">' + esc(rd.why) + '</span>' : '')
       + '<br>' + (SL.isSet(c.tgt) ? 'Held to ' + esc(SL.fmtVal(lk, c.tgt)) + ' — ' + (c.tgtOwn ? 'its own ' : 'the brand’s ') + md + ' value' : 'No ' + md + ' value set to hold it to')
       + (c.drift ? '<br><b>Off plan</b> — ' + esc(c.drift.why) : '')
@@ -1388,7 +1417,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function lvRow(r, levs, b, items) {
     var anyOwn = levs.some(function (l) { return r.cells[l.k].own; }), offN = levs.filter(function (l) { return r.cells[l.k].drift; }).length;
     var due = r.mode !== r.expect ? '<span class="tg rd" title="' + esc(r.expect === 'sale' ? 'Its sale period is on — the switch to SALE is not marked made' : 'Its sale period is over — the switch back to BAU is not marked made') + '">due → ' + r.expect.toUpperCase() + '</span>' : '';
-    var nm = '<td class="nm"><b>' + esc(b) + '</b> ' + esc(r.market) + (anyOwn ? ' <span class="tg" title="This market has its own values for some levers">own</span>' : '') + '<span class="sub2">' + (r.read ? (items ? n0(items) + ' products' : '') : 'not read yet') + '</span></td>';
+    var nm = '<td class="nm"><b>' + esc(b) + '</b> ' + esc(r.market) + (anyOwn ? ' <span class="tg" title="This market has its own values for some levers">own</span>' : '') + '<span class="sub2">' + (r.read ? (items ? n0(items) + ' products' : '') + (r.feed === false ? '<span class="nofeed" title="' + esc('No ' + SL.CHANNEL[LV.ch].label + ' feed is wired for this market in the FCC — its rules are read all the same') + '"> · no ' + esc(SL.CHANNEL[LV.ch].label) + ' feed</span>' : '') : 'not read yet') + '</span></td>';
     var md = '<td class="md"><span class="mode ' + r.mode + '">' + r.mode.toUpperCase() + '</span>' + due + '</td>';
     var ed = '<td class="ra"><button class="hb-dl" type="button" data-act="lv-medit" aria-expanded="' + (LV.med === r.market) + '" title="' + esc(r.market) + '’s own BAU / SALE values">✎</button></td>';
     if (!r.read) return '<tr class="unread" data-mk="' + esc(r.market) + '">' + nm + md + '<td colspan="' + (levs.length + 1) + '" class="muted">Waiting for its first read.</td>' + ed + '</tr>';
@@ -1397,7 +1426,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   // a market's own values, in a row under it: BAU and SALE per lever (blank follows the brand), and the two shortcuts
   function lvEditRow(r, levs, b, span) {
-    var mo = SL.marketOf(LV.store, b, r.market), pl = SL.planOf(LV.store, b);
+    var mo = SL.marketOf(LV.store, b, r.market, LV.ch), pl = SL.planOf(LV.store, b, LV.ch);
     var anyOwn = levs.some(function (l) { return r.cells[l.k].own; }), keep = r.read && levs.some(function (l) { return r.cells[l.k].drift && !r.cells[l.k].own; });
     return '<tr class="med" data-mk="' + esc(r.market) + '"><td colspan="' + span + '"><div class="mle"><p class="mlh"><b>' + esc(b + ' ' + r.market) + '</b> — its own values. Leave a box blank to follow the brand.</p>'
       + '<div class="mlg" style="grid-template-columns:repeat(' + levs.length + ',minmax(0,1fr))">' + levs.map(function (l) {
@@ -1484,10 +1513,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     });
     var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     var csv = [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = S.brand + ' stock levers ' + lvToday() + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = S.brand + ' stock levers ' + SL.CHANNEL[LV.ch].label + ' ' + lvToday() + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
   function lvSaveLever(lk) {
-    var box = document.querySelector('#lev-plan .lv[data-lk="' + lk + '"]'), b = S.brand, p = SL.planOf(LV.store, b); if (!box) return;
+    var box = document.querySelector('#lev-plan .lv[data-lk="' + lk + '"]'), b = S.brand, p = SL.planOf(LV.store, b, LV.ch); if (!box) return;
     var kind = SL.LEVER[lk].kind, v = {};
     ['bau', 'sale'].forEach(function (m) { var el = box.querySelector('[data-lvf="' + m + '"]'); v[m] = lvParse(kind, el ? el.value : ''); });
     if (v.bau === undefined || v.sale === undefined) { toast('A value is a number' + (kind === 'pct' ? ' from 0 to 100' : '') + ', N/A, or blank for not set'); return; }
@@ -1509,10 +1538,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     });
     if (bad) { toast('A value is a number, N/A, or blank for the brand’s'); return; }
     LV.med = '';
-    var d = {}; d['m:' + b + '|' + mkName] = Object.keys(lv).length ? { lv: lv } : null; lvPut(d);
+    var d = {}; d[SL.marketKey(b, mkName, LV.ch)] = Object.keys(lv).length ? { lv: lv } : null; lvPut(d);
   }
   function lvSwitchText(q, dir) {
-    var b = S.brand, sw = SL.switchList(LV.M.plan, LV.store, b, lvMarkets(b), q.mk, dir);
+    var b = S.brand, sw = SL.switchList(LV.M.plan, LV.store, b, lvMarkets(b), q.mk, dir, LV.ch);
     return SL.briefLines(sw, b, q);
   }
   function lvSetStep(q, dir, st, now, then) {
@@ -1521,10 +1550,16 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var d = {}; d['e:' + S.brand + '|' + q.id] = o; lvPut(d, now, then);
   }
   $('#lev-card').addEventListener('click', function (e) {
-    var t = e.target.closest('[data-act],[data-lvb],[data-lvf2],[data-lvm],[data-lvrm],[data-lvv]'); if (!t || !SL) return;
+    var t = e.target.closest('[data-act],[data-lvb],[data-lvf2],[data-lvm],[data-lvrm],[data-lvv],[data-lvch]'); if (!t || !SL) return;
     var b = S.brand, act = t.getAttribute('data-act');
     // by market ↔ grouped: this device's choice from now on
     if (t.hasAttribute('data-lvv')) { remember('fcc-stock-lvgrp', t.getAttribute('data-lvv')); renderLev(); return; }
+    if (t.hasAttribute('data-lvch')) {
+      var nc = t.getAttribute('data-lvch') === 'meta' ? 'meta' : 'google'; if (nc === LV.ch) return;
+      // what is open belongs to the channel it was opened on: an edit, a market's own values, a rule picker, a record
+      LV.ch = nc; remember('fcc-stock-lvch', nc === 'meta' ? 'meta' : ''); LV.ed = ''; LV.med = ''; LV.rk = ''; LV.rksel = null; LV.rf = null; LV.f = '';
+      renderLev(); return;
+    }
     if (t.hasAttribute('data-lvb')) { S.brand = t.getAttribute('data-lvb'); S.market = ''; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); return; }
     if (t.hasAttribute('data-lvf2') && !act) { LV.f = t.getAttribute('data-lvf2'); renderLev(); if (LV.f) { var tw = $('#lev-t'); if (tw && tw.scrollIntoView) tw.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; }
     if (t.hasAttribute('data-lvm')) {
@@ -1547,7 +1582,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       case 'lv-save': lvSaveLever(t.getAttribute('data-lk')); break;
       case 'lv-sug': {
         var lk = t.getAttribute('data-lk'), val = +t.getAttribute('data-v');
-        lvPlanPut(b, SL.planOf(LV.store, b), function (l) { return l.k === lk ? Object.assign({}, l, { sale: val }) : l; }); break;
+        lvPlanPut(b, SL.planOf(LV.store, b, LV.ch), function (l) { return l.k === lk ? Object.assign({}, l, { sale: val }) : l; }); break;
       }
       case 'lv-new': LV.form = true; LV.fmk = null; LV.fname = ''; LV.ffrom = ''; LV.fto = ''; renderLev(); var n0 = $('#lvf-name'); if (n0) n0.focus(); break;
       case 'lv-x': LV.form = false; renderLev(); break;
@@ -1566,7 +1601,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       case 'lv-undo': if (q) lvSetStep(q, dir, 'planned'); break;
       case 'lv-copyp': if (q) lvCopy(lvSwitchText(q, dir)); break;
       case 'lv-brief': if (q) {
-        var scope = lvSwitchText(q, dir), task = 'Stock Levers - ' + (dir === 'sale' ? 'Switch to SALE' : 'Back to BAU') + ' - ' + q.name + ' - ' + b + ' - ' + (dir === 'sale' ? q.from : q.to).slice(5, 7) + (dir === 'sale' ? q.from : q.to).slice(2, 4);
+        var scope = lvSwitchText(q, dir), task = 'Stock Levers - ' + (dir === 'sale' ? 'Switch to SALE' : 'Back to BAU') + (LV.ch === 'meta' ? ' - Meta' : '') + ' - ' + q.name + ' - ' + b + ' - ' + (dir === 'sale' ? q.from : q.to).slice(5, 7) + (dir === 'sale' ? q.from : q.to).slice(2, 4);
         // Workflow opens in a tab of its own, reserved inside this click since the mark is saved first; a mark that did not
         // land is said before the brief opens, and saying no closes the reserved tab
         var tab = wfTabLater();
@@ -1579,9 +1614,9 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       case 'lv-keep': {
         var r = LV.M.rows.filter(function (x) { return x.market === mkName; })[0]; if (!r) return;
         LV.med = '';
-        var d4 = {}; d4['m:' + b + '|' + mkName] = { lv: SL.adopt(r) }; lvPut(d4); break;
+        var d4 = {}; d4[SL.marketKey(b, mkName, LV.ch)] = { lv: SL.adopt(r) }; lvPut(d4); break;
       }
-      case 'lv-reset': { LV.med = ''; var d5 = {}; d5['m:' + b + '|' + mkName] = null; lvPut(d5); break; }
+      case 'lv-reset': { LV.med = ''; var d5 = {}; d5[SL.marketKey(b, mkName, LV.ch)] = null; lvPut(d5); break; }
       case 'lv-medit': {
         LV.med = LV.med === mkName ? '' : mkName; renderLev();
         var f1 = LV.med && document.querySelector('#lev-t tr.med [data-lvf="bau"]'); if (f1) f1.focus(); break;
@@ -1628,6 +1663,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         if (rw === undefined) { toast('“Was” is ' + (kind === 'onoff' ? 'on, off' : 'a number, N/A') + ' or blank'); return; }
         if (!(f.mk || []).length) { toast('Pick at least one market'); return; }
         var o = { d: f.d, mk: f.mk.slice(), k: f.k, mode: f.mode || '', v: rv, note: String(f.note || '').trim() };
+        if (LV.ch === 'meta') o.ch = 'meta';   // a record belongs to the channel it was written on
         if (rw !== null) o.was = rw;
         if (f.src) o.src = f.src;
         // an edit keeps who first wrote it down on screen while the save is on the wire (the server keeps it either way)
@@ -1637,7 +1673,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         var d6 = {}; d6[key6] = o; lvPut(d6); break;
       }
       case 'lv-rsw': if (q) {
-        var swr = SL.switchList(LV.M.plan, LV.store, b, lvMarkets(b), q.mk, dir), rs = SL.switchRecords(swr, q, lvToday());
+        var swr = SL.switchList(LV.M.plan, LV.store, b, lvMarkets(b), q.mk, dir, LV.ch), rs = SL.switchRecords(swr, q, lvToday());
         if (!rs.length) { toast('Nothing to record — the switch changes no lever'); return; }
         var d7 = {}; rs.forEach(function (x) { d7['r:' + b + '|' + lvRecId(x.d, x.k)] = x; }); lvPut(d7);
       } break;
@@ -1657,7 +1693,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   $('#lev-adopt').addEventListener('click', function () {
     if (!LV.M || !SL) return;
     var b = S.brand, d = {}, n = 0;
-    LV.M.rows.forEach(function (r) { if (r.read && LV.M.levers.some(function (l) { return r.cells[l.k].drift && !r.cells[l.k].own; })) { d['m:' + b + '|' + r.market] = { lv: SL.adopt(r) }; n++; } });
+    LV.M.rows.forEach(function (r) { if (r.read && LV.M.levers.some(function (l) { return r.cells[l.k].drift && !r.cells[l.k].own; })) { d[SL.marketKey(b, r.market, LV.ch)] = { lv: SL.adopt(r) }; n++; } });
     if (!n || !confirm('Make what ' + n + ' market' + (n === 1 ? '' : 's') + ' run today their own BAU? The brand plan stays as it is for every other market.')) return;
     lvPut(d);
   });

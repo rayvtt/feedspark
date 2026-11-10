@@ -145,7 +145,7 @@ t('…a lever with no value in either mode is not part of the switch — no chan
 const back = L.switchList(P, store, 'Superdry', MKS, ['GB'], 'bau');
 t('back to BAU is the same list the other way', back.changes.some((c) => c.k === 'rc' && c.from === 20 && c.to === 35));
 const bl = L.briefLines(sw, 'Superdry', ps[0]);
-t('the brief: the direction, the period, every change with its markets and the rule names, the blocker', /^Switch to SALE — Superdry — Black Friday \(2026-11-20 → 2026-12-01\)/.test(bl) && /Range completion: 35% → 20% — GB, FR/.test(bl)
+t('the brief: the direction, the period, every change with its markets and the rule names, the blocker', /^Switch to SALE — Superdry · Google Shopping — Black Friday \(2026-11-20 → 2026-12-01\)/.test(bl) && /Range completion: 35% → 20% — GB, FR/.test(bl)
   && /“Range Completion by Availability” \(GB\)/.test(bl) && /no rule runs it yet/.test(bl) && /⚠ Hero sizes: the SALE value is not set/.test(bl), bl);
 t('…kept under the composer’s 2,000 characters', (() => { const big = { dir: 'sale', changes: Array.from({ length: 60 }, (_, i) => ({ k: 'rc', label: 'Range completion', from: 35, to: 20, mk: ['M' + i], rules: { ['M' + i]: ['A long rule name number ' + i + ' that goes on and on'] } })), blocked: [] }; return L.briefLines(big, 'X', null).length <= 1990; })());
 t('nothing to change says so', /Nothing to change/.test(L.briefLines({ dir: 'sale', changes: [], blocked: [] }, 'X', null)));
@@ -265,7 +265,7 @@ t('…and a brand with no record says nothing about one', !/Recorded/.test(L.sum
 
 console.log('· the summary, in words');
 const txt = L.summaryText(M, 'Superdry', '2026-10-05');
-t('each lever: the plan, then the markets grouped by what they run — named, never a count alone', /^Superdry — stock levers, 2026-10-05/.test(txt) && /• Range completion: BAU 35% · SALE 20% \(band 20–40%\)/.test(txt) && /36% measured from the products — GB/.test(txt) && /not read yet — SE/.test(txt), txt);
+t('each lever: the plan, then the markets grouped by what they run — named, never a count alone', /^Superdry — stock levers · Google Shopping, 2026-10-05/.test(txt) && /• Range completion: BAU 35% · SALE 20% \(band 20–40%\)/.test(txt) && /36% measured from the products — GB/.test(txt) && /not read yet — SE/.test(txt), txt);
 t('…off plan named, and each period’s next step', /• Off plan: \d+ of 8 markets — /.test(txt) && /Black Friday \(2026-11-20 → 2026-12-01\): switch to SALE in 46 days/.test(txt));
 
 console.log('· the worker’s half — what a signin may store');
@@ -289,7 +289,7 @@ t('a whole save is refused if any key is (nothing half-written)', (() => { const
 t('deletions only through _deleted (or a null value), each key checked', eq(W.sanitizeLeverPut({ _deleted: ['e:Superdry|bf-1'], 'm:Superdry|IT': null }, ctx).deleted.sort(), ['e:Superdry|bf-1', 'm:Superdry|IT']) && W.sanitizeLeverPut({ _deleted: ['e:Reiss|x-1'] }, ctx).errors.length === 1);
 t('a signin reads only its brands', eq(Object.keys(W.leverView({ 'p:Superdry': {}, 'p:Reiss': {}, 'e:Reiss|a-1': {}, 'm:Superdry|GB': {} }, (b) => b === 'Superdry')).sort(), ['m:Superdry|GB', 'p:Superdry']));
 t('every brand in scope — four levers each, a plan or not: how many levers are planned (a legacy key counted as its lever), periods, records', eq(W.leverBrands({ 'p:Superdry': { levers: [{ k: 'rc', bau: 35 }, { k: 'units', bau: 'off' }, { k: 'hero', bau: 'on' }, { k: 'thresh', bau: null, sale: null }, { k: 'xx', bau: 1 }] }, 'e:Superdry|a-1': {}, 'e:Superdry|b-2': {}, 'r:Superdry|rec-1': {} }, ['Superdry', 'Reiss']),
-  [{ client: 'Superdry', plan: true, levers: 3, periods: 2, records: 1 }, { client: 'Reiss', plan: false, levers: 0, periods: 0, records: 0 }]));
+  [{ client: 'Superdry', plan: true, levers: 3, meta: 0, periods: 2, records: 1 }, { client: 'Reiss', plan: false, levers: 0, meta: 0, periods: 0, records: 0 }]));
 
 console.log('· the worker’s half — a record');
 const rec = { d: '2026-10-06', mk: ['gb', 'FR', 'GB'], k: 'rc', mode: 'sale', v: 20, was: 35, note: 'Black Friday line', src: 'e:bf-1|sale', by: 'forged', at: 1 };
@@ -317,6 +317,47 @@ const envx = { data: {}, meta: {} };
 t('written once into an empty store, stamped from Ray’s brief', W.applyLeverSeeds(envx, 5) === 1 && envx.data['p:Superdry'].seed === 1 && /from Ray/.test(envx.data['p:Superdry'].by) && envx.meta['p:Superdry'].t === 5);
 t('…never again, and never over a plan the team deleted (its tombstone counts)', W.applyLeverSeeds(envx, 6) === 0 && W.applyLeverSeeds({ data: {}, meta: { 'p:Superdry': { t: 1, del: true } } }, 6) === 0);
 
+// ---- THE CHANNEL (Ray, 10 Nov 2026: "allow selection of whether it's Google Shopping [or] Meta, specifically for multi-market
+// brands, especially at the stock level, where I summarize the current setting for each stock lever")
+console.log('· the channel — Google Shopping or Meta');
+{
+  const META_FR = market('FR', 'b_fr', [RC_SET('Range Completion < 0.21 ( 20% completion)'), rule('Social: RC > 65% -> out of stock', 'Social availability', 'social_availability', 30, OF), rule('fb Stock < 3 -> OOS', 'FB availability', 'fb_availability', 20, OF)], { x: 22, lo: 21, hi: 23 });
+  META_FR.wk = { g: 'fr', fb: null };
+  const ms = [META_FR, SOC];
+  const G = L.model({}, 'Superdry', ms, ['FR', 'DK'], '2026-11-10'), Mt = L.model({}, 'Superdry', ms, ['FR', 'DK'], '2026-11-10', 'meta');
+  const gFR = G.rows[0].cells, mFR = Mt.rows[0].cells, gDK = G.rows[1].cells, mDK = Mt.rows[1].cells;
+  t('Google Shopping is the default: a Meta rule is never Google’s lever (DK’s "Social: RC > 65%" reads no range-completion rule on Google)', G.ch === 'google' && gDK.rc.rd.state === 'none');
+  t('…on Meta it IS the lever, its cut-off off its name (65%)', Mt.ch === 'meta' && mDK.rc.rd.state === 'on' && mDK.rc.rd.val === 65 && mDK.rc.rd.how === 'name', JSON.stringify(mDK.rc.rd));
+  t('a rule every channel shares reads on both — FR’s range-completion rule is in both readings', gFR.rc.rd.rules.some((r) => /0\.21/.test(r.n)) && mFR.rc.rd.rules.some((r) => /0\.21/.test(r.n)));
+  t('the line measured off the GOOGLE feed is Google’s alone — Meta never borrows FR’s ≈22%', gFR.rc.rd.how === 'line' && gFR.rc.rd.val === 22 && mFR.rc.rd.how !== 'line' && /Google feed, never Meta/.test(mFR.rc.rd.why), JSON.stringify(mFR.rc.rd));
+  t('a Meta stock threshold reads on Meta only (fb_ "Stock < 3")', !gFR.thresh.rd.rules.length && mFR.thresh.rd.state === 'on' && mFR.thresh.rd.cut && mFR.thresh.rd.cut.v === 3, JSON.stringify(mFR.thresh.rd));
+  t('a market with no feed wired on the channel says so — and is still read off its rules', Mt.rows[0].feed === false && G.rows[0].feed === true && Mt.sum.nofeed.indexOf('FR') >= 0 && mFR.rc.rd.state === 'on');
+  t('each lever is stamped with the channel it is read on', Mt.levers.every((l) => l.ch === 'meta') && G.levers.every((l) => l.ch === 'google'));
+  // each channel its own plan and market values; records filtered; a sale period shared
+  const store = { 'p:Superdry': { levers: [{ k: 'rc', bau: 35, sale: 20 }] }, 'p:Superdry|meta': { levers: [{ k: 'rc', bau: 65, sale: 50 }] },
+    'm:Superdry|FR': { lv: { rc: { bau: 21 } } }, 'm:Superdry|FR|meta': { lv: { rc: { bau: 60 } } },
+    'r:Superdry|rec-g': { d: '2026-11-01', mk: ['FR'], k: 'rc', v: 21 }, 'r:Superdry|rec-m': { d: '2026-11-02', mk: ['FR'], k: 'rc', v: 60, ch: 'meta' },
+    'e:Superdry|bf': { name: 'BF', from: '2026-11-20', to: '2026-12-01', mk: ['FR', 'DK'] } };
+  const G2 = L.model(store, 'Superdry', ms, ['FR', 'DK'], '2026-11-10'), M2 = L.model(store, 'Superdry', ms, ['FR', 'DK'], '2026-11-10', 'meta');
+  t('each channel keeps its own plan — p:<Brand> for Google, p:<Brand>|meta for Meta', L.planOf(store, 'Superdry').levers[0].bau === 35 && L.planOf(store, 'Superdry', 'meta').levers[0].bau === 65 && L.planKey('Superdry', 'meta') === 'p:Superdry|meta' && L.planKey('Superdry') === 'p:Superdry');
+  t('…and its own market values (m:<Brand>|<MKT>|meta)', G2.rows[0].cells.rc.bau === 21 && M2.rows[0].cells.rc.bau === 60 && M2.rows[1].cells.rc.bau === 65 && L.marketKey('Superdry', 'FR', 'meta') === 'm:Superdry|FR|meta');
+  t('…and its own records (a record with no ch is Google’s)', G2.records.map((r) => r.id).join() === 'rec-g' && M2.records.map((r) => r.id).join() === 'rec-m');
+  t('a sale period is the brand’s, shared by both channels', G2.periods.length === 1 && M2.periods.length === 1);
+  const swm = L.switchList(M2.plan, store, 'Superdry', ms, ['FR', 'DK'], 'sale', 'meta');
+  t('the switch list on Meta reads Meta’s plan and rules, and says which channel', swm.ch === 'meta' && swm.changes.some((c) => c.k === 'rc' && c.from === 60 && c.to === 50 && c.mk.indexOf('FR') >= 0) && /Superdry · Meta/.test(L.briefLines(swm, 'Superdry', null)));
+  t('…a switch recorded on Meta is a Meta record', L.switchRecords(swm, { id: 'bf', name: 'BF' }, '2026-11-20').every((r) => r.ch === 'meta' && /\|meta$/.test(r.src)));
+  t('the summary names its channel', /^Superdry — stock levers · Meta, /.test(L.summaryText(M2, 'Superdry', '2026-11-10')) && /No Meta feed wired in the FCC for FR/.test(L.summaryText(M2, 'Superdry', '2026-11-10')));
+  t('every rule to connect is the channel’s own or a shared one — never another channel’s', L.ruleChoices('rc', ms, 'DK', M2.levers[0], true).every((r) => r.ch !== 'google') && !L.ruleChoices('rc', ms, 'DK', G2.levers[0], true).some((r) => r.ch === 'meta'));
+  // the worker stores both channels, and nothing else
+  t('worker: a Meta plan and a Meta market’s own values are stored', !ok('p:Superdry|meta', { levers: [{ k: 'rc', bau: 65, sale: 50 }] }).error && !ok('m:Superdry|FR|meta', { lv: { rc: { bau: 60, sale: null } } }).error);
+  t('worker: no other channel key, and a brand is still a roster brand', !!ok('p:Superdry|tiktok', { levers: [] }).error && !!ok('m:Superdry|FR|x', { lv: {} }).error && !!ok('p:Reiss|meta', { levers: [] }).error);
+  t('worker: a record keeps its channel (Meta only — none is Google)', ok('r:Superdry|rec-meta-1', { d: '2026-11-02', mk: ['FR'], k: 'rc', v: 60, ch: 'meta' }).value.ch === 'meta' && ok('r:Superdry|rec-goo-1', { d: '2026-11-02', mk: ['FR'], k: 'rc', v: 60, ch: 'tiktok' }).value.ch === undefined);
+  t('worker: All brands counts each channel’s plan', W.leverBrands({ 'p:Superdry|meta': { levers: [{ k: 'rc', bau: 65 }] } }, ['Superdry'])[0].meta === 1);
+  t('worker: a signin reads both channels of the brands in its scope', Object.keys(W.leverView({ 'p:Superdry|meta': {}, 'm:Superdry|FR|meta': {}, 'p:Reiss|meta': {} }, (b) => b === 'Superdry')).join() === 'p:Superdry|meta,m:Superdry|FR|meta');
+  t('page: the channel switch on the levers card, remembered per device, everything read and written on it', /id="lev-ch"/.test(SP) && /recall\('fcc-stock-lvch'\)/.test(SP) && /remember\('fcc-stock-lvch'/.test(SP)
+    && /SL\.model\(LV\.store, b, mk, lvRoster\(b\), lvToday\(\), LV\.ch\)/.test(SP) && /d\[SL\.planKey\(b, LV\.ch\)\]/.test(SP) && /SL\.marketKey\(b, mkName, LV\.ch\)/.test(SP) && !/'m:' \+ b \+ '\|' \+ (mkName|r\.market)/.test(SP) && /if \(LV\.ch === 'meta'\) o\.ch = 'meta';/.test(SP));
+}
+
 console.log('· route, page, stub, nothing committed');
 t('worker: the engine served verbatim at /stock/levers.js (a Text module by the *_engine.js rule)', /import STOCKLEVERS_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/stocklevers_engine\.js";/.test(WK) && /path === '\/stock\/levers\.js'/.test(WK));
 t('worker: GET/PUT /api/rules/levers — scoped, the kvmerge envelope with explicit tombstones, logged', /if \(path === '\/api\/rules\/levers' && \(request\.method === 'GET' \|\| request\.method === 'PUT'\)\)/.test(WK) && /LEVERS\.sanitizeLeverPut\(body, lctx\)/.test(WK)
@@ -340,8 +381,8 @@ t('page: half-typed form values survive a re-render a save elsewhere triggers', 
 t('page: → Brief opens the Workflow composer with the switch as the brief (technical, from the levers)', /tab\('\/workflow\?brief=' \+ lvB64\(\{ client: b, task: task, cat: 'technical', scope: scope, source: 'stock-levers' \}\)/.test(SP));
 t('page: a switch marked briefed BEFORE the page leaves (flushed now, then navigate)', /lvSetStep\(q, dir, 'briefed', true, go\)/.test(SP));
 t('page: every rule in the switch list opens on FeedHero', /fhUrl\(x\.cmpid, n\)/.test(SP));
-t('page: every brand on All brands — four levers each, a plan or not; a brand with no plan opens its matrix, its plan saved on the first edit', /var bl = LV\.brands \|\| \[\];/.test(SP) && /\(x\.levers \? x\.levers \+ ' of 4 planned' : 'no plan yet'\)/.test(SP)
-  && !/data-act="lv-start"/.test(SP) && /function lvPlanPut\(b, p, fn\) \{\n    var d = \{\}; d\['p:' \+ b\] = \{ levers: SL\.planLevers\(p\)\.map\(fn\), note: \(p && p\.note\) \|\| '' \}; lvPut\(d\);/.test(SP));
+t('page: every brand on All brands — four levers each, a plan or not; a brand with no plan opens its matrix, its plan saved on the first edit', /var bl = LV\.brands \|\| \[\];/.test(SP) && /\(x\.levers \? x\.levers \+ ' of 4 planned' : 'no plan yet'\) \+ \(x\.meta \? ' · Meta ' \+ x\.meta \+ ' of 4' : ''\)/.test(SP)
+  && !/data-act="lv-start"/.test(SP) && /function lvPlanPut\(b, p, fn\) \{\n    var d = \{\}; d\[SL\.planKey\(b, LV\.ch\)\] = \{ levers: SL\.planLevers\(p\)\.map\(fn\), note: \(p && p\.note\) \|\| '' \}; lvPut\(d\);/.test(SP));
 t('page: four lever tiles, one width — two columns on a narrower screen or beside the forecast panel', /#lev-card \.lev-plan\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/.test(SP));
 t('page: MARKETS THAT READ THE SAME SHARE A ROW — grouped from 8 markets unless the device chose, the switch remembered per device, a group\'s market chip opening its own values', /var LVGRP_AT = 8;/.test(SP)
   && /function lvGrouped\(M\) \{ var v = recall\('fcc-stock-lvgrp'\); return v === '1' \? true : v === '0' \? false : M\.rows\.length >= LVGRP_AT; \}/.test(SP)

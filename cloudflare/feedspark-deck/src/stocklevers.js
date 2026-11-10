@@ -66,7 +66,8 @@ function step(s, was, ctx) {
 export function sanitizeLeverKey(key, v, ctx) {
   const k = String(key || '');
   let m;
-  if ((m = /^p:(.{1,80})$/.exec(k))) {
+  // the Google Shopping plan is p:<Brand>, the Meta plan p:<Brand>|meta (docs/stocklevers_engine.js › THE CHANNEL)
+  if ((m = /^p:([^|]{1,80})(?:\|meta)?$/.exec(k))) {
     const brand = m[1];
     if (ctx.brands.indexOf(brand) < 0) return { error: 'not a roster brand: ' + brand };
     if (!ctx.inScope(brand)) return { error: 'out of scope: ' + brand };
@@ -104,7 +105,8 @@ export function sanitizeLeverKey(key, v, ctx) {
     }
     return { value: { levers, note: str(v.note, 300), by: ctx.by, at: ctx.now } };
   }
-  if ((m = /^m:(.{1,80})\|([A-Z-]{2,8})$/.exec(k))) {
+  // a market's own values: m:<Brand>|<MKT> on Google Shopping, m:<Brand>|<MKT>|meta on Meta
+  if ((m = /^m:([^|]{1,80})\|([A-Z-]{2,8})(?:\|meta)?$/.exec(k))) {
     const brand = m[1], mk = m[2];
     if (ctx.brands.indexOf(brand) < 0) return { error: 'not a roster brand: ' + brand };
     if (!ctx.inScope(brand)) return { error: 'out of scope: ' + brand };
@@ -155,6 +157,7 @@ export function sanitizeLeverKey(key, v, ctx) {
     const o = { d: v.d, mk, k: rk, mode: v.mode === 'sale' || v.mode === 'bau' ? v.mode : '', v: to, note: str(v.note, 300) };
     if (from !== null) o.was = from;
     const src = str(v.src, 60); if (src) o.src = src;
+    if (v.ch === 'meta') o.ch = 'meta';   // a Meta record; none = Google Shopping
     if (prev && prev.by) { o.by = prev.by; o.at = prev.at || ctx.now; o.ed = { by: ctx.by, at: ctx.now }; } else { o.by = ctx.by; o.at = ctx.now; }
     return { value: o };
   }
@@ -192,7 +195,9 @@ export function leverBrands(store, mine) {
   return (mine || []).map((b) => {
     const p = store && store['p:' + b], has = (pre) => Object.keys(store || {}).filter((k) => k.indexOf(pre + b + '|') === 0).length;
     const set = p && Array.isArray(p.levers) ? p.levers.filter((l) => l && (l.bau != null || l.sale != null) && KINDS[keyOf(l.k)]).length : 0;
-    return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, periods: has('e:'), records: has('r:') };
+    const pm = store && store['p:' + b + '|meta'];
+    const setm = pm && Array.isArray(pm.levers) ? pm.levers.filter((l) => l && (l.bau != null || l.sale != null) && KINDS[keyOf(l.k)]).length : 0;
+    return { client: b, plan: !!(p && Array.isArray(p.levers)), levers: set, meta: setm, periods: has('e:'), records: has('r:') };
   });
 }
 
