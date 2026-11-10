@@ -224,7 +224,7 @@ const DET = { present: true, filled: 6720, full: 1200, target: 3, cov: 41.3, avg
     await xp.close();
     // and the PDF carries none — paper cannot hover
     await page.evaluate(() => { window.__h2dep = null; window.html2canvas = (el) => { const d = el.ownerDocument; if (d !== document && window.__h2dep == null) window.__h2dep = d.querySelectorAll('.dep-hov,.dep-card').length; return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
-      window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdep = true; }; } }; });
+      window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.link = (x, y, w, h, o) => { (window.__pdfLinks = window.__pdfLinks || []).push({ x, y, w, h, url: o && o.url }); }; this.save = () => { window.__pdfdep = true; }; } }; });
     await page.click('#det-pdf');
     await page.waitForFunction(() => window.__pdfdep === true, null, { timeout: 15000 }).catch(() => {});
     ok('…and the PDF carries no depth table at all', await page.evaluate(() => window.__h2dep) === 0, await page.evaluate(() => window.__h2dep));

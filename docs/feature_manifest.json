@@ -17251,6 +17251,11 @@
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "if(_asplDone||!LIVE_CONN||!Object.keys(BRIEFS).length)return; _asplDone=true;",
    "pr": 0
+  },
+  {
+   "name": "Golden: the PDF keeps the document's http(s) links clickable (pdfLinks → pdf.link)",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "links.forEach(function (l) { pdf.link(l.x * mm, l.y * mm, l.w * mm, l.h * mm, { url: l.url }); });"
   }
  ]
 }

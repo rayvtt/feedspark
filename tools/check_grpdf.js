@@ -283,7 +283,7 @@ const QUALITY = {
           bg: getComputedStyle(d.body).backgroundColor, w: d.documentElement.clientWidth,
           ring: (() => { const c = d.querySelector('.big-ring svg.br-svg circle:last-child'); return c ? { dash: c.getAttribute('stroke-dasharray'), stroke: c.getAttribute('stroke'), bg: getComputedStyle(d.querySelector('.big-ring')).backgroundImage } : null; })() });
         return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
-      window.jspdf = { jsPDF: function (opts) { this.opts = opts; this.addImage = () => {}; this.save = (name) => { window.__pdfSaved = name; }; } };
+      window.jspdf = { jsPDF: function (opts) { this.opts = opts; this.addImage = () => {}; this.link = (x, y, w, h, o) => { (window.__pdfLinks = window.__pdfLinks || []).push({ x, y, w, h, url: o && o.url }); }; this.save = (name) => { window.__pdfSaved = name; }; } };
     });
     await page.click('#det-pdf');
     await page.waitForTimeout(800);
@@ -297,6 +297,10 @@ const QUALITY = {
     ok('the capture classes are removed once the download completes — no lingering print state', !r.stillCapturing);
     ok('the app is back to normal immediately (no waiting on window.print’s afterprint)', r.chromeBack);
     ok('the button label is restored', r.btnRestored === '⬇ PDF', r.btnRestored);
+    // THE LINKS STAY CLICKABLE (Ray, 10 Nov 2026: "links inside PDF download of golden record is not clickable")
+    const pl = await page.evaluate(() => window.__pdfLinks || []);
+    ok('the PDF carries the document\'s links as clickable areas — Google\'s spec pages among them', pl.length > 0 && pl.some((l) => /support\.google\.com/.test(l.url)), pl.slice(0, 4));
+    ok('…every one an http(s) address inside the 210mm sheet', pl.every((l) => /^https?:\/\//.test(l.url) && l.x >= 0 && l.x + l.w <= 210.5 && l.y >= 0 && l.h > 0), pl.slice(0, 4));
     const cap = await page.evaluate(() => ({ calls: window.__h2c, frames: document.querySelectorAll('iframe.pdf-render').length }));
     const c0 = (cap.calls || [])[0] || {};
     ok('the PDF is rasterised from the ⬇ HTML document, laid out apart from the live page — the same body classes, the cover and its score ring in place of the AM\'s header band, no script',

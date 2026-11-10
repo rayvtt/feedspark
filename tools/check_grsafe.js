@@ -174,8 +174,14 @@ const QUALITY = {
   console.log('-- 3. the PDF');
   const src = fs.readFileSync(SRC, 'utf8');
   const pdfFn = src.slice(src.indexOf('var pdf = new jsPDF('), src.indexOf('pdf.save(', src.indexOf('var pdf = new jsPDF(')) + 10);
-  ok('jsPDF is handed ONE picture and nothing else — no text layer, no link, no script, no attachment, no form field',
-    /pdf\.addImage\(/.test(pdfFn) && !/\.(text|textWithLink|link|addJS|setProperties|createAnnotation|addField|attach)\b/.test(pdfFn.replace(/pdf\.addImage\(/, '')), pdfFn);
+  // since 10 Nov 2026 (Ray: "links inside PDF download of golden record is not clickable") the picture carries the
+  // document's own http(s) links laid back over it — pdf.link with a URL, nothing else; pdfLinks is the only source
+  const pdfRest = pdfFn.replace(/pdf\.addImage\(/, '').replace(/pdf\.link\(l\.x \* mm, l\.y \* mm, l\.w \* mm, l\.h \* mm, \{ url: l\.url \}\)/, '');
+  ok('jsPDF is handed ONE picture and its links — no text layer, no script, no attachment, no form field',
+    /pdf\.addImage\(/.test(pdfFn) && /links\.forEach/.test(pdfFn) && !/\.(text|textWithLink|link|addJS|setProperties|createAnnotation|addField|attach)\b/.test(pdfRest), pdfFn);
+  const plFn = src.slice(src.indexOf('function pdfLinks('), src.indexOf('function exportPdf('));
+  ok('a PDF link is only ever a plain http(s) address the scrub kept — never script, data or an in-page anchor',
+    /\^https\?:/.test(plFn) && /EXP_BADURL\.test\(u\)/.test(plFn) && /width < 2/.test(plFn), plFn.slice(0, 200));
   const pp = await open();
   await pp.evaluate(() => {
     window.__cap = null;
@@ -188,11 +194,14 @@ const QUALITY = {
       }
       return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' });
     };
-    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdone = true; }; } };
+    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.link = (x, y, w, h, o) => { (window.__pdfLinks = window.__pdfLinks || []).push({ x, y, w, h, url: o && o.url }); }; this.save = () => { window.__pdfdone = true; }; } };
   });
   await pp.click('#det-pdf');
   await pp.waitForFunction(() => window.__pdfdone === true, null, { timeout: 20000 }).catch(() => {});
   const cap = await pp.evaluate(() => window.__cap);
+  const plinks = await pp.evaluate(() => window.__pdfLinks || []);
+  ok('every link laid over the PDF is http(s) and inside the page — the poisoned javascript: link is not one of them',
+    plinks.every((l) => /^https?:\/\//i.test(l.url || '') && l.x >= 0 && l.x + l.w <= 210.5 && l.w > 0 && l.h > 0), plinks.slice(0, 5));
   ok('the document the PDF is drawn from is the same scrubbed one — no handler, no script, no invisible character',
     cap && cap.on === 0 && cap.scripts === 0 && !INVIS.test(cap.text) && !cap.text.includes(HIDDEN), cap && { on: cap.on, s: cap.scripts, invis: INVIS.test(cap.text) });
   await pp.close();
@@ -214,8 +223,12 @@ const QUALITY = {
     // jsPDF writes /OpenAction [<page> 0 R /FitH null] — a VIEW (open at page 1, fit width), not an action; anything else
     // under that name (a << /S /JavaScript >> dictionary) is one
     const view = shape.replace(/\/OpenAction\s*\[\s*\d+ 0 R\s*\/(FitH|FitV|Fit|FitB|XYZ)[^\]]*\]/g, '');
-    const acts = view.match(/\/(JavaScript|JS|OpenAction|AA|URI|Launch|EmbeddedFile|AcroForm|SubmitForm|GoToR|Annots)\b/g) || [];
-    ok('the real PDF holds no action, script, link, form, attachment or text — the page draws one image',
+    // a /Link annotation whose /A is << /S /URI /URI (http…) >> is the one thing allowed — the document's own links
+    const uris = [...view.matchAll(/\/URI\s*\(([^)]*)\)/g)].map((m) => m[1]);
+    const view2 = view.replace(/\/S\s*\/URI\s*\/URI\s*\([^)]*\)/g, '').replace(/\/Annots\b/g, '');
+    const acts = view2.match(/\/(JavaScript|JS|OpenAction|AA|URI|Launch|EmbeddedFile|AcroForm|SubmitForm|GoToR|Annots)\b/g) || [];
+    ok('every link in the real PDF is an http(s) address', uris.every((u) => /^https?:\/\//i.test(u)), uris.slice(0, 5));
+    ok('the real PDF holds no action, script, form, attachment or text — the page draws one image (plus its links)',
       bytes.length > 1000 && acts.length === 0 && imgs === 1 && drawn.every((c) => !/\bBT\b/.test(c) && /\bDo\b/.test(c)), { len: bytes.length, acts, imgs, drawn: drawn.map((c) => c.slice(0, 120)) });
     await rp.close();
   } else console.log('   · the real PDF bytes are read with GRPDF_LIBS=<dir with html2canvas.min.js + jspdf.umd.min.js>');

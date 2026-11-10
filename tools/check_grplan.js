@@ -153,7 +153,7 @@ const QUALITY = {
       if (d !== document && !window.__cap) { const pp = d.getElementById('print-plan');
         window.__cap = { lanes: pp ? pp.querySelectorAll('.ap-lane').length : 0, shown: pp ? d.defaultView.getComputedStyle(pp).display !== 'none' : false, text: d.body.textContent }; }
       return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
-    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdone = true; }; } };
+    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.link = (x, y, w, h, o) => { (window.__pdfLinks = window.__pdfLinks || []).push({ x, y, w, h, url: o && o.url }); }; this.save = () => { window.__pdfdone = true; }; } };
   });
   await page.click('#det-pdf');
   await page.waitForFunction(() => window.__pdfdone === true, null, { timeout: 20000 }).catch(() => {});
