@@ -16,14 +16,14 @@
  *
  * Commercial model (v1):
  *   one-off  = setup hours (ASPL + AM QC + PM, per optimisation) rounded UP to 8h retainer
- *              blocks × block £  +  SparkAI processing (unit £/product × volume through the
+ *              blocks × block £  +  Tachyon processing (unit £/product × volume through the
  *              MARGINAL tier ladder — each band priced like tax brackets)
  *   monthly  = monitoring hours/mo (block-rounded unless "absorb into existing retainer")
  *              + optional refresh processing (newPct of volume × unit £/product each month)
  *   sla      = longest selected lead time + 2 working days per extra optimisation (stagger)
  *   VOLUME UNIT = PARENT PRODUCTS — unique g:item_group_id, NOT variant SKUs (Ray, 10 Sep
  *              2026: "for parent products (g:item_group_id) because of unique products").
- *              SparkAI generates once per unique product and the variants inherit, so a
+ *              Tachyon generates once per unique product and the variants inherit, so a
  *              dress in six sizes is ONE billable unit. parentCounter() below is the single
  *              counting rule every page streams a feed through; a row with no item_group_id
  *              is its own product, so single-SKU catalogues price 1:1.
@@ -33,7 +33,7 @@
 (function (g) {
   'use strict';
 
-  // The SparkAI catalogue ("What We Do") — 11 optimisations in 6 groups. RETIRED entries (must
+  // The Tachyon catalogue ("What We Do") — 11 optimisations in 6 groups. RETIRED entries (must
   // stay gone): an "AI Text Attribute Extraction" entry was added 10 Sep 2026 and pulled the same
   // day — Ray: "not needed ever"; the two "AI Pre-Description" entries (plain + Highlighting
   // Attributes) were pulled 10 Sep 2026 — Ray: "remove AI Pre Description also". Their
@@ -66,7 +66,7 @@
 
   // Retainer + tier defaults (rate card can override all of it).
   // blockGBP/blockHours = the London ratecard (£585 ex VAT per 8h → £73.125/h).
-  // tiers = MARGINAL volume ladder on the SparkAI unit rate.
+  // tiers = MARGINAL volume ladder on the Tachyon unit rate.
   var DEFAULTS = {
     blockGBP: 585, blockHours: 8,
     tiers: [
@@ -187,7 +187,7 @@
     var monthly = { monHours: h.mon, absorbed: !!opts.absorbMonitoring,
       blocks: opts.absorbMonitoring ? 0 : monBlocks,
       blockCost: opts.absorbMonitoring ? 0 : round2(monBlocks * blockGBP),
-      refreshPct: refreshPct, refreshSparkAI: refreshTach,
+      refreshPct: refreshPct, refreshTachyon: refreshTach,
       total: round2((opts.absorbMonitoring ? 0 : monBlocks * blockGBP) + refreshTach) };
     var sla = rows.length ? lead + (rows.length - 1) * (isFinite(+opts.staggerDays) ? +opts.staggerDays : DEFAULTS.staggerDays) : 0;
     return { picks: rows.map(function (r) { return r.id; }), volume: vol, unit: 'product', skus: skus, tier: tv,
@@ -218,7 +218,7 @@
     L.push('ONGOING (MONTHLY)');
     if (q.monthly.absorbed) L.push('  Monitoring: ' + q.monthly.monHours + 'h/mo — absorbed into the existing retainer');
     else L.push('  Monitoring: ' + q.monthly.monHours + 'h/mo = ' + q.monthly.blocks + ' × ' + fmtGBP(q.blockGBP) + ' = ' + fmtGBP(q.monthly.blockCost) + ' ex VAT');
-    if (q.monthly.refreshPct > 0) L.push('  New/refreshed products (~' + Math.round(q.monthly.refreshPct * 100) + '%/mo): ' + fmtGBP(q.monthly.refreshSparkAI) + ' ex VAT');
+    if (q.monthly.refreshPct > 0) L.push('  New/refreshed products (~' + Math.round(q.monthly.refreshPct * 100) + '%/mo): ' + fmtGBP(q.monthly.refreshTachyon) + ' ex VAT');
     L.push('  Monthly total: ' + fmtGBP(q.monthly.total) + ' ex VAT');
     L.push('');
     L.push('Live in ~' + q.slaDays + ' working days from sign-off.');
