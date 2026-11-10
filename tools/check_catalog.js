@@ -203,15 +203,15 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
       const ms = Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).map((m) => { const r = m.getBoundingClientRect(); return { id: m.dataset.mod, t: Math.round(r.top), h: Math.round(r.height), l: Math.round(r.left), w: Math.round(r.width) }; });
       const rows = {}; ms.forEach((m) => { (rows[m.t] = rows[m.t] || []).push(m); });
       const k = document.querySelectorAll('#kpis .kpi'), kh = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().height))), kt = new Set(Array.from(k).map((x) => Math.round(x.getBoundingClientRect().top)));
-      const one = ms.filter((m) => m.id !== 'pix' && m.id !== 'ptd'), px = ms.filter((m) => m.id === 'pix')[0] || null, ins = document.getElementById('ins').getBoundingClientRect();
+      const one = ms.filter((m) => m.id !== 'pix' && m.id !== 'ptd' && m.id !== 'kwr'), px = ms.filter((m) => m.id === 'pix')[0] || null, ins = document.getElementById('ins').getBoundingClientRect();
       return { n: ms.length, hs: new Set(ms.map((m) => m.h)).size, ws: new Set(one.map((m) => m.w)).size, rows: Object.values(rows).map((r) => r.length), kpis: k.length, kh: kh.size, kt: kt.size,
         px: px && { w: px.w, full: Math.abs(px.w - Math.round(ins.width)) <= 2 },
         ptd2: (function () { const p = ms.filter((m) => m.id === 'ptd')[0], o = one[0]; return !!(p && o && p.w > o.w * 2); })() };
     });
-    ok('twenty-one modules, every one the same height; the nineteen single cards one width', grid.n === 21 && grid.hs === 1 && grid.ws === 1, grid);
+    ok('twenty-two modules, every one the same height; the nineteen single cards one width', grid.n === 22 && grid.hs === 1 && grid.ws === 1, grid);
     ok('Image pixels spans the whole row', grid.px && grid.px.full, grid.px);
-    ok('three to a row at 1440px — seven full rows (Product type depth two wide beside one card) and the Image pixels row, no hole',
-      grid.rows.length === 8 && grid.rows.filter((r) => r === 3).length === 6 && grid.rows.filter((r) => r === 2).length === 1 && grid.rows.filter((r) => r === 1).length === 1 && grid.ptd2, grid.rows);
+    ok('three to a row at 1440px — seven full rows (Product type depth two wide beside one card), the Image pixels row and the Keyword tests row, no hole',
+      grid.rows.length === 9 && grid.rows.filter((r) => r === 3).length === 6 && grid.rows.filter((r) => r === 2).length === 1 && grid.rows.filter((r) => r === 1).length === 2 && grid.ptd2, grid.rows);
     ok('the KPI band is one row of equal tiles', grid.kpis === 7 && grid.kh === 1 && grid.kt === 1, grid);
     // CUSTOM LABELS + PRODUCT TYPE DEPTH (Ray, 8 Oct 2026: "add custom label values overview in the customisable module in golden
     // record report as well" · "product type breakdown as well especially the depth table as modularised component") — read
@@ -371,7 +371,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     await pg.evaluate(() => { const c = document.querySelector('#mods-p [data-mod-on="price"]'); c.click(); });
     await pg.waitForTimeout(200);
     const hid = await pg.evaluate(() => ({ hidden: document.getElementById('m-price').hidden, disp: getComputedStyle(document.getElementById('m-price')).display, saved: localStorage.getItem('fcc-cat-mods'), note: document.getElementById('mods-s').textContent }));
-    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /20 of 21/.test(hid.note), hid);
+    ok('⊞ Modules hides a module (painted, not just flagged), remembers it on the device, and says so', hid.hidden && hid.disp === 'none' && /"price":1/.test(hid.saved || '') && /21 of 22/.test(hid.note), hid);
     await pg.evaluate(() => { document.querySelector('#mods-p [data-reset]').click(); });
     await pg.waitForTimeout(200);
     ok('Reset puts every module back', await pg.evaluate(() => !document.getElementById('m-price').hidden && !localStorage.getItem('fcc-cat-mods')));
@@ -380,7 +380,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     // 👔 Procurement view: nine modules, the commercial six first, the operational ones put away — and off again restores all
     await pg.click('#proc-b'); await pg.waitForTimeout(300);
     const pv = await pg.evaluate(() => ({ shown: Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden && getComputedStyle(m).display !== 'none').sort((a, b) => (+a.style.order) - (+b.style.order)).map((m) => m.dataset.mod), on: document.getElementById('proc-b').getAttribute('aria-pressed'), note: document.getElementById('mods-s').textContent }));
-    ok('👔 Procurement view shows nine modules, the commercial six first, and says so', pv.on === 'true' && pv.shown.length === 9 && pv.shown.slice(0, 6).join() === 'lift,fix,waste,vendor,scope,fee' && /Procurement view · 9 of 21/.test(pv.note), pv);
+    ok('👔 Procurement view shows ten modules, the commercial ones first with the keyword tests under Optimised vs not, and says so', pv.on === 'true' && pv.shown.length === 10 && pv.shown.slice(0, 7).join() === 'lift,fix,waste,kwr,vendor,scope,fee' && /Procurement view · 10 of 22/.test(pv.note), pv);
     // optimised vs not: FeedHero's own cut of Google Ads, re-added in node
     const lr = DATA.live.Title_optimisation_status.rows.filter((r) => !/unlisted/i.test(r.category));
     const side = (r) => (/non/i.test(r.category) ? 'n' : 'o'), acc = { o: { s: 0, r: 0, sp: 0 }, n: { s: 0, r: 0, sp: 0 } };
@@ -391,6 +391,17 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const rowOf = (lab) => lift.find((r) => r[0] === lab) || [];
     ok('Optimised vs not: revenue per product and ROAS equal an independent count of the same cut', rowOf('Revenue per product')[1] === gbp(acc.o.r / acc.o.s) && rowOf('Revenue per product')[2] === gbp(acc.n.r / acc.n.s) && rowOf('ROAS')[1] === Math.round(acc.o.r / acc.o.sp * 100) + '%', { page: [rowOf('Revenue per product'), rowOf('ROAS')], want: [gbp(acc.o.r / acc.o.s), gbp(acc.n.r / acc.n.s), Math.round(acc.o.r / acc.o.sp * 100)] });
     ok('…and says it is a comparison, not a controlled test', await pg.evaluate(() => /not a controlled test/.test(document.getElementById('lift-body').textContent)));
+    // keyword tests: FeedSpark's own read-outs, re-counted in node off the stub's rounds (GB only, this brand only)
+    const kr = DATA.kwr.results.filter((r) => r.client === 'Northwind' && r.mkt === 'GB');
+    const kpos = kr.filter((r) => r.verdict === 'positive').length, kdec = kr.filter((r) => r.verdict !== 'unknown').length;
+    const pctOf = (t) => { const m = /([+-])?\s*(\d+(?:\.\d+)?)\s*%/.exec(t); let v = +m[2]; if (m[1] === '-' || /decrease|down/i.test(t)) v = -v; return v; };
+    const clk = kr.map((r) => (r.metrics.find((l) => /^clicks/i.test(l)))).filter(Boolean).map(pctOf).sort((a, b) => a - b);
+    await pg.waitForFunction(() => document.querySelector('#kwr-body .vs'), null, { timeout: 8000 });
+    const kw = await pg.evaluate(() => ({ hl: document.querySelector('#kwr-body .hl').textContent, rows: Array.from(document.querySelectorAll('#kwr-body .vs tbody tr')).map((tr) => Array.from(tr.children).map((c) => c.textContent.trim())), rounds: document.querySelectorAll('#kwr-body .kwr-r').length, foot: document.querySelector('#kwr-body .cfoot').textContent, full: (function () { const m = document.getElementById('m-kwr').getBoundingClientRect(), i = document.getElementById('ins').getBoundingClientRect(); return Math.abs(m.width - i.width) <= 2; })() }));
+    const kclk = kw.rows.find((r) => /^Clicks/.test(r[0])) || [], kcpc = kw.rows.find((r) => /^CPC/.test(r[0])) || [];
+    ok('Keyword tests: the positive count, the Clicks median and its rounds equal an independent count of this market\'s read-outs', new RegExp('^' + kpos + ' of ' + kdec + ' test rounds read out positive').test(kw.hl) && kclk[1] === '+' + clk[1] + '%' && kclk[2] === clk.filter((v) => v > 0).length + ' of ' + clk.length, { kw, want: { kpos, kdec, clk } });
+    ok('…a cost metric falling counts as improved, the other market and the other brand are left out, and a round with no figure is said so', /^−5%$/.test(kcpc[1] || '') && kcpc[2] === '1 of 1' && kw.rounds === kr.length && /1 with no figure/.test(kw.foot) && /PPC agency/.test(kw.foot), kw);
+    ok('…and the card takes the whole row', kw.full, kw);
     // before and after: the page's headline is the traced catalogue's own average, both ways
     const fx2 = await pg.evaluate(() => { const S = window.__FCCCatalogue.state(), b = document.querySelectorAll('#fix-body .bna b'); return { page: [b[0] && b[0].textContent, b[1] && b[1].textContent], want: S.sum ? [Math.round(S.sum.cb / S.sum.n), Math.round(S.sum.ca / S.sum.n)] : null }; });
     ok('Before and after FeedSpark: master → feed completeness is the traced average both ways', fx2.want && +fx2.page[0] === fx2.want[0] && +fx2.page[1] === fx2.want[1], fx2);
@@ -420,9 +431,17 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     const tN = prods.filter((p) => p.opti && p.opti.T).length;
     const vd = await pg.evaluate(() => { const ks = Array.from(document.querySelectorAll('#vendor-body .evl .k')), vs = document.querySelectorAll('#vendor-body .evl .v'); const i = ks.findIndex((k) => k.textContent === 'Titles rewritten'); return i >= 0 ? vs[i].textContent : null; });
     ok('What the service does: "Titles rewritten" is FeedSpark’s own stamp over every product', vd === tN.toLocaleString('en-GB') + ' fields · ' + Math.round(tN / prods.length * 100) + '%', { page: vd, want: tN + '/' + prods.length });
+    // image overlays: read off the image URL (a FeedSpark image host), never the IMG stamp, which also marks plain image work
+    const ovN = prods.filter((p) => E.isOverlay(p.f.image_link)).length, imgN = prods.filter((p) => p.opti && p.opti.IMG).length;
+    const vo = await pg.evaluate(() => { const ks = Array.from(document.querySelectorAll('#vendor-body .evl .k')), vs = document.querySelectorAll('#vendor-body .evl .v'); const i = ks.findIndex((k) => k.textContent === 'Image overlays'); return i >= 0 ? vs[i].textContent : null; });
+    ok('What the service does: "Image overlays" counts overlay images, not the IMG stamp (' + ovN + ' of ' + imgN + ' stamped)', ovN < imgN && vo === ovN.toLocaleString('en-GB') + ' images · ' + Math.round(ovN / prods.length * 100) + '%', { page: vo, want: ovN });
     // the service in numbers: feeds run = every LIVE feed FeedHero sends, every channel (the stub's book), never only the wired Google + Meta
     const fr = await pg.evaluate(() => { const t = document.querySelectorAll('#scope-body .tiles .t')[1]; return t ? { b: t.querySelector('b').textContent, s: t.querySelector('small').textContent } : null; });
-    ok('The service in numbers: feeds run counts every channel FeedHero sends', fr && fr.b === '5' && /Pinterest/.test(fr.s) && /TikTok/.test(fr.s), fr);
+    ok('The service in numbers: feeds run counts every channel FeedHero sends', fr && fr.b === '5' && /^across all 1 market$/.test(fr.s), fr);
+    const mkl = await pg.evaluate(() => { const m = document.querySelector('#scope-body .fm-mk'); return m ? { s: m.textContent, tip: m.title } : null; });
+    ok('…and names the brand’s markets by what they run (Shopping vs Wunderkind only), each listed in the tip', mkl && /^1 market · 1 Shopping$/.test(mkl.s) && /Shopping: GB/.test(mkl.tip), mkl);
+    const fmx = await pg.evaluate(() => Array.from(document.querySelectorAll('#scope-body .fm-g .fm-k')).map((k) => k.textContent + '=' + k.nextElementSibling.nextElementSibling.textContent));
+    ok('…and lists every channel with its feed count under the tiles', fmx.join('|') === 'Google=2|Meta=1|Pinterest=1|TikTok=1', fmx);
     ok('…a capability the page cannot read says so rather than scoring a zero', await pg.evaluate(() => /not readable here/.test(document.getElementById('vendor-body').textContent)));
     // fee check: empty until typed, then the buyer's own figure over the catalogue and the Ads revenue — kept on the device only
     ok('Fee check is empty until a fee is typed', await pg.evaluate(() => { localStorage.removeItem('fcc-cat-fee'); document.getElementById('fee-a').value = ''; document.getElementById('fee-a').dispatchEvent(new Event('input')); return !document.querySelector('#fee-out .kvl'); }));
@@ -432,7 +451,7 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('Fee check: per product and against Ads revenue are the typed fee over this catalogue and this market', fee.o['Per product, a month'] === gbp(2500 / prods.length) && fee.o['vs Google Ads revenue'] === fpc(2500 / rev) && fee.o['Costs more by'] === gbp(700 * 12), fee);
     ok('…and the fees stay on this device (fcc-cat-fee), never a request', JSON.parse(fee.saved || '{}').a === 2500);
     await pg.click('#proc-b'); await pg.waitForTimeout(250);
-    ok('turning the view off brings all twenty-one back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 21 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
+    ok('turning the view off brings all twenty-two back', await pg.evaluate(() => Array.from(document.querySelectorAll('#ins > .mod')).filter((m) => !m.hidden).length === 22 && document.getElementById('proc-b').getAttribute('aria-pressed') === 'false'));
     ok('no page errors', errs.length === 0, errs.slice(0, 5));
     await ctx.close();
 
@@ -537,10 +556,14 @@ const nodeOf = (pt) => { let o = null; (function walk(ns) { (ns || []).forEach((
     ok('⚡ the read walks every market, then puts the reader back on GB', seen.join() === 'Northwind|gb,Northwind|ie' && await tp.evaluate(() => window.__FCCCatalogue.state().mkt) === 'gb', seen);
     if (process.env.CAT_SHOT) { await tp.evaluate(() => document.querySelector('.modbar').scrollIntoView()); await tp.screenshot({ path: path.join(process.env.CAT_SHOT, 'cat_allmkts.png'), fullPage: false }); }
     ok('Products managed adds both markets (' + wantAll.n + ')', num(await tile()) === wantAll.n, await tile());
+    const mk2 = await tp.evaluate(() => (document.querySelector('#scope-body .fm-mk') || {}).textContent || '');
+    ok('a Shopping market that also runs Wunderkind says so (Shopping + Wunderkind)', /^3 markets · 2 Shopping \+ Wunderkind · 1 Wunderkind only$/.test(mk2), mk2);
     const fixFoot = await tp.evaluate(() => (document.querySelector('#fix-body .cfoot') || {}).textContent || '');
     ok('Before and after traces every market\'s products and says how many markets it read', /\b40\b products traced/.test(fixFoot) && /2 of 2 markets/.test(fixFoot), fixFoot);
     const bdg = await tp.evaluate(() => ({ fix: (document.querySelector('#m-fix .scb') || {}).textContent, roas: (document.querySelector('#roas-card .scb') || {}).textContent }));
-    ok('the nine cards are badged All 2 markets, a one-market card keeps its market', bdg.fix === 'All 2 markets' && bdg.roas === 'GB', bdg);
+    ok('the ten cards are badged All 2 markets, a one-market card keeps its market', bdg.fix === 'All 2 markets' && bdg.roas === 'GB', bdg);
+    const kwa = await tp.evaluate(() => ({ b: (document.querySelector('#m-kwr .scb') || {}).textContent, n: document.querySelectorAll('#kwr-body .kwr-r').length, ie: /Sep II · IE/.test((document.getElementById('kwr-body') || {}).textContent || '') }));
+    ok('Keyword tests read every market\'s rounds in All markets (GB and IE), each round naming its market', kwa.b === 'All 2 markets' && kwa.n === DATA.kwr.results.filter((r) => r.client === 'Northwind').length && kwa.ie, kwa);
     const w1 = await tp.evaluate(() => ({ hl: (document.querySelector('#waste-body .hl b:last-of-type') || document.querySelector('#waste-body .hl b') || {}).textContent, foot: (document.querySelector('#waste-body .cfoot') || {}).textContent || '', cur: (document.getElementById('sc-cur') || {}).value }));
     ok('money stays in one currency: the budget card adds GB\'s pounds only and names the EUR market it left out', w1.cur === 'GBP' && Math.abs(num(w1.hl) - wantAll.gbp) < 0.02 && /1 in another currency not added/.test(w1.foot), { w1, want: wantAll.gbp });
     await tp.selectOption('#sc-cur', 'EUR'); await tp.waitForTimeout(300);

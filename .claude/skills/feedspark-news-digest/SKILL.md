@@ -108,6 +108,42 @@ Rules that matter:
   account list). Generic "brands should prepare for AI" lines are worse than no item.
 - Keep the whole file under ~200 lines. This is a pop-up, not a report.
 
+## Step 3b — Show it (optional media)
+
+Ray, 2 Nov 2026: *"bring in graphic / images / video if needed as well to demonstrate."* An item
+MAY carry a `media` array (up to 3 entries; 10 across the digest) when a visual demonstrates the
+point better than the sentence does. **Most items carry none** — a visual that does not demonstrate
+anything is clutter, and the AM is skimming this in ten seconds.
+
+```json
+"media": [
+  { "type": "video", "url": "https://about.fb.com/…/Muse_Shopping.mp4",
+    "poster": "https://about.fb.com/…/share.jpg", "alt": "Meta's demo of Muse buying a product",
+    "caption": "Meta's own shopping demo, from the launch post", "credit": "Meta" },
+  { "type": "image", "url": "https://corporate.walmart.com/…/Lead-two-phones.webp",
+    "alt": "Walmart Agent Profiles: a spending limit set for an agent", "credit": "Walmart" },
+  { "type": "chart", "title": "Who shops with Muse (weekly actives)", "unit": "%",
+    "source": "First Page Sage panel, n=4,180, 8 Sep–25 Oct 2026",
+    "bars": [ { "label": "Used it to shop", "value": 47.2 }, { "label": "Bought through it", "value": 22.8 } ] }
+]
+```
+
+Rules, each of which the gate (`tools/check_news.js`) enforces where it can:
+- **Three types only.** `image` and `video` need an `https` `url` to the file itself and an `alt`
+  that says what it shows; a `video` may carry a `poster`. A `chart` is drawn by the page from
+  `bars` (2–8 `{label, value}` rows, one `unit`, a `source` naming where the numbers come from) —
+  it never carries a url.
+- **A chart only plots figures the item already states**, in one unit, from one source. Never mix
+  Meta's number with a vendor panel's on one chart, never estimate a bar, never draw a trend from
+  two points.
+- **Use the platform's own media** (about.fb.com, blog.google, openai.com, corporate.walmart.com,
+  a newsroom share image, a product demo clip) or openly licensed images. **Never hotlink a
+  publisher's article photo** (TechCrunch, Fortune, trade press) — it is their licence, not ours,
+  and it breaks when they move it. Read the `og:image` of the primary source when you need a still.
+- A video is shown as a poster with a play button and loads only when tapped, so a 14MB clip is
+  fine; still, prefer the platform's short demo over a keynote.
+- Credit the owner in `credit`; the caption says what the visual demonstrates, not what it is.
+
 ## Step 4 — Ship it
 
 The Routine runs as a **cloud session**, and a cloud session pushes freely only to `claude/`-prefixed

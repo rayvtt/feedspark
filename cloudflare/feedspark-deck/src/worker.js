@@ -75,6 +75,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 import * as SOCLOGO from "./sociallogo.js";
 import * as RET from "./retired.js";
 import * as SL from "./spendlens.js";   // Spend Lens: where a market's Google Ads money sits against what it returns (src/spendlens.js)
+import * as GMC from "./gmcvis.js";   // GMC competitive visibility off FeedHero's gmc_visibility (src/gmcvis.js)
 import * as TL from "./testlab.js";   // Test Lab: the Playbook's test proposals + the competitor Shopping read (src/testlab.js)   // retired clients: a list in KV, purged from every store (src/retired.js)
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
@@ -3212,7 +3213,19 @@ async function route(request, env, ctx) {
             const t = { live: 0, paused: 0, google: 0, kinds: {}, read: 0 };
             ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid]; if (!b) return; t.live += b.live; t.paused += b.paused; t.read++;
               t.google += b.feeds.filter((f) => f.k === 'google' && f.st === 'a').length;
-              b.feeds.forEach((f) => { if (f.st === 'a' && f.k !== 'audit') t.kinds[f.k] = (t.kinds[f.k] || 0) + 1; }); });
+              b.feeds.forEach((f) => { if (f.st === 'a' && f.k !== 'audit') { t.kinds[f.k] = (t.kinds[f.k] || 0) + 1; const km = t.km || (t.km = {}); const L = km[f.k] || (km[f.k] = []); if (L.indexOf(m.market) < 0) L.push(m.market); } }); });
+            // WHAT EACH MARKET RUNS (Ray, 3 Nov 2026: "Superdry has 19 markets (7 live with Shopping) and rest is
+            // Wunderkind (12 markets)"): a market is SHOPPING when FeedHero sends it a live Google Shopping feed, else
+            // named by the one channel it runs (wunderkind) or 'other', 'paused' when every feed it has is paused, and
+            // 'unread' when the book carries no row for it — never folded into another bucket
+            t.mk = { shop: [], wunderkind: [], other: [], paused: [], unread: [] };
+            ROAS.rosterOf(c).forEach((m) => { const b = book[m.cmpid], lab = m.market;
+              if (!b) { t.mk.unread.push(lab); return; }
+              const live = b.feeds.filter((f) => f.st === 'a' && f.k !== 'audit');
+              if (live.some((f) => f.k === 'google')) t.mk.shop.push(lab);
+              else if (!live.length) t.mk.paused.push(lab);
+              else if (live.every((f) => f.k === 'wunderkind')) t.mk.wunderkind.push(lab);
+              else t.mk.other.push(lab); });
             t.markets = ROAS.rosterOf(c).length; fh[c] = t;
           }
           if (!list.length) delete out[c];
@@ -4220,7 +4233,13 @@ async function scheduledRun(event, env, ctx) {
     if (event && event.cron === '10,40 * * * *') {
       const mi = new Date((event && event.scheduledTime) || Date.now()).getUTCMinutes();
       if (mi >= 30 && RULES.rulesDue(await env.EDITS.get('rulesstatus', 'json'), ROAS.rosterList(), Date.now())) { await rulesPull(env); return; }
-      await roasPull(env);
+      // ONE MCP session serves both reads: the ROAS rotation, then GMC_PULLS companies' Merchant
+      // Center visibility (3 calls each, one KV get + one put for the whole store) — ~45 subrequests
+      // in all, under the 50 a firing allows. A rules firing never carries the GMC read.
+      let mcp = null;
+      if (env.ROAS_MCP_TOKEN) { try { const x = roasMcp(env, fetch); await x.init(); mcp = x; } catch (e) { mcp = null; } }
+      await roasPull(env, mcp ? { mcp } : {});
+      if (mcp) await gmcPull(env, { mcp });
       return;
     }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
@@ -5065,6 +5084,37 @@ async function roasPull(env, opts) {
       error: msg,
     }));
   }
+}
+
+// ---- GMC COMPETITIVE VISIBILITY (Ray, 2 Nov 2026: "start importing competitors on Google Shopping via the
+// new data from Google Merchant Center"): FeedHero's gmc_visibility, read three ways (all / ads / organic)
+// per roster company, stalest first, once a day (GMC_STALE_MS). ONE KV key, `gmcvis` = {cmpid: record},
+// so a firing costs one get and one put however many companies it reads, and /api/testlab reads the
+// whole store in one get. A company that answers nothing is stored with the source's reason, never as
+// "no competitors". Competitor domains are client data: KV only.
+async function gmcPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  if (!env.ROAS_MCP_TOKEN) return { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — the GMC read uses the same FeedHero reports token as ROAS' };
+  const mcp = opts.mcp || roasMcp(env, opts.fetch || fetch);
+  const store = (await env.EDITS.get('gmcvis', 'json')) || {};
+  const roster = ROAS.rosterList();
+  const plan = opts.only ? roster.filter((m) => m.cmpid === opts.only) : GMC.gmcPlan(roster, store, opts.pulls == null ? GMC.GMC_PULLS : opts.pulls, now);
+  const pulled = [];
+  let err = null, code = null;
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    for (const m of plan) {
+      const bySrc = {};
+      for (const src of GMC.GMC_SOURCES) bySrc[src] = await mcp.call('gmc_visibility', { client: m.cmpid, source: src, page_size: GMC.GMC_ROWS });
+      store[m.cmpid] = GMC.makeRecord(m, bySrc, now);
+      pulled.push(m.client + ' ' + m.market);
+    }
+  } catch (e) { err = String((e && e.message) || e).slice(0, 160); code = e && e.code; }
+  if (pulled.length) { try { await env.EDITS.put('gmcvis', JSON.stringify(store)); } catch (e) { err = err || 'kv put failed'; } }
+  const st = GMC.storeStatus(roster, store, now);
+  if (err) return Object.assign({ state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|timed? ?out|aborted|HTTP 5\d\d/i.test(err) ? 'unreachable' : 'error'), error: err, pulled }, st);
+  return Object.assign({ state: 'ok', pulled }, st);
 }
 
 // ---- RULES: the worker pulls FeedHero's rule_report through roasMcp (same server, same token).
@@ -6857,7 +6907,7 @@ async function goldenRoutes(env, request, url) {
 // neighbour's prefix, and tools/check_routes.js fails the build on any route the router cannot
 // reach. `ctx` is the worker's execution context (logActivity writes through it) — goldenRoutes
 // never took it, which is the second way the spend lens's ⚡ POST could not have worked.
-const RAIL_PATHS = new Set(['/api/outcomes', '/api/spendlens', '/api/testlab', '/api/compwatch', '/api/compwatch/auction']);
+const RAIL_PATHS = new Set(['/api/outcomes', '/api/spendlens', '/api/testlab', '/api/compwatch', '/api/compwatch/auction', '/api/gmcvis']);
 async function railRoutes(env, request, url, ctx) {
   const path = url.pathname;
   /* WHAT THE HOURS MOVED (Ray, 28 Sep 2026: charts "for procurement heads/ senior executives to
@@ -7008,6 +7058,34 @@ async function railRoutes(env, request, url, ctx) {
       mcp: !!env.ROAS_MCP_TOKEN, cuts: SL.SL_CUTS }, lens));
   }
 
+  /* GMC COMPETITIVE VISIBILITY — the store the cron fills (gmcPull). GET = status across the roster, or
+     ?client=<brand> = that brand's markets, each the account's rows in its own country (scoped like
+     /api/testlab). ?pull=N = OWNER-ONLY "read now": N companies (≤4 a call) off the same plan the cron
+     uses, so nobody waits a day for a first read; &cmpid= reads one company. */
+  if (path === '/api/gmcvis' && request.method === 'GET') {
+    const now = Date.now();
+    if (url.searchParams.get('pull')) {
+      if (!realOwner(env, request)) return json({ ok: false, error: 'restricted to the account owner' }, 403);
+      const only = String(url.searchParams.get('cmpid') || '').slice(0, 60);
+      if (only && !ROAS.rosterList().some((m) => m.cmpid === only)) return json({ ok: false, error: 'not a roster company' }, 400);
+      const r = await gmcPull(env, { pulls: Math.min(4, Math.max(1, +url.searchParams.get('pull') || 1)), only: only || null });
+      logActivity(ctx, env, request, 'gmcvis-read', (r.pulled || []).join(', ') || r.state);
+      return json(Object.assign({ ok: r.state === 'ok' }, r));
+    }
+    const store = (await env.EDITS.get('gmcvis', 'json')) || {};
+    const roster = ROAS.rosterList();
+    const who = String(url.searchParams.get('client') || '').slice(0, 60).trim();
+    if (!who) return json(Object.assign({ ok: true, on: !!env.ROAS_MCP_TOKEN }, GMC.storeStatus(roster, store, now)));
+    if (who.indexOf(':') >= 0 || who.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+    const acc = await accessOf(env, request);
+    if (acc.clients && !clientMatch(acc.clients, who)) return json({ ok: false, error: 'out of scope' }, 403);
+    const markets = roster.filter((m) => clientSlug(m.client) === clientSlug(who)).map((m) => {
+      const v = GMC.marketView(store[m.cmpid], GMC.ccOf(m.market));
+      return { market: m.market, cmpid: m.cmpid, view: v, signals: GMC.gmcSignals(v) };
+    });
+    return json({ ok: true, on: !!env.ROAS_MCP_TOKEN, client: who, markets });
+  }
+
   if (path === '/api/testlab' && request.method === 'GET') {
     const who0 = String(url.searchParams.get('client') || '').slice(0, 60).trim();
     if (!who0 || who0.indexOf(':') >= 0 || who0.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
@@ -7051,7 +7129,11 @@ async function railRoutes(env, request, url, ctx) {
     const reads = await Promise.all(feeds.map((f) => env.EDITS.get('compwatch:' + brand + ':' + f.mkt, 'json').catch(() => null)));
     // and the Auction Insights the AM uploaded (no API): the report's own competitors by impression share
     const aucs = await Promise.all(feeds.map((f) => env.EDITS.get('compauction:' + brand + ':' + f.mkt, 'json').catch(() => null)));
-    const comp = { on: !!env.SERPAPI_KEY, markets: {}, signals: [], meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } };
+    // and Merchant Center's own competitive visibility (gmcvis, filled by the cron off FeedHero): the
+    // account's rows in each market's own country
+    const gstore = (await env.EDITS.get('gmcvis', 'json').catch(() => null)) || {};
+    const rlist = ROAS.rosterList();
+    const comp = { on: !!env.SERPAPI_KEY, gmcOn: !!env.ROAS_MCP_TOKEN, markets: {}, signals: [], meta: { on: false, why: 'Meta’s ad creatives are not readable without a Meta Ad Library token (EU ads only under the DSA); what competitors run on Meta is a manual read for now.' } };
     const seenSig = {};
     const addSig = (mkt, src, sg) => { if (!seenSig[sg.k]) { seenSig[sg.k] = 1; comp.signals.push(Object.assign({ mkt, src }, sg)); } };
     feeds.forEach((f, i) => {
@@ -7059,6 +7141,9 @@ async function railRoutes(env, request, url, ctx) {
       const m = {};
       if (r && r.reads.length) { const sm = TL.compSummary(r.reads, brand, domain); Object.assign(m, { at: r.at, n: r.n, summary: sm }); sm.signals.forEach((sg) => addSig(f.mkt, 'shopping', sg)); }
       if (a) { m.auction = Object.assign({}, a, { signals: TL.auctionSignals(a) }); m.auction.signals.forEach((sg) => addSig(f.mkt, 'auction', sg)); }
+      const rm = GMC.cmpidFor(rlist, brand, f.mkt);
+      if (rm && gstore[rm.cmpid]) { const v = GMC.marketView(gstore[rm.cmpid], GMC.ccOf(rm.market)); m.gmc = Object.assign(v, { signals: GMC.gmcSignals(v) }); m.gmc.signals.forEach((sg) => addSig(f.mkt, 'gmc', sg)); }
+      else if (rm) m.gmc = { unread: true };
       comp.markets[f.mkt] = Object.keys(m).length ? m : null;
     });
     const own = book.find((b) => clientSlug(b.brand) === clientSlug(who0));

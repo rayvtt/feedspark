@@ -220,6 +220,18 @@ window.addEventListener('load',restore);
   .vs thead th{font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .vs td b{font-weight:900}
   .vs .up{color:var(--good)}
+  /* KEYWORD TESTS: a whole row — what the read-outs measured on the left, the latest rounds on the right */
+  .mod[data-mod="kwr"]{grid-column:1/-1}
+  .kwr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;flex:1;min-height:0}
+  .kwr>div{min-height:0;overflow:auto}
+  .kwr .vs .dn{color:var(--bad,#b91c1c)}
+  .kwr-r{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:3px 10px;align-items:baseline;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .kwr-r:last-child{border-bottom:0}
+  .kwr-r .p{font-weight:900;color:var(--ink);white-space:nowrap}
+  .kwr-r .v{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:1px 7px;color:#fff;background:#64748b;white-space:nowrap}
+  .kwr-r .v.positive{background:#15803d}.kwr-r .v.negative{background:#b91c1c}.kwr-r .v.mixed{background:#b45309}
+  .kwr-r .m{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kwr .gh{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
   .kvl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;font-size:12px;align-items:baseline}
   .kvl .k{font-weight:800;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .kvl .v{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -263,6 +275,13 @@ window.addEventListener('load',restore);
   .tiles .t{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--wash);min-width:0}
   .tiles .t b{display:block;font-size:22px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tiles .t span{display:block;font-size:11px;font-weight:800;color:var(--ink-2);margin-top:3px;line-height:1.25}
+  .fmix{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .fm-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+  .fm-g{display:grid;grid-template-columns:minmax(0,8.5em) minmax(40px,1fr) auto auto;gap:5px 10px;align-items:center;font-size:12px}
+  .fm-k{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fm-b{height:8px;border-radius:4px;background:var(--wash);overflow:hidden}.fm-b i{display:block;height:100%;border-radius:4px;background:var(--muted)}
+  .fm-n{font-variant-numeric:tabular-nums;text-align:right}.fm-m{color:var(--muted);font-size:11px;white-space:nowrap;text-align:right}
+  .fm-mk{margin-top:8px;font-size:11px;color:var(--muted)}
   .tiles .t small{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fee-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
   .fee-in label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);min-width:0}
@@ -810,6 +829,10 @@ window.addEventListener('load',restore);
         <div id="fee-out"></div>
       </div>
     </section>
+    <section class="card mod" id="m-kwr" data-mod="kwr">
+      <div class="chead"><div class="sp"><h3>Keyword tests — measured uplift</h3><p class="ch" id="kwr-sub">FeedSpark’s own keyword-optimisation tests, as each read-out reported them.</p></div></div>
+      <div class="mbody" id="kwr-body"><div class="empty2">Reading the keyword test results…</div></div>
+    </section>
   </div>
 
   <section class="card" id="cat" data-m-digest="products">
@@ -1127,7 +1150,7 @@ window.addEventListener('load',restore);
     $('ls-body').innerHTML = '<div class="empty2">Joining the master feed…</div>';
     $('lm-body').innerHTML = '<div class="empty2">The matrix fills in once the master feed is joined.</div>';
     layout(); refresh(true);
-    loadOutput(g); loadMaster(g, 0); loadRoas(g); loadStock(g); loadPix(g);
+    loadOutput(g); loadMaster(g, 0); loadRoas(g); loadStock(g); loadPix(g); loadKwr(g);
     safe(scPaint);
     if (adsWanted()) loadAds(g);
   }
@@ -2069,7 +2092,7 @@ window.addEventListener('load',restore);
     ['spec', 'Google format issues'], ['price', 'Price bands'], ['run', 'Size-run health'], ['pix', 'Image pixels'], ['mix', 'Catalogue mix'], ['depth', 'Content depth'], ['cl', 'Custom labels'], ['ptd', 'Product type depth'],
     ['avail', 'Availability'], ['stock', 'Stock controls'], ['kept', 'Ad spend kept off'],
     ['lift', 'Optimised vs not'], ['fix', 'Before and after FeedSpark'], ['waste', 'Where the ad budget goes'],
-    ['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check']];
+    ['vendor', 'What the service does'], ['scope', 'The service in numbers'], ['fee', 'Fee check'], ['kwr', 'Keyword tests — measured uplift']];
   function modState() { var m = lsGet('fcc-cat-mods', null) || {}; var ord = (m.order || []).filter(function (k) { return MODS.some(function (x) { return x[0] === k; }); }); MODS.forEach(function (x) { if (ord.indexOf(x[0]) < 0) ord.push(x[0]); }); return { order: ord, off: m.off || {} }; }
   function applyMods() {
     var st = modState(), shown = 0;
@@ -2646,7 +2669,7 @@ window.addEventListener('load',restore);
   // after, where the ad budget goes, what the service demonstrably does, the size of the service, and a fee check the buyer
   // types. 👔 Procurement view shows exactly these (plus Ad spend kept off, Data FeedSpark added and ROAS) and hides the
   // operational ones; it is a preset of the same per-device module state, so ⊞ Modules still tunes it.
-  var PROC = ['lift', 'fix', 'waste', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];
+  var PROC = ['lift', 'fix', 'waste', 'kwr', 'vendor', 'scope', 'fee', 'kept', 'gain', 'roas'];
   function procOn() { var m = lsGet('fcc-cat-mods', null); return !!(m && m.v === 'proc'); }
   function procBtn() { var b = $('proc-b'); if (!b) return; var on = procOn(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '👔 Procurement view · on' : '👔 Procurement view'; }
   function setProc(on) {
@@ -2657,7 +2680,7 @@ window.addEventListener('load',restore);
     applyMods(); renderModsPop(); renderMods();
   }
   $('proc-b').addEventListener('click', function () { setProc(!procOn()); });
-  function renderProc() { [renderLift, renderFix, renderWaste, renderVendor, renderScope, renderFee, scBadges, maybeSnap].forEach(safe); }
+  function renderProc() { [renderLift, renderFix, renderWaste, renderKwr, renderVendor, renderScope, renderFee, scBadges, maybeSnap].forEach(safe); }
   function curCode() { var c = S.roas && S.roas.cur; for (var i = 0; !c && i < S.fx.length; i++) c = S.fx[i].cur; return c || 'GBP'; }
   function pct1(n, d) { if (!d) return '—'; var v = n / d * 100; return (v >= 10 || v === 0 ? Math.round(v) : Math.round(v * 10) / 10) + '%'; }
   function ratioTxt(a, b) { if (!a || !b) return '—'; var r = a / b; return (r >= 10 ? Math.round(r) : Math.round(r * 10) / 10) + '×'; }
@@ -2725,6 +2748,82 @@ window.addEventListener('load',restore);
     return h;
   }
   $('lift-f').addEventListener('change', function () { lsSet('fcc-cat-lift', this.value); $('lift-body').innerHTML = ''; renderLift(); });
+  // 10b · KEYWORD TESTS — MEASURED UPLIFT (Ray, 3 Nov 2026: "address the keywords optimisation results because it more
+  // generally contributes towards the uplift that isolates FeedSpark vs. the PPC agency"). "Optimised vs not" sets two groups
+  // of products side by side, which a buyer can fairly say is a choice of WHICH products. These are FeedSpark's own test
+  // read-outs (Dino's rounds, KV kwresults via /api/kwresults): a keyword change made on a set of products and what it moved —
+  // the feed work measured on its own, the bids and budgets left to the PPC agency. Every figure is a number a read-out
+  // stated; the card adds them up per metric (the MEDIAN, so one outlier round never carries it) and never invents one. A
+  // round whose wording held no figure still counts as a round and is said so. One brand's rounds, filtered to the market
+  // on screen (a round naming no market is the brand's); All markets reads every one.
+  var KWR_M = [['ctr', 'CTR', /\bctr\b|click[- ]?through/i], ['cvr', 'Conv. rate', /conv(?:ersion)?s?\.? ?rate|\bcvr\b/i],
+    ['roas', 'ROAS', /\broas\b/i], ['rev', 'Revenue', /revenue|conv(?:ersion)?\.? ?value|\bsales\b/i], ['conv', 'Conversions', /conv(?:ersion)?s?\b|\borders?\b|transactions?/i],
+    ['cpc', 'CPC', /\bcpc\b|cost per click/i], ['clicks', 'Clicks', /\bclicks?\b/i], ['impr', 'Impressions', /impressions?|\bimpr\b/i],
+    ['cost', 'Cost', /\bcost\b|\bspend\b/i], ['traffic', 'Traffic', /traffic|sessions?|visits?/i]];
+  var KWR_INV = { cpc: 1, cost: 1 };
+  function kwrLine(t) {
+    t = String(t || '');
+    var k = null; for (var i = 0; i < KWR_M.length && !k; i++) if (KWR_M[i][2].test(t)) k = KWR_M[i];
+    var m = /([+\-−])?\s*(\d+(?:\.\d+)?)\s*%/.exec(t); if (!k || !m) return null;
+    var v = parseFloat(m[2]);
+    if (m[1]) { if (m[1] !== '+') v = -v; }
+    else if (/\b(down|fell|drop(?:ped|s)?|decline[sd]?|decrease[sd]?|lower|reduc(?:ed|tion))\b/i.test(t)) v = -v;
+    else if (!/\b(up|rose|grew|growth|increase[sd]?|gain(?:ed|s)?|improve[sd]?|uplift|higher)\b/i.test(t)) return null;
+    return { k: k[0], l: k[1], v: v, good: KWR_INV[k[0]] ? v < 0 : v > 0 };
+  }
+  function kwrMed(a) { var b = a.slice().sort(function (x, y) { return x - y; }), h = b.length >> 1; return b.length % 2 ? b[h] : (b[h - 1] + b[h]) / 2; }
+  function kwrRead(rs) {
+    var by = {}, vd = { positive: 0, mixed: 0, negative: 0, unknown: 0 }, nofig = 0;
+    rs.forEach(function (r) {
+      vd[vd[r.verdict] != null ? r.verdict : 'unknown']++;
+      var seen = {}, any = false;
+      (r.metrics || []).forEach(function (ln) { var x = kwrLine(ln); if (!x || seen[x.k]) return; seen[x.k] = 1; any = true; var b = by[x.k] || (by[x.k] = { k: x.k, l: x.l, v: [], up: 0 }); b.v.push(x.v); if (x.good) b.up++; });
+      if (!any) nofig++;
+    });
+    var rows = KWR_M.map(function (m) { return by[m[0]]; }).filter(Boolean).map(function (b) { return { k: b.k, l: b.l, n: b.v.length, med: kwrMed(b.v), up: b.up }; });
+    return { n: rs.length, vd: vd, rows: rows, nofig: nofig };
+  }
+  function loadKwr(g) {
+    S.kwr = { st: 'loading' };
+    var c = S.client;
+    fetch('/api/kwresults?client=' + encodeURIComponent(c), sig()).then(function (res) { return res.json(); }).then(function (j) {
+      if (g !== S.gen) return;
+      var lc = String(c).toLowerCase();
+      var rs = (j && j.ok ? j.results || [] : []).filter(function (r) { var x = String(r.client || '').toLowerCase(); return x === lc || x.indexOf(lc) === 0; });
+      S.kwr = j && j.ok ? { st: 'ok', rs: rs } : { st: 'error', why: (j && j.error) || 'unavailable' };
+      safe(renderKwr);
+    }).catch(function (er) { if (g !== S.gen || (er && er.name === 'AbortError')) return; S.kwr = { st: 'error', why: 'unreachable' }; safe(renderKwr); });
+  }
+  function kwrWhen(r) { var t = Date.parse(r.when || ''); return isFinite(t) ? t : 0; }
+  function renderKwr() {
+    var K = S.kwr || { st: 'loading' };
+    if (K.st === 'loading') { modEmpty('kwr-body', 'Reading the keyword test results…'); return; }
+    if (K.st === 'error') { modEmpty('kwr-body', 'Keyword test results unavailable — ' + K.why + '.'); return; }
+    var all = scAll(), mk = String(S.mkt || '').replace(/-fb$/, '').toLowerCase();
+    var rs = K.rs.filter(function (r) { var x = String(r.mkt || '').toLowerCase(); return all || !x || x === mk || (x === 'uk' && mk === 'gb') || (x === 'gb' && mk === 'uk'); });
+    rs.sort(function (a, b) { return kwrWhen(b) - kwrWhen(a); });
+    var where = all ? 'any ' + S.client + ' market' : S.client + ' ' + mktLabel(S.mkt);
+    if (!rs.length) { modEmpty('kwr-body', K.rs.length ? 'No keyword test has been read out for ' + where + ' yet — ' + K.rs.length + ' for the brand’s other markets.' : 'No keyword test read-out on record for ' + S.client + ' yet.'); return; }
+    var d = kwrRead(rs);
+    var pos = d.vd.positive, dec = d.n - d.vd.unknown;
+    var best = d.rows.filter(function (r) { return KWR_INV[r.k] ? r.med < 0 : r.med > 0; }).sort(function (a, b) { return b.n - a.n; })[0];
+    var sg = function (r) { var v = Math.round(r.med * 10) / 10; return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + '%'; };
+    var h = '<div class="kwr"><div>';
+    h += '<p class="hl"><b>' + n0(pos) + '</b> of ' + n0(dec) + ' test round' + (dec === 1 ? '' : 's') + ' read out positive' + (best ? ' · median ' + esc(best.l) + ' <b>' + sg(best) + '</b>' : '') + '</p>';
+    if (d.rows.length) {
+      h += '<table class="vs"><thead><tr><th>Metric</th><th>Median change</th><th>Rounds improved</th></tr></thead><tbody>'
+        + d.rows.map(function (r) { var gd = KWR_INV[r.k] ? r.med < 0 : r.med > 0, bd = KWR_INV[r.k] ? r.med > 0 : r.med < 0; return '<tr data-k="' + r.k + '"><td>' + esc(r.l) + (KWR_INV[r.k] ? ' <small title="lower is better">↓ better</small>' : '') + '</td><td class="' + (gd ? 'up' : bd ? 'dn' : '') + '"><b>' + sg(r) + '</b></td><td>' + r.up + ' of ' + r.n + '</td></tr>'; }).join('')
+        + '</tbody></table>';
+    } else h += '<div class="empty2">The read-outs on record state a verdict but no figure the card can add up.</div>';
+    h += '</div><div><p class="gh">Latest rounds</p>' + rs.slice(0, 12).map(function (r) {
+      var v = r.verdict && /^(positive|negative|mixed)$/.test(r.verdict) ? r.verdict : 'unknown';
+      var lab = (r.period || '') + (r.mkt && all ? ' · ' + String(r.mkt).toUpperCase() : '');
+      var m = (r.metrics || []).slice(0, 3).join(' · ');
+      return '<div class="kwr-r" title="' + esc((r.subject || '') + (r.metrics && r.metrics.length ? '\n' + r.metrics.join('\n') : '')) + '"><span class="p">' + esc(lab || '—') + '</span><span class="v ' + v + '">' + (v === 'unknown' ? 'unread' : v) + '</span><span class="m">' + esc(m || 'no figure in the read-out') + '</span></div>';
+    }).join('') + '</div></div>';
+    h += '<div class="cfoot"><span>' + n0(d.n) + ' read-out' + (d.n === 1 ? '' : 's') + ' for ' + esc(where) + (d.nofig ? ' · ' + d.nofig + ' with no figure' : '') + ' · each a keyword change FeedSpark made on the products it optimised, measured on those products — the bids and budgets are the PPC agency’s and are not part of the change · figures as each read-out stated them</span></div>';
+    $('kwr-body').innerHTML = h;
+  }
   // 11 · BEFORE AND AFTER — the brand's master against the feed FeedSpark sends: the completeness score both ways (the same
   // weighting as the Golden Record), products given a Google-required field their master lacked, values filled and rewritten,
   // the AI-shopping fields carried, and what is still missing — told apart, because a buyer needs to see both.
@@ -2880,12 +2979,16 @@ window.addEventListener('load',restore);
     if (!S.prods.length) return { why: 'Reading the feed…' };
     var N = S.prods.length, st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }, stamped = 0;
     S.prods.forEach(function (p) { var o = p.opti; if (!o) return; stamped++; Object.keys(st).forEach(function (k) { if (o[k]) st[k]++; }); });
+    // IMAGE OVERLAYS ARE READ OFF THE IMAGE, NOT THE STAMP (Ray, 3 Nov 2026, over Superdry's "274,460 fields · 100%":
+    // "i dont think we did image overlays for SD UK") — c:fs_data_opti's IMG says the product's IMAGE was worked on, not
+    // that an overlay was composed; an overlay is a main image served from a FeedSpark image host (the Overlays module's rule)
+    var ov = 0; S.prods.forEach(function (p) { if (p.f && E.isOverlay(p.f.image_link)) ov++; });
     var filled = 0, fF = 0, traced = 0, aiIx = [], aiA = {};
     E.ATTRS.forEach(function (a, i) { if (a.tier === 'ai') aiIx.push(i); });
     if (S.linDone) for (var i = 0; i < S.codes.length; i++) { var c = S.codes[i]; if (!c) continue; if (S.comp[i] && S.comp[i][0] >= 0) { traced++; var fm = c.match(/[lpe]/g); if (fm) { filled++; fF += fm.length; } } for (var q = 0; q < aiIx.length; q++) if ('klpsoeg'.indexOf(c.charAt(aiIx[q])) >= 0) aiA[E.ATTRS[aiIx[q]].k] = 1; }
     var stk = S.stk && S.stk.st === 'ok' ? S.stk.m : null, mechs = {};
     if (stk) (stk.stock || []).forEach(function (r) { mechs[r.sk] = 1; });
-    return { N: N, st: st, stamped: stamped, lin: !!S.linDone, traced: traced, filled: filled, fF: fF, aiA: Object.keys(aiA), aiN: aiIx.length,
+    return { N: N, st: st, stamped: stamped, ov: ov, lin: !!S.linDone, traced: traced, filled: filled, fF: fF, aiA: Object.keys(aiA), aiN: aiIx.length,
       mnone: S.m.st === 'none' || S.m.st === 'nojoin', mechs: Object.keys(mechs), rules: stk ? (stk.stock || []).length : null, rulesN: stk ? stk.n : null,
       stkSt: stk ? 'ok' : (S.stk && S.stk.st === 'loading' ? 'loading' : 'no'), roasSt: S.roas.st === 'ok' ? 'ok' : (S.roas.st === 'loading' ? 'loading' : 'no') };
   }
@@ -2902,7 +3005,7 @@ window.addEventListener('load',restore);
       row('Titles rewritten', sv('T'), stamped ? vol('T') : 'no stamps in this feed', 'FeedSpark’s own title stamp (c:fs_data_opti) per product'),
       row('Keyword optimisation', sv('Keywords'), stamped ? vol('Keywords') : 'no stamps in this feed', 'Products carrying FeedSpark’s keyword stamp'),
       row('Category mapping', sv('Cat'), stamped ? vol('Cat') : 'no stamps in this feed', 'Products whose category FeedSpark mapped'),
-      row('Image overlays', sv('IMG'), stamped ? vol('IMG') : 'no stamps in this feed', 'Products carrying a FeedSpark image'),
+      row('Image overlays', d.ov, n0(d.ov) + ' images · ' + pct1(d.ov, N), 'Products whose main image is a FeedSpark overlay — served from a FeedSpark image host, read off the image itself'),
       row('Missing data filled', d.lin && d.traced ? d.filled : null, d.lin && d.traced ? (d.fF != null ? n0(d.fF) + ' fields · ' : '') + pct1(d.filled, d.traced) + ' of products' : (d.mnone ? 'no master to compare' : 'tracing…'), 'Fields FeedSpark filled that the master did not carry, and the share of products given at least one'),
       row('AI-shopping fields', d.lin ? d.aiA.length : null, d.lin ? d.aiA.length + ' of ' + d.aiN + ' carried' : 'tracing…', 'Google’s conversational attributes, read by AI Mode and shopping agents' + (all ? ' — carried in at least one market' : '')),
       row('Stock controls', d.stkSt === 'ok' ? d.mechs.length : null, d.stkSt === 'ok' ? d.mechs.length + ' kinds · ' + n0(d.rules) + ' rules' : (d.stkSt === 'loading' ? 'reading…' : 'not read'), 'Rules that stop ads showing on products the shopper cannot buy'),
@@ -2927,14 +3030,32 @@ window.addEventListener('load',restore);
     var all = !!d.mk, fd = feedsRun(S.client);
     var T = [
       { b: n0(d.N), l: 'Products managed', sm: all ? S.client + ' · ' + d.used + ' market' + (d.used === 1 ? '' : 's') : S.client + ' ' + mktLabel(S.mkt) },
-      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.sm, tip: fd.tip },
+      // ALL THE BRAND'S MARKETS, SHOPPING OR NOT (Ray, 3 Nov 2026: "that tile should cover the 19 markets live whether or
+      // not they have shopping"): the count is FeedHero's whole book for the roster, so the tile says so; the channel split
+      // sits in the breakdown under the tiles, where it is not cut off
+      { b: n0(fd.n), l: 'Feeds run for ' + S.client, sm: fd.M ? 'across all ' + fd.M + ' market' + (fd.M === 1 ? '' : 's') : fd.sm, tip: fd.tip },
       { b: d.n ? (Math.round(d.touched / d.n * 10) / 10) : '—', l: 'Values set per product', sm: d.n ? 'by FeedSpark' : 'needs the master' },
       { b: d.rules != null ? n0(d.rules) : '—', l: 'FeedHero rules running', sm: d.rules != null ? (all ? 'across ' + d.rmk + ' market' + (d.rmk === 1 ? '' : 's') : 'this market') : 'not read' },
       { b: n0(d.nw), l: 'New products taken in', sm: 'last 30 days' },
       { b: d.touched != null ? n0(d.touched) : '—', l: 'Values maintained', sm: d.touched != null ? 'across the catalogue' : 'needs the master' }
     ];
-    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.tip || t.sm) + '">' + esc(t.sm) + '</small></div>'; }).join('') + '</div>'
+    $('scope-body').innerHTML = '<div class="tiles">' + T.map(function (t) { return '<div class="t"><b>' + esc(String(t.b)) + '</b><span>' + esc(t.l) + '</span><small title="' + esc(t.tip || t.sm) + '">' + esc(t.sm) + '</small>' + (t.sm2 ? '<small class="mk" title="' + esc(t.sm2.tip) + '">' + esc(t.sm2.s) + '</small>' : '') + '</div>'; }).join('') + '</div>'
+      + feedMix(fd)
       + '<div class="cfoot"><span>Read live from the feed, the master and FeedHero' + scNote(d) + '</span></div>';
+  }
+  // EVERY FEED TYPE, AND WHERE IT RUNS (Ray, 3 Nov 2026, over the tile's cut-off "17 Wunderkind · 10 Go…": "more overview
+  // of these types"): one row per channel FeedHero sends live — how many feeds, a bar against the biggest, and how many of
+  // the brand's markets run it (named in the tooltip); then the markets by what they run. Nothing when the book is unread.
+  function feedMix(fd) {
+    if (!fd || !fd.K || !fd.K.length) return '';
+    var top = fd.K[0].n || 1;
+    var rows = fd.K.map(function (r) {
+      var mk = r.mk ? r.mk.length + ' of ' + fd.M + ' market' + (fd.M === 1 ? '' : 's') : '';
+      return '<span class="fm-k">' + esc(r.l) + '</span><span class="fm-b"><i style="width:' + Math.max(4, Math.round(r.n / top * 100)) + '%"></i></span>'
+        + '<b class="fm-n">' + n0(r.n) + '</b><span class="fm-m" title="' + esc(r.mk ? r.l + ' runs in ' + r.mk.join(', ') : '') + '">' + esc(mk) + '</span>';
+    }).join('');
+    return '<div class="fmix"><div class="fm-h">Feeds by channel · all ' + fd.M + ' market' + (fd.M === 1 ? '' : 's') + ', Shopping or not</div><div class="fm-g">' + rows + '</div>'
+      + (fd.mk ? '<div class="fm-mk" title="' + esc(fd.mk.tip) + '">' + esc(fd.mk.s) + '</div>' : '') + '</div>';
   }
   // EVERY CHANNEL, NOT JUST GOOGLE AND META (Ray, 30 Oct 2026: "the complete list of feeds should be sourced, not just
   // google and meta but all channels"): the count is FeedHero's own output_feeds report — every LIVE feed it sends for the
@@ -2947,11 +3068,28 @@ window.addEventListener('load',restore);
       var K = Object.keys(f.kinds).sort(function (a, b) { return f.kinds[b] - f.kinds[a]; }), n = 0;
       K.forEach(function (k) { n += f.kinds[k]; });
       var parts = K.map(function (k) { return f.kinds[k] + ' ' + (FEED_KIND[k] || k); });
-      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live',
+      return { n: n, sm: parts.length ? parts.join(' · ') : 'none live', mk: mkLine(f), K: K.map(function (k) { return { k: k, l: FEED_KIND[k] || k, n: f.kinds[k], mk: (f.km && f.km[k]) || null }; }), M: f.markets || 0,
         tip: 'Live in FeedHero across ' + f.read + ' market' + (f.read === 1 ? '' : 's') + ': ' + (parts.join(' · ') || 'none') + (f.paused ? ' · ' + f.paused + ' paused not counted' : '') };
     }
     var mk = (S.roster[c] || []).filter(function (x) { return x.kind !== 'none'; }), g = mk.filter(function (x) { return x.channel === 'google'; }).length;
     return { n: mk.length, sm: g + ' Google · ' + (mk.length - g) + ' Meta', tip: 'Feeds wired into the FCC — FeedHero’s full list of channels not read yet' };
+  }
+  // the brand's markets by what they run — "19 markets · 9 Shopping · 8 Wunderkind only · 2 paused", each bucket named in the tip
+  function mkLine(f) {
+    var m = f.mk; if (!m) return null;
+    var B = [['shop', 'Shopping'], ['wunderkind', 'Wunderkind only'], ['other', 'other channels'], ['paused', 'paused'], ['unread', 'not read']];
+    var parts = [], tip = [];
+    // A SHOPPING MARKET RUNS WUNDERKIND TOO (Ray, 3 Nov 2026: "technically all 9 Shopping market also has 9 Wunderkind
+    // feeds too"): the buckets are what sets a market apart, so the Shopping bucket names the Wunderkind feeds it also runs
+    var wk = (f.km && f.km.wunderkind) || [];
+    B.forEach(function (b) {
+      var L = m[b[0]] || []; if (!L.length) return;
+      var lab = b[1];
+      if (b[0] === 'shop') { var both = L.filter(function (x) { return wk.indexOf(x) >= 0; }).length; if (both) lab = both === L.length ? 'Shopping + Wunderkind' : 'Shopping (' + both + ' also Wunderkind)'; }
+      parts.push(L.length + ' ' + lab); tip.push(lab + ': ' + L.join(', '));
+    });
+    return { s: (f.markets || 0) + ' market' + (f.markets === 1 ? '' : 's') + (parts.length ? ' · ' + parts.join(' · ') : ''),
+      tip: 'Shopping = a live Google Shopping feed in FeedHero (paid or free listings — the feed does not say which). ' + tip.join(' · ') };
   }
   function mktLabel(m) { return String(m || '').toUpperCase(); }
   // 15 · FEE CHECK — the buyer types a monthly fee (and, to compare, another vendor's); the card turns it into the units
@@ -2996,7 +3134,7 @@ window.addEventListener('load',restore);
   // currency (a currency picker appears when the estate reports in more than one, and what it leaves out is named); a
   // market not read yet is named, never counted as zero; and a figure that is a share is re-worked from the summed counts,
   // never averaged across markets.
-  var SC_MODS = ['gain', 'cl', 'kept', 'lift', 'fix', 'waste', 'vendor', 'scope', 'fee'];
+  var SC_MODS = ['gain', 'cl', 'kept', 'lift', 'kwr', 'fix', 'waste', 'vendor', 'scope', 'fee'];
   var SNAP_K = 'fcc-cat-snap', SNAP_V = 1, SNAP_FRESH = 12 * 3600e3, SNAP_KEEP = 3 * 864e5, SW_MAX = 240e3;
   var SW = { on: false, list: [], i: -1, orig: '', c: '', inner: false, fail: {} };
   function gMkts(c) { return mktsOf(c || S.client, 'google'); }
@@ -3098,10 +3236,10 @@ window.addEventListener('load',restore);
   }
   function scVen() {
     var X = scSet(), L = okOf(X, 'ven'); if (!L.length) return scNone(X, 'its feed read');
-    var o = scBase(X, L.length); o.N = 0; o.stamped = 0; o.st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }; o.traced = 0; o.filled = 0; o.fF = 0; o.lin = false; o.mnone = true;
+    var o = scBase(X, L.length); o.N = 0; o.stamped = 0; o.st = { T: 0, Keywords: 0, Cat: 0, D: 0, IMG: 0 }; o.ov = 0; o.traced = 0; o.filled = 0; o.fF = 0; o.lin = false; o.mnone = true;
     var A = {}, M = {}, rules = 0, rulesN = 0, stk = false, roas = false;
     L.forEach(function (d) {
-      o.N += d.N; o.stamped += d.stamped; Object.keys(o.st).forEach(function (k) { o.st[k] += d.st[k] || 0; });
+      o.N += d.N; o.stamped += d.stamped; o.ov += d.ov || 0; Object.keys(o.st).forEach(function (k) { o.st[k] += d.st[k] || 0; });
       if (d.lin) { o.lin = true; o.traced += d.traced; o.filled += d.filled; o.fF = o.fF == null || d.fF == null ? null : o.fF + d.fF; d.aiA.forEach(function (k) { A[k] = 1; }); }
       if (!d.mnone) o.mnone = false;
       if (d.stkSt === 'ok') { stk = true; rules += d.rules || 0; rulesN += d.rulesN || 0; d.mechs.forEach(function (k) { M[k] = 1; }); }
@@ -3129,7 +3267,7 @@ window.addEventListener('load',restore);
     L.forEach(function (s) { ['o', 'n'].forEach(function (k) { var a = s.lift[agg][k], t = T[k] || (T[k] = { skus: 0, impr: 0, clicks: 0, spend: 0, rev: 0, cw: 0, cc: 0 }); Object.keys(t).forEach(function (q) { t[q] += a[q] || 0; }); }); });
     var o = scBase(X, L.length, cur); o.T = T; return o;
   }
-  function scRender() { [renderGain, renderCl, renderKept, renderLift, renderFix, renderWaste, renderVendor, renderScope, renderFee].forEach(safe); scBadges(); }
+  function scRender() { [renderGain, renderCl, renderKept, renderLift, renderKwr, renderFix, renderWaste, renderVendor, renderScope, renderFee].forEach(safe); scBadges(); }
   // every card says which markets it is reading: the nine read the scope chosen, the rest one market
   function scBadges() {
     var multi = S.chan === 'google' && gMkts().length > 1, all = scAll(), X = all ? scSet() : null;

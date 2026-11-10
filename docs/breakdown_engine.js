@@ -324,6 +324,14 @@
     if (lw) { res.layered = true; res.totalL = totL; if (lw2) res.totalL2 = totL2; }
     return res;
   }
+  // HIDE (blank) (Ray, 2 Nov 2026: "in field-pivot - allow option to hide (blank) row or column"): the products carrying
+  // NO value in a field leave the table, not just its row — so every total still adds up to what is on screen. Returns a
+  // new mask and how many it took out; m is never written to.
+  function dropBlank(S, spec, m) {
+    var R = reader(S, spec), out = new Uint8Array(S.n), n = 0;
+    for (var r = 0; r < S.n; r++) { if (m && !m[r]) continue; if (R && !R.of(r).length) { n++; continue; } out[r] = 1; }
+    return { m: out, n: n };
+  }
   // k: 'v' value (A→Z, numbers in number order) · 'n' count · 'share' · 'o' band order; blank always last
   var COLL = typeof Intl !== 'undefined' && Intl.Collator ? new Intl.Collator('en', { numeric: true, sensitivity: 'base' }) : null;
   function sortRows(rows, k, dir) {
@@ -842,7 +850,7 @@
   return { VERSION: VERSION, BLANK: BLANK, MAXLEN: MAXLEN, MODE_LBL: MODE_LBL, LEN_BANDS: LEN_BANDS, NUM_EDGES: NUM_EDGES,
     clean: clean, colName: colName, slotOf: slotOf, labelOf: labelOf, createStore: createStore, addRow: addRow, kindOf: kindOf,
     fields: fields, fieldOf: fieldOf, modesFor: modesFor, maxTier: maxTier, tierOf: tierOf, splitList: splitList, numBand: numBand, adsJoin: adsJoin, ADS_KEYS: ADS_KEYS, dateOf: dateOf, qtrBand: qtrBand, isBand: isBand, QTR_BACK: QTR_BACK, NO_DATE: NO_DATE,
-    reader: reader, mask: mask, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
+    reader: reader, mask: mask, dropBlank: dropBlank, passing: passing, groupCol: groupCol, pivot: pivot, sortRows: sortRows, cross: cross,
     defaultPanes: defaultPanes, resolve: resolve, csv: csv, specName: specName,
     spot: spot, spotFields: spotFields, SPOT_MIN: SPOT_MIN,
     pairScan: pairScan, pockets: pockets, pkBand: pkBand, pkBands: pkBands,

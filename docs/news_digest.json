@@ -1,39 +1,74 @@
 {
   "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once. Every item must be dated within the last 3 months (Ray's rule, 18 Sep 2026).",
-  "id": "2026-10-13",
-  "generated": "2026-10-13T07:45:22Z",
-  "headline": "Meta's own research finds Muse shops the open web, not the Shopify catalogue it was meant to read",
-  "intro": "Back after a 15-day gap in the landing pipeline (fixed today, see below) — three real developments since the 28 Sep edition, not a recap padded to cover the silence.",
+  "id": "2026-11-05",
+  "generated": "2026-11-05T05:55:00Z",
+  "headline": "Google takes UCP direct checkout to Canada, and Amazon opens a free feed portal for any store to list in its search",
+  "intro": "Two platform moves on 4 Nov matter to a feed team: Google's agentic checkout left the US for its second market with a Merchant Center route promised for next year, and Amazon now takes any eligible store's shopping feed for free listing in its search and Alexa for Shopping.",
   "items": [
     {
-      "title": "Profound: Muse fills most of its shopping picks from the open web, not the merchant catalogue",
-      "source": "Profound",
-      "url": "https://www.tryprofound.com/blog/the-era-of-personal-agents-muse-and-instinct",
-      "date": "2026-10-02",
-      "impact": "high",
-      "tags": ["Meta", "Agentic commerce", "Muse"],
-      "what": "Profound's own test of Meta's Muse shopping agent found it filled 4 of its 6 product recommendations from the open web and only 2 from Meta's product catalogue — even though the catalogue returned roughly 60 candidate products from 30 merchants, about 15x more options than the web picks it actually used. Neither Muse nor rival agent Instinct identifies itself when browsing; both present as an ordinary visitor. A follow-up Profound post on 8 Oct, based on an instruction file it says it extracted from Muse (its own caveat: may be stale since late September), reports the agent is told to rank well-known merchants first and check no more than three open-web stores per request.",
-      "sowhat": "Complicates the 28 Sep edition's framing that Muse shops the Shopify catalogue, not the feed we optimise — the catalogue clearly isn't winning the recommendation even when a merchant is eligible for it. For any US-facing client on Shopify (check Reiss US, Superdry US), general on-site content and open-web visibility may matter to Muse at least as much as the Shopify Catalog feed. Flag as 'unproven and Meta-side' rather than act on — nothing here is a lever we control yet."
-    },
-    {
-      "title": "ChatGPT adds virtual try-on and a saved-items Favorites library to shopping",
-      "source": "TechCrunch",
-      "url": "https://techcrunch.com/2026/10/01/chatgpt-can-now-virtually-try-on-clothes-for-you/",
-      "date": "2026-10-01",
+      "title": "Google brings UCP direct checkout to AI Mode and the Gemini app in Canada, with a Merchant Center integration from next year",
+      "source": "Google Canada blog (Sabrina Geremia, VP and Country Managing Director)",
+      "url": "https://blog.google/intl/en-ca/products/explore-get-answers/a-new-way-to-shop-introducing-a-more-intuitive-agentic-shopping-experience-for-consumers-and-retailers-in-canada",
+      "date": "2026-11-04",
       "impact": "med",
-      "tags": ["OpenAI", "ChatGPT", "Apparel"],
-      "what": "OpenAI added a 'Try On' button to ChatGPT shopping results: a shopper uploads or takes a selfie (or screenshots an item from another site) and sees it composited onto their own photo, built on the ChatGPT Images 2.5 model, alongside a Favorites library for saving products into folders. Live on mobile and web; reference photos are stored for reuse unless deleted in settings.",
-      "sowhat": "A visual, apparel-specific surface with no published feed-side lever yet — OpenAI hasn't said how a retailer's own product imagery factors into the render, and there's no stated opt-in/opt-out. Relevant to every apparel client (Reiss, Superdry, Schuh, Monsoon/Accessorize) as a 'clients will ask about this' line this quarter, not a brief yet."
+      "tags": [
+        "Google",
+        "UCP",
+        "AI Mode",
+        "Gemini",
+        "agentic checkout",
+        "Merchant Center"
+      ],
+      "what": "From 4 Nov, direct checkout powered by the Universal Commerce Protocol is rolling out to Canadian shoppers on AI Mode in Google Search and the Gemini app. Launch retailers are lululemon, select Shopify merchants, Shoppers Drug Mart and Simons; shoppers pay with Google Pay using details already in Google Wallet, and retailers remain the seller of record. Loyalty rewards follow in the coming months. Google says that starting next year it will make simplified UCP integration available directly within Merchant Center, with no date given. Search Engine Journal notes Google has not said how UCP orders are attributed in Merchant Center or Google Ads, or how they interact with Shopping and PMax.",
+      "sowhat": "Canada is the second market after the US, and the Merchant Center route is how most of our clients will reach it: the feed, not a Shopify app, becomes the entry point. Reiss CA is the one Google Shopping feed we run into Canada, so it is the account to watch for UCP eligibility and for the UCP agentic performance reporting Google added to the Merchant API in October. For the UK estate nothing changes today, but the question to answer before Google names a UK date is whether each feed's price, availability, shipping and returns data are complete enough to be bought from without a human seeing the site."
     },
     {
-      "title": "Anthropic published a commerce-agent blueprint — agents built ON Claude for a retailer's own site, not a shopping surface inside Claude",
-      "source": "Digital Commerce 360",
-      "url": "https://www.digitalcommerce360.com/2026/09/02/anthropic-debuts-claude-features-focused-on-agentic-commerce/",
-      "date": "2026-09-02",
+      "title": "Amazon launches the Shop Direct Merchant Workspace: any eligible store can submit a shopping feed and list in Amazon search and Alexa for Shopping, free",
+      "source": "About Amazon (retail news)",
+      "url": "https://www.aboutamazon.com/news/retail/amazon-shop-direct-merchant-workspace",
+      "date": "2026-11-04",
+      "impact": "med",
+      "tags": [
+        "Amazon",
+        "Shop Direct",
+        "Buy for Me",
+        "Alexa for Shopping",
+        "product feeds"
+      ],
+      "what": "Amazon opened a free self-service portal where eligible merchants register for Shop Direct, connect their store and submit product feeds in widely adopted shopping feed formats, through Feedonomics, Salsify, CEDCommerce, VersaFeed or the Selling Partner API. Listed products appear in Amazon.com search results labelled Shop Direct and in Alexa for Shopping, and where eligible can be bought by Amazon's agent, Buy for Me. No fees, opt out at any time; shipping, returns and customer service stay with the merchant. US customers only; Amazon published no merchant or product counts and did not define eligibility. PPC Land reports the accepted feed type is the Google product data feed.",
+      "sowhat": "The Google Shopping feed we already run is the asset Amazon is asking for, so for Reiss US and Superdry US this is a channel decision for the client rather than new feed work: whether they want their range surfaced in Amazon search and bought by Amazon's agent off their own site, with Amazon owning the customer touchpoint. Worth raising with both US leads before peak, with the caveat that earlier this year some brands found themselves listed in Shop Direct without opting in. UK markets are not covered."
+    },
+    {
+      "title": "Google Ads publishes a Promotion Mode help page: an open beta that lowers Target ROAS and adds budget for a sale window on Search and PMax, retail in November",
+      "source": "Search Engine Roundtable, with Google's help page",
+      "url": "https://www.seroundtable.com/google-ads-promotion-mode-help-document-42446.html",
+      "date": "2026-11-04",
       "impact": "watch",
-      "tags": ["Anthropic", "Claude", "Agentic commerce"],
-      "what": "Anthropic released 'commerce-agents' (Apache 2.0): reference code for a customer-facing shopping agent and an operator-facing merchant agent that a retailer builds into its own app or site — not a consumer shopping feature inside Claude itself. Shopify published example code applying it to a live Shopify store; Accenture, Mastercard and Visa are named partners, and checkout/payment stay with the retailer's own stack. Anthropic cites larger carts and higher completion among early users — its own figures, not independently verified.",
-      "sowhat": "Backfilled here — it predates this edition's window but never reached a digest, since the pipeline that would have carried it broke the same week it shipped. Directly relevant to how we position Tachyon: this is Anthropic's own house view of what a 'good' commerce agent looks like, worth reading before the next AI-readiness conversation even though no client is building on it."
+      "tags": [
+        "Google Ads",
+        "Performance Max",
+        "Promotion Mode",
+        "Black Friday",
+        "bidding"
+      ],
+      "what": "Barry Schwartz flagged a new Google Ads help document for Promotion Mode on 4 Nov. Google's page says Promotion Mode is in an open beta, supported for standard Search and Performance Max campaigns using campaign-level Target ROAS, and lets advertisers temporarily lower their Target ROAS and apply an optional extra daily budget during a promotional window, with targets and budgets returning to their previous settings automatically when the promotion ends. Google's own note: it is initially powered by Smart Bidding Exploration for Search inventory only, and Retail will be available in November 2026. Shopping campaigns are not named.",
+      "sowhat": "This is the campaign-side twin of the sale switch we run on the feed. Superdry's Stock levers card already schedules the BAU to SALE move on range completion and hero sizes; when the PPC agency lifts bids with Promotion Mode over Black Friday the feed has to carry the matching sale_price and Merchant Center promotions, or the extra budget buys clicks on full-price listings. A line for the pre-peak call with each client's PPC agency, nothing for us to change until Google's retail date lands."
+    },
+    {
+      "title": "Blend Commerce audit: bot protection turned away an AI shopping agent at 29 of 200 UK and US retailers, including Tesco, Argos and Next",
+      "source": "Blend Commerce, AI Shopping Audit 2026 (reported by PPC Land, 5 Nov)",
+      "url": "https://blendcommerce.com/blogs/shopify/ai-shopping-audit-2026",
+      "date": "2026-10-06",
+      "impact": "watch",
+      "tags": [
+        "AI agents",
+        "bot protection",
+        "agentic commerce",
+        "product data",
+        "UK retail"
+      ],
+      "what": "Blend, a Shopify conversion agency, sent an unmodified Chromium shopping agent to 100 UK and 100 US retailers between 8 and 15 September and scored 17 checks. 29 refused it twice, a list it says includes Home Depot, Best Buy, Macy's, Tesco, Argos and Next, while robots.txt at 24 of those 29 allows the ChatGPT, Perplexity and Claude crawlers. Product pages were readable at 171 of 200; a GTIN was in the product data on 18% of those, shipping on 22%, returns on 20%. 38 of 200 had a live agent checkout endpoint, 37 on Shopify. Fashion scored lowest of twenty sectors. Report dated 6 Oct; PPC Land covered Blend's 4 Nov statement. Blend's own figures; its table does not fully reconcile with the 29.",
+      "sowhat": "Our own PDP scanner is already blocked by Reiss (Akamai), Schuh and Hobbycraft (Cloudflare), so those three are the accounts most likely to be refusing shopping agents too, before any feed question arises. The ask is the same one Blend makes: have each client's security team say which named agents are on the allow list. Microsoft Clarity's Agentic Analytics, announced 4 Nov, is one free way for a client to test whether an agent can complete a task on their site. Vendor marketing, so quote the direction, not the decimals."
     }
   ]
 }

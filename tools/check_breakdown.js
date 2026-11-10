@@ -168,6 +168,31 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
       await pg.waitForTimeout(120);
     }
 
+    console.log('· Hide (blank): the products with no value leave the table and its totals');
+    {
+      const noCol = ITEMS.filter((it) => !tag(it, 'g:custom_label_1')).length, noPt = ITEMS.filter((it) => !tag(it, 'g:product_type')).length;
+      await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'g:custom_label_1'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+      await pg.waitForTimeout(150);
+      const rd = () => pg.evaluate(() => ({ heads: Array.from(document.querySelectorAll('#pv table thead th')).map((th) => th.textContent), rows: Array.from(document.querySelectorAll('#pv tbody td.rh')).map((td) => td.textContent),
+        grand: +(Array.from(document.querySelectorAll('#pv table tfoot td')).slice(-1)[0] || {}).textContent.replace(/[^0-9]/g, ''), note: document.getElementById('pv-note').textContent,
+        on: Array.from(document.querySelectorAll('#pv-nb [data-nb]')).map((b) => b.getAttribute('aria-pressed')) }));
+      const b0 = await rd();
+      ok('the custom_label_1 column carries a (blank) to hide', noCol > 0 && b0.heads.includes('(blank)'), [noCol, b0.heads]);
+      await pg.click('#pv-nb [data-nb="C"]'); await pg.waitForTimeout(150);
+      const b1 = await rd();
+      ok('Hide (blank) · Columns takes the (blank) column away and the grand total down to the products carrying a label', !b1.heads.includes('(blank)') && b1.grand === ITEMS.length - noCol && b1.on[1] === 'true', [b1.grand, ITEMS.length - noCol, b1.heads]);
+      ok('…and the note says how many it hid', new RegExp(noCol + ' with no ').test(b1.note), b1.note);
+      if (noPt) { await pg.click('#pv-nb [data-nb="R"]'); await pg.waitForTimeout(150); const b2 = await rd(); ok('Hide (blank) · Rows takes the (blank) row away', !b2.rows.includes('(blank)') && b2.on[0] === 'true', b2.rows); await pg.click('#pv-nb [data-nb="R"]'); }
+      await pg.reload(); await pg.waitForFunction(() => window.__FCCBreakdown && window.__FCCBreakdown.state().st, null, { timeout: 15000 }).catch(() => {}); await pg.waitForTimeout(400);
+      const b3 = await rd();
+      ok('…the choice is remembered on this device', b3.on[1] === 'true' && !b3.heads.includes('(blank)'), b3.on);
+      await pg.click('#pv-nb [data-nb="C"]'); await pg.waitForTimeout(150);
+      const b4 = await rd();
+      ok('…and pressed again the (blank) column is back', b4.heads.includes('(blank)') && b4.grand === ITEMS.length, [b4.grand, b4.heads]);
+      await pg.evaluate(() => { const s = document.querySelector('#pv-c select.f'); s.value = 'g:availability'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+      await pg.waitForTimeout(120);
+    }
+
     console.log('· Google Ads in the pivot: spend per group, against its share of products, and ROAS');
     {
       const ADS = STUBS.build().ads, A = {}; Object.keys(ADS).forEach((k) => { A[k.toLowerCase()] = ADS[k]; });
