@@ -40,6 +40,10 @@ spec naming the client, deck type, look-back window, ordered section list, and (
 client has a linked plan) live score/task numbers. That handoff is this skill — take
 the brief, and build the actual `.pptx` the DeckBuilder only sketches.
 
+## Always a cover
+
+Every deck this skill builds — and any slide set Ray asks for, even three slides — opens on a cover slide (Ray, 10 Nov 2026: "always generate a cover"): client · market, title + period, one line on what is inside, the date prepared, "FeedSpark · Private & Confidential", and a visual drawn from the deck's own real data. Unnumbered; content slides start at 01.
+
 ## Step 1 — Read the brief
 
 A brief looks like this (client name, deck type and outline vary):
