@@ -355,7 +355,7 @@ console.log('· the channel — Google Shopping or Meta');
   t('worker: All brands counts each channel’s plan', W.leverBrands({ 'p:Superdry|meta': { levers: [{ k: 'rc', bau: 65 }] } }, ['Superdry'])[0].meta === 1);
   t('worker: a signin reads both channels of the brands in its scope', Object.keys(W.leverView({ 'p:Superdry|meta': {}, 'm:Superdry|FR|meta': {}, 'p:Reiss|meta': {} }, (b) => b === 'Superdry')).join() === 'p:Superdry|meta,m:Superdry|FR|meta');
   t('page: the channel switch on the levers card, remembered per device, everything read and written on it', /id="lev-ch"/.test(SP) && /recall\('fcc-stock-lvch'\)/.test(SP) && /remember\('fcc-stock-lvch'/.test(SP)
-    && /SL\.model\(LV\.store, b, mk, lvRoster\(b\), lvToday\(\), LV\.ch\)/.test(SP) && /d\[SL\.planKey\(b, LV\.ch\)\]/.test(SP) && /SL\.marketKey\(b, mkName, LV\.ch\)/.test(SP) && !/'m:' \+ b \+ '\|' \+ (mkName|r\.market)/.test(SP) && /if \(LV\.ch === 'meta'\) o\.ch = 'meta';/.test(SP));
+    && /SL\.model\(LV\.store, b, mk, pick\.length \? pick : rost, lvToday\(\), LV\.ch\)/.test(SP) && /d\[SL\.planKey\(b, LV\.ch\)\]/.test(SP) && /SL\.marketKey\(b, mkName, LV\.ch\)/.test(SP) && !/'m:' \+ b \+ '\|' \+ (mkName|r\.market)/.test(SP) && /if \(LV\.ch === 'meta'\) o\.ch = 'meta';/.test(SP));
 }
 
 console.log('· route, page, stub, nothing committed');

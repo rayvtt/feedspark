@@ -17278,7 +17278,7 @@
   {
    "name": "Stock levers: every read and write goes through the channel",
    "file": "docs/FeedSpark_Stock.html",
-   "pattern": "SL.model(LV.store, b, mk, lvRoster(b), lvToday(), LV.ch)",
+   "pattern": "SL.model(LV.store, b, mk, pick.length ? pick : rost, lvToday(), LV.ch)",
    "pr": 0
   },
   {
