@@ -27,7 +27,7 @@
   else root.StockLevers = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  var VERSION = '2.0.0';
+  var VERSION = '2.1.0';
   // the levers EVERY brand carries (Ray, 7 Oct 2026: "every client should have these stock levers: 1. range completion
   // 2. hero sizes 3. stock quantity threshold 4. stock based exclusion") — in his order; keys are the store's, labels the
   // card's. Each reads the rules of ONE stock mechanism (src/rules.js MECHANISMS), so a lever and its column in "Which
@@ -87,7 +87,23 @@
   //                        record of it"): {d (YYYY-MM-DD), mk:[markets], k, mode ('bau'|'sale'|''), v, was?, note, src?,
   //                        by, at, ed?} — what was set in FeedHero, on which day, where, and who wrote it down. It never
   //                        moves a reading: the matrix says what the rules read, the record says what a person set.
-  function planOf(store, brand) { var p = store && store['p:' + brand]; return p && Array.isArray(p.levers) ? p : null; }
+  // ---- THE CHANNEL (Ray, 10 Nov 2026: "allow selection of whether it's Google Shopping [or] Meta, specifically for
+  // multi-market brands, especially at the stock level, where I summarize the current setting for each stock lever"):
+  // a market runs its stock levers ONCE PER CHANNEL — Superdry's Google range-completion line is ≈35% while its Meta line
+  // is "Social: RC > 65% -> out of stock" — so a lever is read on ONE channel at a time, and each channel keeps its own
+  // plan, connected rules and market values:
+  //   google (the default)  p:<Brand>         m:<Brand>|<MKT>         records with no ch
+  //   meta                  p:<Brand>|meta    m:<Brand>|<MKT>|meta    records ch:'meta'
+  // A rule whose field is every channel's (ch 'all', or none read) belongs to both; a Meta, affiliate or other channel's
+  // rule to that channel alone. Sale periods are the brand's, shared — a sale is one event in every channel.
+  var CHANNELS = [{ k: 'google', label: 'Google Shopping' }, { k: 'meta', label: 'Meta' }];
+  var CHANNEL = {}; CHANNELS.forEach(function (c) { CHANNEL[c.k] = c; });
+  function chKey(ch) { return ch === 'meta' ? 'meta' : 'google'; }
+  function chSuffix(ch) { return chKey(ch) === 'meta' ? '|meta' : ''; }
+  function chOk(r, ch) { var c = r && r.ch; return !c || c === 'all' || c === chKey(ch); }
+  function planKey(brand, ch) { return 'p:' + brand + chSuffix(ch); }
+  function marketKey(brand, mk, ch) { return 'm:' + brand + '|' + mk + chSuffix(ch); }
+  function planOf(store, brand, ch) { var p = store && store[planKey(brand, ch)]; return p && Array.isArray(p.levers) ? p : null; }
   // the brand's four levers in their fixed order, whether or not anybody has saved a plan — what the plan holds for a
   // lever, else nothing set (a brand with no plan still reads every lever off its rules); a legacy key is read as the
   // lever it now is, and the first entry for a lever wins
@@ -100,7 +116,7 @@
     return LEVERS.map(function (L) { return held[L.k] || { k: L.k, bau: null, sale: null }; });
   }
   function leverOf(plan, lk) { return planLevers(plan).filter(function (x) { return x.k === lk; })[0]; }
-  function marketOf(store, brand, mk) { return (store && store['m:' + brand + '|' + mk]) || null; }
+  function marketOf(store, brand, mk, ch) { return (store && store[marketKey(brand, mk, ch)]) || null; }
   // a market's own values for one lever (a legacy key read as the lever it is now)
   function ownOf(mo, lk) {
     var lv = mo && mo.lv; if (!lv) return null;
@@ -114,9 +130,10 @@
     return out.sort(function (a, b) { return a.from < b.from ? -1 : a.from > b.from ? 1 : (a.id < b.id ? -1 : 1); });
   }
   // the brand's records, newest day first (the newest written first within a day)
-  function recordsOf(store, brand) {
-    var pre = 'r:' + brand + '|', out = [];
-    Object.keys(store || {}).forEach(function (k) { var e = store[k]; if (k.indexOf(pre) === 0 && e && e.d && LEVER[keyOf(e.k)]) out.push(Object.assign({ id: k.slice(pre.length) }, e, { k: keyOf(e.k) })); });
+  // a channel's records only (a record kept before the channel existed is Google's — it was the only side read)
+  function recordsOf(store, brand, ch) {
+    var pre = 'r:' + brand + '|', out = [], c = chKey(ch);
+    Object.keys(store || {}).forEach(function (k) { var e = store[k]; if (k.indexOf(pre) === 0 && e && e.d && LEVER[keyOf(e.k)] && chKey(e.ch) === c) out.push(Object.assign({ id: k.slice(pre.length) }, e, { k: keyOf(e.k) })); });
     return out.sort(function (a, b) { return a.d > b.d ? -1 : a.d < b.d ? 1 : ((b.at || 0) - (a.at || 0)) || (a.id < b.id ? -1 : 1); });
   }
   // the newest record for one market and lever — null when nobody recorded one
@@ -128,8 +145,9 @@
   // frozen the day it is written — a plan edited later never rewrites what was recorded
   function switchRecords(sw, p, today) {
     return (sw && sw.changes || []).map(function (c) {
-      var r = { d: today, mk: c.mk.slice(), k: c.k, mode: sw.dir, v: c.to, note: (p ? p.name + ' — ' : '') + (sw.dir === 'sale' ? 'switch to SALE' : 'back to BAU'), src: p ? 'e:' + p.id + '|' + sw.dir : '' };
+      var r = { d: today, mk: c.mk.slice(), k: c.k, mode: sw.dir, v: c.to, note: (p ? p.name + ' — ' : '') + (sw.dir === 'sale' ? 'switch to SALE' : 'back to BAU'), src: p ? 'e:' + p.id + '|' + sw.dir + (chKey(sw.ch) === 'meta' ? '|meta' : '') : '' };
       if (isSet(c.from)) r.was = c.from;
+      if (chKey(sw.ch) === 'meta') r.ch = 'meta';
       return r;
     });
   }
@@ -156,9 +174,10 @@
   var RC_NAME = /\b(range[\s-]*completion|rc)\b/i, HERO_NAME = /\bhero\b/i;
   // a percentage a range-completion rule's name states without a comparison ("Range Completion (BAU & Peak) - 20%")
   function namePct(n) { var m = /(\d{1,2}(?:\.\d+)?)\s*%/.exec(s0(n)); return m ? +m[1] : null; }
-  // a lever is read on the Google Shopping side: a rule for Meta or the affiliates, or a label that only names a level, is
-  // not the lever (Superdry's "Social: RC > 65% -> out of stock" is Meta's own line)
-  function gch(r) { return !r.ch || r.ch === 'all' || r.ch === 'google'; }
+  // a lever is read on ONE channel — its own (lever.ch, set by model(); Google Shopping when none): another channel's rule,
+  // or a label that only names a level, is not the lever (Superdry's "Social: RC > 65% -> out of stock" is Meta's own
+  // line, never Google's)
+  function gch(r, lever) { return chOk(r, lever && lever.ch); }
   function pick(r) { return { i: r.i, n: r.n, t: r.t, d: r.d, imp: r.imp, of: r.of, mo: r.mo, mb: r.mb, cut: r.cut || [] }; }
   function wordIn(name, scope) {
     var w = s0(scope).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -201,13 +220,13 @@
     var st = (m && m.stock) || [];
     lk = keyOf(lk);
     var rcOrHero = function (r) { return RC_NAME.test(s0(r.n)) || HERO_NAME.test(s0(r.n)); };
-    if (lk === 'rc') return st.filter(function (r) { return gch(r) && r.sk !== 'label' && (r.sk === 'range' || RC_NAME.test(s0(r.n))) && !HERO_NAME.test(s0(r.n)); });
-    if (lk === 'hero') return st.filter(function (r) { return gch(r) && (r.sk === 'hero' || HERO_NAME.test(s0(r.n))); });
+    if (lk === 'rc') return st.filter(function (r) { return gch(r, lever) && r.sk !== 'label' && (r.sk === 'range' || RC_NAME.test(s0(r.n))) && !HERO_NAME.test(s0(r.n)); });
+    if (lk === 'hero') return st.filter(function (r) { return gch(r, lever) && (r.sk === 'hero' || HERO_NAME.test(s0(r.n))); });
     if (lk !== 'thresh' && lk !== 'excl') return [];
     var sc = s0(lever && lever.scope).trim(), sib = (lever && lever.sib) || [];
     var onStock = function (r) { return r.sk === 'threshold' || r.sk === 'excl' || (r.sk === 'avail' && !!stockCut(r)); };
     return st.filter(function (r) {
-      if (!gch(r) || rcOrHero(r) || !holds(r)) return false;
+      if (!gch(r, lever) || rcOrHero(r) || !holds(r)) return false;
       if (sc) return onStock(r) && (wordIn(r.n, sc) || wordIn(r.b, sc));
       if (sib.some(function (w) { return wordIn(r.n, w) || wordIn(r.b, w); })) return false;
       return lk === 'thresh' ? r.sk === 'threshold' || (r.sk === 'avail' && !!stockCut(r)) : r.sk === 'excl';
@@ -226,9 +245,9 @@
   }
   // a units lever's mechanism rules that were SET ASIDE as not holding stock back — named, so a market whose coverage
   // column counts a threshold rule while its lever reads none says why
-  function aside(lk, m) {
+  function aside(lk, m, lever) {
     var mech = keyOf(lk) === 'thresh' ? 'threshold' : keyOf(lk) === 'excl' ? 'excl' : '';
-    return ((m && m.stock) || []).filter(function (r) { return mech && gch(r) && r.sk === mech && !holds(r); })
+    return ((m && m.stock) || []).filter(function (r) { return mech && gch(r, lever) && r.sk === mech && !holds(r); })
       .map(function (r) { return { i: r.i, n: r.n, why: ASIDE[holdKind(r)] || '' }; });
   }
 
@@ -265,27 +284,35 @@
   // a market's copy of the connected rule: {r, mt: 'name' | 'job'}, or null
   function findRule(lk, m, lever, bd) {
     var st = (m && m.stock) || [];
-    var named = st.filter(function (r) { return sameName(r.n, bd.n) && (!bd.d || r.d === bd.d); });
+    var named = st.filter(function (r) { return gch(r, lever) && sameName(r.n, bd.n) && (!bd.d || r.d === bd.d); });
     if (named.length) return { r: named[0], mt: 'name' };
     if (!bd.d) return null;   // a field nobody knows: the name alone
     var pool = cands(lk, m, lever).filter(function (r) { return r.d === bd.d; });
     // a rule picked from "every stock rule" does not read as the lever: its copy writes the same field under a near name
-    if (!pool.length) pool = st.filter(function (r) { return r.d === bd.d && nameSim(r.n, bd.n) >= 0.5; });
+    if (!pool.length) pool = st.filter(function (r) { return gch(r, lever) && r.d === bd.d && nameSim(r.n, bd.n) >= 0.5; });
     if (!pool.length) return null;
     pool = pool.slice().sort(function (a, b) { return nameSim(b.n, bd.n) - nameSim(a.n, bd.n) || (a.i || 0) - (b.i || 0); });
     return { r: pool[0], mt: 'job', of: pool.length };
   }
   // the connected rule's FIELD, read off the market it was picked in when the plan does not carry it (a lever connected
   // before the field was stored) — never written back, and a rule that market no longer runs keeps the name alone
-  function resolved(lever, markets) {
+  function resolved(lever, markets, ch) {
     var bd = boundOf(lever); if (!bd || bd.d) return lever;
     var ms = (markets || []).filter(function (x) { return x && x.market === bd.mk; }).concat(markets || []), r = null;
-    for (var i = 0; i < ms.length && !r; i++) r = ((ms[i] && ms[i].stock) || []).filter(function (y) { return sameName(y.n, bd.n); })[0] || null;
+    for (var i = 0; i < ms.length && !r; i++) r = ((ms[i] && ms[i].stock) || []).filter(function (y) { return chOk(y, ch) && sameName(y.n, bd.n); })[0] || null;
     if (!r || !r.d) return lever;
     var o = {}; Object.keys(lever).forEach(function (k) { o[k] = lever[k]; });
     o.rule = { n: bd.n, mk: bd.mk, d: r.d };
     return o;
   }
+  // the range-completion line MEASURED from the products the Google feed is not sent — a Google Shopping reading only: the
+  // join that measures it reads the Google feed, so a Meta lever never borrows it
+  function gline(m, lever) {
+    if (chKey(lever && lever.ch) !== 'google') return null;
+    var held = m && m.av && m.av.held;
+    return held && held.state === 'ok' && held.line ? held.line : null;
+  }
+  function noLine(lever) { return chKey(lever && lever.ch) === 'google' ? 'no line could be measured' : 'the measured line is read off the Google feed, never Meta’s'; }
   function reading(lk, m, lever) {
     lk = keyOf(lk);
     var bd = boundOf(lever);
@@ -307,12 +334,12 @@
     var base = { rules: [pick(r)], bound: bd.n, mt: f.mt, as: f.mt === 'job' ? r.n : '', others: others, idle: r.imp === 0 };
     var put = function (o) { Object.keys(o).forEach(function (k) { base[k] = o[k]; }); return base; };
     if (lk === 'rc') {
-      var held = m && m.av && m.av.held, line = held && held.state === 'ok' && held.line ? held.line : null;
+      var held = gline(m, lever), line = held;
       var st0 = null; (r.cut || []).forEach(function (c) { if (c.m === 'rc' && !st0) st0 = { rule: r.n, op: c.op, v: c.v }; });
       if (!st0) { var np = namePct(r.n); if (np != null && np > 0 && np < 100) st0 = { rule: r.n, op: '', v: np }; }
       if (line) return put({ state: 'on', val: line.x, lo: line.lo, hi: line.hi, how: 'line', stated: st0 ? [st0] : [], why: 'The line measured from the products the Google feed is not sent — the connected rule runs here' });
-      if (st0) return put({ state: 'on', val: st0.v, how: 'name', stated: [st0], why: 'The cut-off the connected rule’s name states — no line could be measured' });
-      return put({ state: 'on', val: null, how: 'rules', stated: [], why: 'The connected rule runs; its cut-off is not in its name and no line could be measured' });
+      if (st0) return put({ state: 'on', val: st0.v, how: 'name', stated: [st0], why: 'The cut-off the connected rule’s name states — ' + noLine(lever) });
+      return put({ state: 'on', val: null, how: 'rules', stated: [], why: 'The connected rule runs; its cut-off is not in its name and ' + noLine(lever) });
     }
     if (isUnits(lk)) {
       var uc = stockCut(r);
@@ -328,19 +355,19 @@
   function loose(lk, m, lever) {
     var rs = cands(lk, m, lever);
     if (lk === 'rc') {
-      var rr = rs, held = m && m.av && m.av.held, line = held && held.state === 'ok' && held.line ? held.line : null;
+      var rr = rs, line = gline(m, lever);
       var stated = [];
       rr.forEach(function (r) { (r.cut || []).forEach(function (c) { if (c.m === 'rc') stated.push({ rule: r.n, op: c.op, v: c.v }); }); });
       if (!stated.length) rr.forEach(function (r) { var v = namePct(r.n); if (v != null && v > 0 && v < 100) stated.push({ rule: r.n, op: '', v: v }); });
       if (!rr.length) return { state: 'none', val: null, how: '', rules: [], why: 'No range-completion rule runs in this market' };
       if (line) return { state: 'on', val: line.x, lo: line.lo, hi: line.hi, how: 'line', rules: rr.map(pick), stated: stated, why: 'The line measured from the products the Google feed is not sent' };
-      if (stated.length) return { state: 'on', val: stated[0].v, how: 'name', rules: rr.map(pick), stated: stated, why: 'The cut-off a rule’s name states — no line could be measured' };
-      return { state: 'on', val: null, how: 'rules', rules: rr.map(pick), stated: [], why: 'Range-completion rules run; their cut-off is not in a name and no line could be measured' };
+      if (stated.length) return { state: 'on', val: stated[0].v, how: 'name', rules: rr.map(pick), stated: stated, why: 'The cut-off a rule’s name states — ' + noLine(lever) };
+      return { state: 'on', val: null, how: 'rules', rules: rr.map(pick), stated: [], why: 'Range-completion rules run; their cut-off is not in a name and ' + noLine(lever) };
     }
     if (isUnits(lk)) {
       var scope = lever && lever.scope, ur = rs, word = lk === 'thresh' ? 'stock quantity threshold' : 'stock-based exclusion';
       if (!ur.length) {
-        var ad = aside(lk, m);
+        var ad = aside(lk, m, lever);
         return { state: 'off', val: null, how: '', rules: [], aside: ad,
           why: 'No ' + word + (scope ? ' for ' + scope : '') + ' holds products back here' + (ad.length ? ' — ' + ad.slice(0, 3).map(function (x) { return '“' + x.n + '” ' + x.why; }).join('; ') : '') };
       }
@@ -365,7 +392,7 @@
   // when asked. Each names the markets where it would be found (carry) and those running it under the same name (same).
   function ruleChoices(lk, markets, mk, lever, all) {
     var m = (markets || []).filter(function (x) { return x.market === mk; })[0]; if (!m) return [];
-    var cand = cands(lk, m, lever), pool = all ? (m.stock || []).slice() : cand.slice(), seen = {};
+    var cand = cands(lk, m, lever), pool = all ? (m.stock || []).filter(function (r) { return gch(r, lever); }) : cand.slice(), seen = {};
     return pool.filter(function (r) { var k = nameKey(r.n) + '|' + s0(r.d); if (!nameKey(r.n) || seen[k]) return false; seen[k] = 1; return true; }).map(function (r) {
       var bx = { n: r.n, d: r.d }, carry = [], same = [];
       (markets || []).forEach(function (x) { var f = x && findRule(lk, x, lever, bx); if (f) { carry.push(x.market); if (f.mt === 'name') same.push(x.market); } });
@@ -427,12 +454,12 @@
   // ---- THE SWITCH LIST — what to change in FeedHero to move markets from one mode to the other ------------------------
   // grouped by lever and change, so 19 markets moving 35% → 20% read as ONE line naming the markets and each market's
   // own rule; a lever whose target in the mode switched to is not set is listed as a blocker, never assumed
-  function switchList(plan, store, brand, markets, mks, dir) {
+  function switchList(plan, store, brand, markets, mks, dir, ch) {
     var from = dir === 'sale' ? 'bau' : 'sale', to = dir, groups = {}, order = [], unset = {};
     var byMk = {}; (markets || []).forEach(function (m) { byMk[m.market] = m; });
-    var levs = sibbed(planLevers(plan).map(function (l) { return resolved(l, markets); }));
+    var levs = onCh(sibbed(planLevers(plan).map(function (l) { return resolved(l, markets, ch); })), ch);
     (mks || []).forEach(function (mk) {
-      var mo = marketOf(store, brand, mk), m = byMk[mk];
+      var mo = marketOf(store, brand, mk, ch), m = byMk[mk];
       levs.forEach(function (l) {
         var a = valueOf(plan, mo, l.k, from), b = valueOf(plan, mo, l.k, to);
         // every brand carries all four levers; one with no value in either mode is not part of this market's plan, so a
@@ -453,13 +480,13 @@
     });
     var out = order.map(function (k) { return groups[k]; });
     var blocked = Object.keys(unset).map(function (k) { return { k: k, label: LEVER[k].label, mk: unset[k] }; });
-    return { dir: dir, changes: out, blocked: blocked };
+    return { dir: dir, ch: chKey(ch), changes: out, blocked: blocked };
   }
   // the switch as brief lines (the Workflow composer's scope, ≤2000 characters): one line per change, its markets, the rule
   // names to edit (each market's own where they differ), then what is not set yet
   function briefLines(sw, brand, p) {
     var L = [];
-    L.push((sw.dir === 'sale' ? 'Switch to SALE' : 'Back to BAU') + ' — ' + brand + (p ? ' — ' + p.name + ' (' + p.from + ' → ' + p.to + ')' : ''));
+    L.push((sw.dir === 'sale' ? 'Switch to SALE' : 'Back to BAU') + ' — ' + brand + ' · ' + CHANNEL[chKey(sw.ch)].label + (p ? ' — ' + p.name + ' (' + p.from + ' → ' + p.to + ')' : ''));
     sw.changes.forEach(function (c) {
       L.push('• ' + c.label + ': ' + fmtVal(c.k, c.from) + ' → ' + fmtVal(c.k, c.to) + ' — ' + c.mk.join(', '));
       var names = {};
@@ -476,15 +503,22 @@
 
   // ---- THE DASHBOARD MODEL — every market × lever, the mode, the periods ---------------------------------------------
   //   markets: /api/rules/stock's markets for the brand · roster: every market of the brand (read or not)
-  function model(store, brand, markets, roster, today) {
-    var plan = planOf(store, brand), periods = periodsOf(store, brand), byMk = {};
+  // the levers stamped with the channel they are read on
+  function onCh(levs, ch) { var c = chKey(ch); return (levs || []).map(function (l) { var o = {}; Object.keys(l).forEach(function (x) { o[x] = l[x]; }); o.ch = c; return o; }); }
+  // does a market carry a feed on the channel? true / false off the wired keys the stock route sends (wk.g / wk.fb);
+  // null when the route did not say — a market whose channel has no feed WIRED IN THE FCC still reads its rules (FeedHero
+  // may send one the FCC has not wired), and says so
+  function hasFeed(m, ch) { if (!m || !m.wk) return null; return chKey(ch) === 'meta' ? !!m.wk.fb : !!m.wk.g; }
+  function model(store, brand, markets, roster, today, ch) {
+    ch = chKey(ch);
+    var plan = planOf(store, brand, ch), periods = periodsOf(store, brand), byMk = {};
     (markets || []).forEach(function (m) { byMk[m.market] = m; });
     var mks = (roster && roster.length ? roster : (markets || []).map(function (m) { return m.market; })).slice();
     // all four levers for every brand, a plan or not — each units lever told the ranges the other is scoped to, so a
     // range's own rule reads under its scoped lever only
-    var levers = sibbed(planLevers(plan).map(function (l) { return resolved(l, markets); }));
+    var levers = onCh(sibbed(planLevers(plan).map(function (l) { return resolved(l, markets, ch); })), ch);
     var rows = mks.map(function (mk) {
-      var m = byMk[mk] || null, mo = marketOf(store, brand, mk), md = modeOf(periods, mk, today);
+      var m = byMk[mk] || null, mo = marketOf(store, brand, mk, ch), md = modeOf(periods, mk, today);
       var cells = {};
       levers.forEach(function (l) {
         var rd = m ? reading(l.k, m, l) : null;
@@ -494,7 +528,10 @@
         // own — a market with its own BAU is still held to the brand's SALE value during a sale, and says so
         cells[l.k] = { rd: rd, bau: valueOf(plan, mo, l.k, 'bau'), sale: valueOf(plan, mo, l.k, 'sale'), tgt: tgt, own: ownSet(mo, l.k), tgtOwn: !!(oc && isSet(oc[md.mode])), ownSale: oc && oc.sale !== undefined ? oc.sale : undefined, drift: rd ? drift(l.k, rd, tgt) : null };
       });
-      return { market: mk, cmpid: m ? m.cmpid : null, read: !!m, mode: md.mode, expect: md.expect, p: md.p, due: md.due, cells: cells };
+      // how many of the market's stock rules are this channel's own (not every channel's) — 0 on a market that runs its
+      // stock management for this channel off the shared rules alone
+      var own = m ? ((m.stock || []).filter(function (r) { return r.ch === ch; }).length) : 0;
+      return { market: mk, cmpid: m ? m.cmpid : null, read: !!m, feed: hasFeed(m, ch), chRules: own, mode: md.mode, expect: md.expect, p: md.p, due: md.due, cells: cells };
     });
     var sum = { markets: rows.length, read: rows.filter(function (r) { return r.read; }).length, sale: 0, late: 0, drift: 0, unset: [] };
     rows.forEach(function (r) {
@@ -518,14 +555,15 @@
       });
       spread[l.k] = o;
     });
-    return { plan: plan, levers: levers, rows: rows, spread: spread, periods: periods.map(function (p) { return Object.assign({}, p, { next: nextStep(p, today) }); }), records: recordsOf(store, brand), sum: sum, today: today };
+    sum.nofeed = rows.filter(function (r) { return r.feed === false; }).map(function (r) { return r.market; });
+    return { ch: ch, plan: plan, levers: levers, rows: rows, spread: spread, periods: periods.map(function (p) { return Object.assign({}, p, { next: nextStep(p, today) }); }), records: recordsOf(store, brand, ch), sum: sum, today: today };
   }
 
   // ---- A SALE VALUE TO CONSIDER — never set without a click -----------------------------------------------------------
   // only what the brand's own rules or plan say: a range-completion line a market's rule names for a peak or sale ("Range
   // Completion (BAU & Peak) - 20%"), else the band's floor; a units cut-off the lever ran before ("previously > 5 units per
   // size"). Hero sizes: none — nothing in the rules says which way a sale should take them.
-  function suggest(plan, markets, lk) {
+  function suggest(plan, markets, lk, ch) {
     lk = keyOf(lk);
     var l = leverOf(plan, lk);
     if (!l) return null;
@@ -533,7 +571,7 @@
       var hits = {};
       (markets || []).forEach(function (m) {
         ((m && m.stock) || []).forEach(function (r) {
-          var n = s0(r.n); if (!RC_NAME.test(n) || !/\b(peak|sale|promo|black friday|bf)\b/i.test(n)) return;
+          var n = s0(r.n); if (!chOk(r, ch) || !RC_NAME.test(n) || !/\b(peak|sale|promo|black friday|bf)\b/i.test(n)) return;
           var v = null; (r.cut || []).forEach(function (c) { if (c.m === 'rc' && v == null) v = c.v; });
           if (v == null) v = namePct(n);
           if (v == null || !(v > 0 && v < 100)) return;
@@ -591,7 +629,7 @@
     return order.map(function (w) { return { w: w, mk: g[w] }; }).sort(function (a, b) { return b.mk.length - a.mk.length; });
   }
   function summaryText(M, brand, today) {
-    var L = [brand + ' — stock levers, ' + (today || M.today)];
+    var L = [brand + ' — stock levers · ' + CHANNEL[chKey(M.ch)].label + ', ' + (today || M.today)];
     M.levers.forEach(function (l) {
       var lab = LEVER[l.k].label + (l.scope ? ' · ' + l.scope : '');
       var plan = 'BAU ' + fmtVal(l.k, l.bau) + ' · SALE ' + fmtVal(l.k, l.sale) + (l.k === 'rc' && num(l.lo) != null && num(l.hi) != null ? ' (band ' + l.lo + '–' + l.hi + '%)' : '') + (l.was ? ' (was ' + l.was + ')' : '');
@@ -605,6 +643,7 @@
     var ps = M.periods.filter(function (p) { return p.next.dir; });
     ps.forEach(function (p) { L.push('• ' + p.name + ' (' + p.from + ' → ' + p.to + '): ' + (p.next.dir === 'sale' ? 'switch to SALE ' : 'back to BAU ') + (p.next.missed ? 'missed — the period ended ' + p.to : p.next.days > 0 ? 'in ' + p.next.days + ' days' : p.next.days === 0 ? 'today' : p.next.late + ' days late') + ' · ' + list(p.mk, 6)); });
     if (!M.periods.length) L.push('• No sale period planned.');
+    if (M.sum && M.sum.nofeed && M.sum.nofeed.length) L.push('• No ' + CHANNEL[chKey(M.ch)].label + ' feed wired in the FCC for ' + list(M.sum.nofeed, 8) + ' — read off their rules all the same');
     var rec = M.records || [];
     if (rec.length) {
       L.push('• Recorded:');
@@ -614,7 +653,7 @@
     return L.join('\n');
   }
 
-  return { VERSION: VERSION, LEVERS: LEVERS, LEVER: LEVER, LEGACY: LEGACY, DRIFT_PP: DRIFT_PP, isSet: isSet, same: same, fmtVal: fmtVal,
+  return { VERSION: VERSION, CHANNELS: CHANNELS, CHANNEL: CHANNEL, chKey: chKey, chOk: chOk, planKey: planKey, marketKey: marketKey, hasFeed: hasFeed, LEVERS: LEVERS, LEVER: LEVER, LEGACY: LEGACY, DRIFT_PP: DRIFT_PP, isSet: isSet, same: same, fmtVal: fmtVal,
     keyOf: keyOf, isUnits: isUnits, planLevers: planLevers, leverOf: leverOf, ownOf: ownOf, stockCut: stockCut, holdKind: holdKind, aside: aside,
     mlOf: mlOf, planMl: planMl, fromMl: fromMl, cutWord: cutWord,
     planOf: planOf, marketOf: marketOf, periodsOf: periodsOf, valueOf: valueOf, reading: reading, drift: drift, namePct: namePct,

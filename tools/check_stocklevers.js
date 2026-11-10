@@ -268,7 +268,7 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.click('#lev-copy');
     await p.waitForFunction(() => !!window.__copied, null, { timeout: 5000 });
     const txt = await p.evaluate(() => window.__copied);
-    ok('⧉ Copy summary is the dashboard in words — the record at its foot', /^Superdry — stock levers, \d{4}-\d{2}-\d{2}/.test(txt) && /• Range completion: BAU 30% · SALE 20% \(band 20–40%\)/.test(txt) && /not read yet — FR/.test(txt) && /Peak sale \(test\)/.test(txt) && /• Recorded:\n    \d{4}-\d{2}-\d{2} — /.test(txt), txt);
+    ok('⧉ Copy summary is the dashboard in words — the record at its foot', /^Superdry — stock levers · Google Shopping, \d{4}-\d{2}-\d{2}/.test(txt) && /• Range completion: BAU 30% · SALE 20% \(band 20–40%\)/.test(txt) && /not read yet — FR/.test(txt) && /Peak sale \(test\)/.test(txt) && /• Recorded:\n    \d{4}-\d{2}-\d{2} — /.test(txt), txt);
     const nPut = seen.length;
     const urlS = p.url();
     const [tab1] = await Promise.all([ctx.waitForEvent('page', { timeout: 8000 }), p.click(per0 + ' .stp[data-dir="bau"] [data-act="lv-brief"]')]);
@@ -278,7 +278,7 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     const raw = decodeURIComponent(new URL(tab1.url()).searchParams.get('brief') || '');
     const brief = JSON.parse(Buffer.from(raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
     ok('→ Brief opens the Workflow composer: the brand, a technical brief from the levers, the switch back to BAU as the scope', brief.client === 'Superdry' && brief.cat === 'technical' && brief.source === 'stock-levers' && /^Stock Levers - Back to BAU - Peak sale \(test\) - Superdry - 1226$/.test(brief.task)
-      && /^Back to BAU — Superdry — Peak sale \(test\)/.test(brief.scope) && /Range completion: 20% → 35% — GB/.test(brief.scope) && /Range completion: 20% → 25% — DE/.test(brief.scope) && /Hero sizes: off → on — GB, DE/.test(brief.scope), brief);
+      && /^Back to BAU — Superdry · Google Shopping — Peak sale \(test\)/.test(brief.scope) && /Range completion: 20% → 35% — GB/.test(brief.scope) && /Range completion: 20% → 25% — DE/.test(brief.scope) && /Hero sizes: off → on — GB, DE/.test(brief.scope), brief);
     ok('…the switch marked briefed', briefPut.some((b) => b['e:Superdry|peak-test'] && b['e:Superdry|peak-test'].bau.st === 'briefed'), briefPut);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
@@ -458,6 +458,71 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
     G = await grp();
     ok('a brand whose markets all read differently (GB, DE, FR not read) has nothing to group: no switch, a row each', !G.on && G.hidden && G.rows.length === 3, G);
+    await ctx.close();
+
+    // ---- THE CHANNEL (Ray, 10 Nov 2026: "allow selection of whether it's Google Shopping [or] Meta … where I summarize the
+    // current setting for each stock lever") — a real click on the switch, the matrix re-read, a save landing on Meta's plan
+    console.log('· the channel — Google Shopping or Meta');
+    ({ ctx, p, errs, seen } = await open(browser, 1440, 1000, '?brand=Superdry'));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    const chBtns = await p.$$eval('#lev-ch [data-lvch]', (a) => a.map((b) => ({ k: b.getAttribute('data-lvch'), on: b.classList.contains('on'), t: b.textContent.replace(/\s+/g, ' ').trim() })));
+    ok('the switch sits on the card: Google Shopping (on, by default) and Meta, each counting the markets with stock rules of their own', chBtns.length === 2 && chBtns[0].k === 'google' && chBtns[0].on && chBtns[1].k === 'meta' && !chBtns[1].on && /^Meta\d+ of \d+$/.test(chBtns[1].t), chBtns);
+    const gRc = (await rows(p)).filter((r) => !r.unread).map((r) => r.mk + '=' + r.cells[0].v);
+    const gTip = (await rows(p))[0].cells[0].tip;
+    ok('on Google Shopping a Meta rule is never the lever — "Social: RC > 6…%" is not in the range-completion tooltip', !/Social: RC/.test(gTip) && /Google Shopping/.test(gTip), gTip);
+    await p.click('#lev-ch [data-lvch="meta"]');
+    await p.waitForFunction(() => /Meta/.test((document.querySelector('#lev-plan .lvp-h h4') || {}).textContent || ''), null, { timeout: 5000 });
+    const mR = await rows(p), mRc = mR.filter((r) => !r.unread).map((r) => r.mk + '=' + r.cells[0].v);
+    ok('on Meta the matrix re-reads: each market’s range completion off its OWN Meta rule ("Social: RC > 6…%" → 6…%)', mR.filter((r) => !r.unread).every((r) => /^6\d%$/.test(r.cells[0].v) && /Social: RC (>|&gt;) 6\d% -(>|&gt;) out of stock/.test(r.cells[0].tip) && /· Meta/.test(r.cells[0].tip)) && mRc.join() !== gRc.join(), [gRc, mRc]);
+    ok('…the plan, the card line and the head say Meta', /Brand plan · Meta/.test(await p.$eval('#lev-plan .lvp-h h4', (h) => h.textContent)) && /on Meta/.test(await p.$eval('#lev-sub', (x) => x.textContent))
+      && await p.$eval('#lev-ch [data-lvch="meta"]', (b) => b.classList.contains('on') && b.getAttribute('aria-pressed') === 'true'));
+    ok('…and a market with no Meta feed wired in the FCC says so, still read off its rules', /no Meta feed/.test(mR.filter((r) => !r.unread)[0].text) && /No Meta feed wired in the FCC/.test(await p.$eval('#lev-chnote', (x) => x.textContent)), mR[0].text);
+    await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-edit"]');
+    await p.fill('#lev-plan .lv[data-lk="rc"] [data-lvf="bau"]', '65');
+    await p.click('#lev-plan .lv[data-lk="rc"] [data-act="lv-save"]');
+    await p.waitForFunction(() => /65%/.test((document.querySelector('#lev-plan .lv[data-lk="rc"]') || {}).textContent || ''), null, { timeout: 5000 });
+    await p.waitForTimeout(700);
+    const metaPut = seen.filter((b) => b['p:Superdry|meta']);
+    ok('a plan saved on Meta lands on Meta’s own plan (p:Superdry|meta) — Google’s is untouched', metaPut.length && metaPut[metaPut.length - 1]['p:Superdry|meta'].levers.some((l) => l.k === 'rc' && l.bau === 65) && !seen.some((b) => b['p:Superdry']), seen);
+    ok('the channel is remembered on this device (fcc-stock-lvch)', (await p.evaluate(() => localStorage.getItem('fcc-stock-lvch'))) === 'meta');
+    await ctx.close();
+    // the stub clears storage on every load, so the next visit is a fresh page carrying what the device kept
+    ({ ctx, p, errs, seen } = await open(browser, 1440, 1000, '?brand=Superdry', 'try{localStorage.setItem("fcc-stock-lvch","meta");}catch(e){}'));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    ok('…and the next visit opens on it', await p.$eval('#lev-ch [data-lvch="meta"]', (b) => b.classList.contains('on')) && /Brand plan · Meta/.test(await p.$eval('#lev-plan .lvp-h h4', (h) => h.textContent)));
+    await p.click('#lev-ch [data-lvch="google"]');
+    await p.waitForFunction(() => !/Meta/.test((document.querySelector('#lev-plan .lvp-h h4') || {}).textContent || ''), null, { timeout: 5000 });
+    ok('…and back on Google Shopping the matrix reads Google again', (await rows(p)).filter((r) => !r.unread).map((r) => r.mk + '=' + r.cells[0].v).join() === gRc.join());
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+
+    // ---- SEVERAL MARKETS AT ONCE (Ray, 10 Nov 2026: "allow multiple selection of market too")
+    console.log('· several markets at once');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry', '', STUB_MANY));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    await p.evaluate(() => { try { localStorage.setItem('fcc-stock-lvgrp', '0'); } catch (e) {} });
+    const allMk = await p.$$eval('#mkts [data-m]', (a) => a.map((b) => b.getAttribute('data-m')).filter(Boolean));
+    const pickA = allMk[0], pickB = allMk[2];
+    await p.click('#mkts [data-m="' + pickA + '"]');
+    await p.click('#mkts [data-m="' + pickB + '"]');
+    await p.click('#lev-view [data-lvv="0"]').catch(() => {});
+    const chipOn = await p.$$eval('#mkts [data-m]', (a) => a.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.getAttribute('data-m')));
+    let lvMk = (await rows(p)).map((r) => r.mk);
+    ok('two market chips stay on together, Every market goes off', chipOn.length === 2 && chipOn.indexOf(pickA) >= 0 && chipOn.indexOf(pickB) >= 0, chipOn);
+    ok('…the levers matrix lists exactly those two', lvMk.length === 2 && lvMk.indexOf(pickA) >= 0 && lvMk.indexOf(pickB) >= 0, lvMk);
+    ok('…the address carries both (?market=A,B) and the scope line names them', new URL(p.url()).searchParams.get('market') === pickA + ',' + pickB && (await p.$eval('#scopeline', (x) => x.textContent)).indexOf(pickA + ', ' + pickB) >= 0, p.url());
+    await p.click('#mkts [data-m="' + pickA + '"]');
+    lvMk = (await rows(p)).map((r) => r.mk);
+    ok('a second click takes a market back out', lvMk.length === 1 && lvMk[0] === pickB, lvMk);
+    await p.click('#mkts [data-m=""]');
+    lvMk = (await rows(p)).map((r) => r.mk);
+    ok('Every market clears the pick — every market back', lvMk.length === allMk.length && (await p.$eval('#mkts [data-m=""]', (b) => b.getAttribute('aria-pressed'))) === 'true', lvMk.length);
+    await ctx.close();
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry&market=' + pickA + ',' + pickB, 'try{localStorage.setItem("fcc-stock-lvgrp","0");}catch(e){}', STUB_MANY));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    lvMk = (await rows(p)).map((r) => r.mk);
+    ok('a link carrying two markets opens on those two', lvMk.length === 2 && lvMk.indexOf(pickA) >= 0 && lvMk.indexOf(pickB) >= 0, lvMk);
+    ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
     console.log('· on a phone');

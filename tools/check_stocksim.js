@@ -165,7 +165,12 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('"on its own" is each rule alone: ' + exOwn.join(' / '), JSON.stringify(own) === JSON.stringify(exOwn), [own, exOwn]);
     const live = IN.filter((pp) => pp.feed === 'in stock'), newly = live.filter((pp) => heldBy(pp, R)).length, back = IN.filter((pp) => pp.feed !== 'in stock' && !heldBy(pp, R)).length;
     const cmp = await p.$eval('#sim-cmp', (e) => e.textContent);
-    ok('against the feed today: ' + newly + ' live today would go, ' + back + ' held back today would come back', new RegExp(newly + ' live today would go, ' + back + ' held back today would come back').test(cmp), cmp);
+    ok('compared with today: ' + newly + ' live today would be held back, ' + back + ' held back today would go live again — three plain lines', new RegExp(newly + ' products live today would be held back').test(cmp) && new RegExp(back + ' products held back today would go live again').test(cmp) && /Held back: [\d,]+ today → [\d,]+ with these rules/.test(cmp) && (await p.$$eval('#sim-cmp li', (l) => l.length)) === 3, cmp);
+    await p.click('#sim-cmp [data-simcmp="0"]');
+    const hid = await p.$eval('#sim-cmp', (e) => ({ t: e.textContent.trim(), li: e.querySelectorAll('li').length, h: e.getBoundingClientRect().height }));
+    ok('✕ Hide folds it to one line, remembered on this device', hid.li === 0 && /Show the comparison with today/.test(hid.t) && hid.h < 44 && (await p.evaluate(() => localStorage.getItem('fcc-stock-simcmp'))) === '0', hid);
+    await p.click('#sim-cmp [data-simcmp="1"]');
+    ok('…and ▸ Show brings it back', (await p.$$eval('#sim-cmp li', (l) => l.length)) === 3 && (await p.evaluate(() => localStorage.getItem('fcc-stock-simcmp'))) === null);
     const cats = await p.$$eval('#sim-cats tbody tr', (t) => t.map((r) => [r.cells[0].textContent, +r.cells[1].textContent.replace(/\D/g, ''), +r.cells[2].textContent.replace(/\D/g, '')]));
     const kidsIn = IN.filter((pp) => pp.cat.startsWith('Kids')).length, kr = cats.filter((c) => c[0] === 'Kids')[0];
     ok('the category table reads the Google feed\'s tree: Kids ' + kidsIn + ' in stock, all held back', kr && kr[1] === kidsIn && kr[2] === kidsIn && cats.some((c) => c[0] === 'Accessories'), cats);

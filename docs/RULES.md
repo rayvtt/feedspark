@@ -1104,6 +1104,12 @@ manifest marker keeps them out. The cut-offs card now stands on its own row. `/r
   rules and the phone. Every count is checked against a tally made in the test, never against the engine.
 - The engine block in `tools/test_catalog.mjs`.
 
+**Compared with today, in plain words** (Ray, 10 Nov 2026, crossing out the one long sentence under the simulator's tiles:
+*"i dont understand this - rewrite and have option to hide"*). Under the tiles, a small box headed "Compared with the
+Google feed today" carries three lines: *Held back: 2,315 today → 4,713 with these rules (2,398 more)*, *2,458 products
+live today would be held back* and *60 products held back today would go live again*. **✕ Hide** folds it to one
+"▸ Show the comparison with today" line, remembered on this device (`fcc-stock-simcmp`). Harness: `tools/check_stocksim.js`.
+
 ## 3q. The source stock as FeedHero holds it — Superdry's suppfeed (`/stock`)
 
 Ray, 26 Oct 2026: *"Just for Superdry specifically … The source stock quantity is not accurate within the master
@@ -1155,6 +1161,46 @@ nosupp, empty field, no token — and the route), `tools/test_rules.mjs` (the ag
 through `sanitizeHeld`, `heldView`, the master's join unchanged beside it), `tools/check_stocksim.js` (a contrary
 suppfeed read on offer moves no simulator count), `tools/check_stockeven.js` (the in-stock card reads the master's
 count and the suppfeed section its own, off the paint).
+
+## 3r. Google Shopping or Meta — the stock levers read per channel (`/stock`)
+
+Ray, 10 Nov 2026: *"Allow selection of whether it's a Google Shopping [or] Meta, specifically for multi-market brands,
+especially at the stock level, where I summarize the current setting for each stock lever."*
+
+A market runs its stock levers once PER CHANNEL. Superdry is the clearest case: its Google range-completion line is ≈35%,
+while Meta reads its own `Social: RC > 65% -> out of stock`. Until now the levers card read the Google side only and set
+every Meta rule aside. A **Channel** switch now sits at the head of the card, **Google Shopping · Meta**. Each button
+counts the read markets that run stock rules of their own for that channel. The pick is remembered per device
+(`fcc-stock-lvch`).
+
+- **What a channel reads** (`docs/stocklevers_engine.js` › THE CHANNEL, `chOk`): the channel's own rules
+  (`src/rules.js` › `channel`) plus every rule whose field belongs to every channel (`ch` `all`, or none read). Another
+  channel's rule is never the lever. The same rule applies to the candidates, the rules set aside, a connected rule's
+  copies and the "every stock rule" picker.
+- **The measured range-completion line is Google's alone** (`gline`). It is measured from the products the Google feed
+  is not sent. On Meta a lever reads the cut-off its rule names, and the tooltip says the measured line is never borrowed.
+- **Each channel has its own plan, market values and records.** Keys: `p:<Brand>` / `p:<Brand>|meta`,
+  `m:<Brand>|<MKT>` / `m:<Brand>|<MKT>|meta`, and records carry `ch:'meta'`. A record with no `ch` is Google's, because
+  Google was the only side read before. The worker (`src/stocklevers.js`) accepts `|meta` and no other suffix. All brands
+  counts both plans (`meta: n`).
+- **Sale periods are the brand's, shared.** A sale is one event in every channel. The switch list, the brief and
+  ＋ Record it follow the channel on screen, and the brief names it (`Superdry · Meta`). A step marked made covers the
+  period, not one channel.
+- **A market with no feed wired on the channel** (`wk.fb` / `wk.g`) still reads its rules, because FeedHero may send a
+  feed the FCC has not wired. The row says "no Meta feed", the channel note lists those markets, and ⧉ Copy summary
+  names them.
+- The summary, CSV, card line, plan heading and every cell tooltip name the channel.
+
+**Several markets at once** (Ray, same day: *"allow multiple selection of market too"*). The market chips at the head
+of the page now toggle: pick GB, FR and DE together, and **Every market** clears the pick. Every card reads the markets
+picked (`S.mks`, `inMk`), and the address carries them (`?market=GB,FR,DE`). The levers matrix, its tiles, ⧉ Copy summary
+and the CSV read only those markets, while a connected rule is still looked for across every market of the brand. A card
+that needs ONE market (the hero-size map, the simulator) reads the single pick, else the first market picked.
+
+Harness: `tools/test_stocklevers.mjs` (the channel block: the Social rule on Meta and never on Google, a shared rule on
+both, the Google line never on Meta, Meta's own threshold, each channel's plan / values / records, the shared period, the
+Meta switch list and records, the worker keys) + `tools/check_stocklevers.js` (a real click on the switch, the matrix
+re-read, a plan saved onto `p:Superdry|meta` with Google's untouched, the remembered pick, and back to Google).
 
 ## 4. Findings
 
