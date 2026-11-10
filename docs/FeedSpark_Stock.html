@@ -147,6 +147,16 @@ window.addEventListener('load',restore);
   .sim-out .sv-sum{margin:0}
   .sim-cmp{font-size:12.5px;font-weight:700;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
   .sim-cmp:empty{display:none}
+  .sim-cmp .sch{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .sim-cmp .sch h4{margin:0;font-size:12.5px;font-weight:800;color:var(--ink)}
+  .sim-cmp .sch .hb-dl{margin-left:auto}
+  .sim-cmp ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-weight:600}
+  .sim-cmp li{display:flex;gap:8px;align-items:baseline}
+  .sim-cmp li i{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--muted);transform:translateY(-1px)}
+  .sim-cmp li i.up{background:var(--chart-2,#ED6F0B)}
+  .sim-cmp li i.dn{background:var(--good,#1BAF7A)}
+  .sim-cmp.hid{padding:6px 12px}
+  .sim-cmp.hid .hb-dl{margin:0}
   .sim-cmp b{font-weight:900}
   .sim-box{border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
   .sim-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
@@ -2431,6 +2441,22 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       + '<div class="vals" id="sim-vals">' + (shown.map(function (v) { return '<label title="' + esc(v[0] + ' · ' + n0(v[1]) + ' products in stock') + '"><input type="checkbox" data-bv="' + esc(v[0]) + '"' + (picked[v[0]] ? ' checked' : '') + '><span>' + esc(v[0]) + '</span><i>' + n0(v[1]) + '</i></label>'; }).join('') || '<div class="na" style="padding:8px">No value matches.</div>') + '</div></div>';
     return rng('rc') + rng('qty') + rng('sz') + blk;
   }
+  function simCmpHtml(t, dlt) {
+    var box = $('#sim-cmp');
+    if (!t) { box.classList.remove('hid'); return ''; }
+    if (recall('fcc-stock-simcmp') === '0') { box.classList.add('hid'); return '<button class="hb-dl" type="button" data-simcmp="1" title="What these rules would change against the Google feed today">▸ Show the comparison with today</button>'; }
+    box.classList.remove('hid');
+    var of = t.joined !== undefined ? ' title="Read against the ' + n0(t.joined) + ' in-stock products found in the Google feed"' : '';
+    return '<div class="sch"><h4' + of + '>Compared with the Google feed today</h4><button class="hb-dl" type="button" data-simcmp="0" title="Fold this away — it stays folded on this device">✕ Hide</button></div><ul>'
+      + '<li><i></i><span>Held back: <b>' + n0(t.held) + '</b> today → <b>' + n0(t.sim) + '</b> with these rules' + (dlt === 0 ? ' (no change)' : ' (' + (dlt > 0 ? n0(dlt) + ' more' : n0(-dlt) + ' fewer') + ')') + '</span></li>'
+      + '<li><i class="up"></i><span><b>' + n0(t.newly) + '</b> products live today would be held back</span></li>'
+      + '<li><i class="dn"></i><span><b>' + n0(t.released) + '</b> products held back today would go live again</span></li></ul>';
+  }
+  $('#sim-cmp').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-simcmp]'); if (!b) return;
+    remember('fcc-stock-simcmp', b.getAttribute('data-simcmp') === '0' ? '0' : '');
+    renderSim();
+  });
   function simSweepSvg(D, E) {
     var r = SIM.rules, sw = E.simSweep(D, r, 5), W = 640, H = 170, pl = 40, pb = 22, pt = 14, top = Math.max(1, sw[sw.length - 1].held);
     var bw = (W - pl - 6) / sw.length, cur = r.rc.on ? r.rc.v : 0, line = simLine();
@@ -2469,7 +2495,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       + '<div class="it"><span>Stays live</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + '</span></div>'
       + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ', not live in the Google feed' : 'not joined to the Google feed') + '</span></div>';
     var t = res.today, dlt = t ? t.sim - t.held : 0;
-    $('#sim-cmp').innerHTML = t ? 'Against the Google feed today: these rules would hold back <b>' + n0(t.sim) + '</b> of the ' + n0(t.joined) + ' in-stock products read against it (today <b>' + n0(t.held) + '</b>, ' + (dlt === 0 ? 'the same' : (dlt > 0 ? n0(dlt) + ' more' : n0(-dlt) + ' fewer')) + ') — <b>' + n0(t.newly) + '</b> live today would go, <b>' + n0(t.released) + '</b> held back today would come back.' : '';
+    // COMPARED WITH TODAY, in three plain lines (Ray, 10 Nov 2026, crossing out the one long sentence this used to be: "i dont
+    // understand this - rewrite and have option to hide") — held back today vs with these rules, then the two ways a product
+    // moves; ✕ Hide folds it to one line, remembered on this device (fcc-stock-simcmp)
+    $('#sim-cmp').innerHTML = simCmpHtml(t, dlt);
     $('#sim-sweep').innerHTML = simSweepSvg(D, E);
     var ord = E.SIM_ORDER.filter(function (k) { return k === 'block' ? r.block.v.length : r[k].on && !(k === 'qty' && !D.hasQty); });
     $('#sim-rules tbody').innerHTML = ord.map(function (k) {

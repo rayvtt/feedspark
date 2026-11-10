@@ -1104,6 +1104,12 @@ manifest marker keeps them out. The cut-offs card now stands on its own row. `/r
   rules and the phone. Every count is checked against a tally made in the test, never against the engine.
 - The engine block in `tools/test_catalog.mjs`.
 
+**Compared with today, in plain words** (Ray, 10 Nov 2026, crossing out the one long sentence under the simulator's tiles:
+*"i dont understand this - rewrite and have option to hide"*). Under the tiles, a small box headed "Compared with the
+Google feed today" carries three lines: *Held back: 2,315 today → 4,713 with these rules (2,398 more)*, *2,458 products
+live today would be held back* and *60 products held back today would go live again*. **✕ Hide** folds it to one
+"▸ Show the comparison with today" line, remembered on this device (`fcc-stock-simcmp`). Harness: `tools/check_stocksim.js`.
+
 ## 3q. The source stock as FeedHero holds it — Superdry's suppfeed (`/stock`)
 
 Ray, 26 Oct 2026: *"Just for Superdry specifically … The source stock quantity is not accurate within the master

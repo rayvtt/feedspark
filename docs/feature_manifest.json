@@ -17298,6 +17298,12 @@
    "file": "docs/FeedSpark_Stock.html",
    "pattern": "var rost = lvRoster(b), pick = rost.filter(inMk);",
    "pr": 0
+  },
+  {
+   "name": "Stock simulator: compared with today in three plain lines, ✕ Hide per device",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "'<li><i class=\"up\"></i><span><b>' + n0(t.newly) + '</b> products live today would be held back</span></li>'",
+   "pr": 0
   }
  ]
 }
