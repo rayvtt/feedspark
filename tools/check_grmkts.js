@@ -175,7 +175,7 @@ const QUALITY = {
       window.__cap = { shown: getComputedStyle(el).display !== 'none', rows: el.querySelectorAll('.pm-t tbody tr').length };
       const c = document.createElement('canvas'); c.width = 20; c.height = 40; return Promise.resolve(c);
     };
-    window.jspdf = { jsPDF: function () { return { addImage: function () {}, save: function () { window.__saved = true; } }; } };
+    window.jspdf = { jsPDF: function () { return { addImage: function () {}, link: function () {}, save: function () { window.__saved = true; } }; } };
   });
   await page.click('#det-pdf');
   await page.waitForFunction(() => window.__saved === true, null, { timeout: 8000 }).catch(() => {});

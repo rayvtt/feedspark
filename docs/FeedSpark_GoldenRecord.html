@@ -6684,10 +6684,31 @@ window.addEventListener('load',restore);
       });
     }));
   }
+  /* THE LINKS STAY CLICKABLE (Ray, 10 Nov 2026: "links inside PDF download of golden record is not clickable"):
+     the sheet is one picture, so every link a reader can SEE in the rendered document — a spec page, the
+     client's own product page — is laid back over it as a URI annotation at the same place. Only plain
+     http(s) addresses: scrubExport has already taken out script and data URLs, and an in-page or relative
+     link means nothing on paper. A link folded away (zero size) or hidden is never annotated. */
+  function pdfLinks(fd) {
+    var out = [], seen = {}, b = fd.body.getBoundingClientRect();
+    Array.prototype.forEach.call(fd.querySelectorAll('a[href]'), function (a) {
+      var u = (a.getAttribute('href') || '').trim();
+      if (!/^https?:\/\/[^\s"'<>]+$/i.test(u) || EXP_BADURL.test(u)) return;
+      var cs = fd.defaultView.getComputedStyle(a);
+      if (cs.visibility === 'hidden' || cs.display === 'none') return;
+      Array.prototype.forEach.call(a.getClientRects(), function (r) {
+        if (r.width < 2 || r.height < 2) return;
+        var x = r.left - b.left, y = r.top - b.top, key = u + '|' + Math.round(x) + '|' + Math.round(y);
+        if (seen[key] || x < 0 || x >= PDF_W) return; seen[key] = 1;
+        out.push({ x: x, y: y, w: Math.min(r.width, PDF_W - x), h: r.height, url: u });
+      });
+    });
+    return out;
+  }
   function exportPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
-    var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '', frame = null;
+    var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '', frame = null, links = [];
     var done = function () { if (frame && frame.parentNode) frame.parentNode.removeChild(frame); frame = null; if (btn) { btn.disabled = false; btn.textContent = oldTxt; } };
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
     var picks = GRP[k] ? [] : catxPicks(k);   // a group report carries no catalogue-wide modules
@@ -6707,6 +6728,7 @@ window.addEventListener('load',restore);
         var h = Math.max(fd.documentElement.scrollHeight, fd.body.scrollHeight);
         f.style.height = h + 'px';
         var bg = getComputedStyle(fd.body).backgroundColor || '#ffffff';
+        links = pdfLinks(fd);
         return window.html2canvas(fd.body, { scale: 2, backgroundColor: bg, useCORS: true, windowWidth: PDF_W, width: PDF_W, height: h, windowHeight: h });
       });
     }).then(function (canvas) {
@@ -6714,6 +6736,8 @@ window.addEventListener('load',restore);
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ unit: 'mm', format: [wMM, hMM] });
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, wMM, hMM);
+      var mm = wMM / PDF_W;   // the capture is PDF_W css px wide, whatever html2canvas's scale
+      links.forEach(function (l) { pdf.link(l.x * mm, l.y * mm, l.w * mm, l.h * mm, { url: l.url }); });
       pdf.save(pdfFilename(p, s, 'pdf'));
       done();
     }).catch(function () {

@@ -179,7 +179,7 @@ const QUALITY = {
     window.__cap = null; window.__pdfdone = false;
     window.html2canvas = (el) => { const d = el.ownerDocument; if (d !== document && !window.__cap) window.__cap = d.body.textContent;
       return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
-    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdone = true; }; } };
+    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.link = (x, y, w, h, o) => { (window.__pdfLinks = window.__pdfLinks || []).push({ x, y, w, h, url: o && o.url }); }; this.save = () => { window.__pdfdone = true; }; } };
   });
   await page.click('#det-pdf');
   await page.waitForFunction(() => window.__pdfdone === true, null, { timeout: 20000 }).catch(() => {});
@@ -262,7 +262,7 @@ const QUALITY = {
     window.__cap = null; window.__pdfdone = false;
     window.html2canvas = (el) => { const d = el.ownerDocument; if (d !== document && !window.__cap) window.__cap = d.body.textContent;
       return Promise.resolve({ width: 1220, height: 3000, toDataURL: () => 'data:image/jpeg;base64,AAAA' }); };
-    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.save = () => { window.__pdfdone = true; }; } };
+    window.jspdf = { jsPDF: function () { this.addImage = () => {}; this.link = (x, y, w, h, o) => { (window.__pdfLinks = window.__pdfLinks || []).push({ x, y, w, h, url: o && o.url }); }; this.save = () => { window.__pdfdone = true; }; } };
   });
   await page.click('#det-pdf');
   await page.waitForFunction(() => window.__pdfdone === true, null, { timeout: 20000 }).catch(() => {});

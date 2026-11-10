@@ -1512,8 +1512,11 @@ encrypted content is that same document) and the PDF (drawn from it):
 - no comment;
 - zero-width marks, bidi overrides and tag characters are removed from every text node and attribute.
 
-The PDF is one JPEG. jsPDF is handed `addImage` + `save` only, so the file has no text layer, link, form, attachment or
-script; its only `/OpenAction` is jsPDF's "open at page 1, fit width" view. The locked shell carries one script (the
+The PDF is one JPEG. jsPDF is handed `addImage`, `link` and `save` only, so the file has no text layer, form, attachment or
+script; its only `/OpenAction` is jsPDF's "open at page 1, fit width" view. THE LINKS STAY CLICKABLE (Ray, 10 Nov 2026:
+"links inside PDF download of golden record is not clickable"): `pdfLinks` measures every `a[href]` the rendered document
+shows — after `scrubExport` — and lays each back over the picture as a `/Link` annotation with a `/URI` action at the same
+place; only a plain http(s) address (never script, data, a relative or in-page link), never a folded-away or hidden one. The locked shell carries one script (the
 opener), and the page it writes has none. What remains is the client's own feed copy, which the report shows as written,
 because quoting it is the point of the audit.
 
