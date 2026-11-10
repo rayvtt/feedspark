@@ -922,7 +922,11 @@ function mkCell(g, client, market) { return '<td>' + (g.first ? '<b>' + esc(clie
 function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() : '') + esc((MK[sk] || {}).label || sk) + '</span>'; }
 
   var Q = new URLSearchParams(location.search);
-  var S = { brand: Q.get('brand') || recall('fcc-stock-brand'), market: Q.get('market') || '', mech: Q.get('mech') || '', q: Q.get('q') || '', chan: recall('fcc-stock-chan') === '1', d: null };
+  // MARKETS ARE A SET (Ray, 10 Nov 2026: "allow multiple selection of market too"): S.mks holds the markets picked (none =
+  // every market), ?market=GB,FR carries them; S.market is the ONE market when exactly one is picked, for the cards that
+  // need a single market (the hero-size map, the simulator), else ''
+  var S = { brand: Q.get('brand') || recall('fcc-stock-brand'), mks: (Q.get('market') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean), market: '', mech: Q.get('mech') || '', q: Q.get('q') || '', chan: recall('fcc-stock-chan') === '1', d: null };
+  setMks(S.mks);
   var MK = {}, CH = {}, DR = {};
   tipInit();
   $('#q').value = S.q; $('#chan').checked = S.chan;
@@ -1156,7 +1160,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     // no plan saved is no reason to show nothing: every market still reads all four levers off its rules, and the plan's
     // values say "not set" until somebody sets them (the first save writes the plan)
     var p = SL.planOf(LV.store, b, LV.ch);
-    var mk = lvMarkets(b), M = LV.M = SL.model(LV.store, b, mk, lvRoster(b), lvToday(), LV.ch);
+    // the markets picked at the top of the page (several at once): the matrix, the tiles, the summary and the CSV read
+    // those; a connected rule is still found across every market of the brand
+    var rost = lvRoster(b), pick = rost.filter(inMk);
+    var mk = lvMarkets(b), M = LV.M = SL.model(LV.store, b, mk, pick.length ? pick : rost, lvToday(), LV.ch);
     var s = M.sum, levs = M.levers, chL = SL.CHANNEL[LV.ch].label;
     lvChRow(b, mk, M);
     $('#lev-sub').textContent = 'What each ' + b + ' market runs today for its four stock levers on ' + chL + (p ? ', against the brand’s ' + chL + ' BAU and SALE plan — and the switch between them.' : ' — no ' + chL + ' BAU / SALE plan set yet: set one in Brand plan below.');
@@ -1560,7 +1567,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       LV.ch = nc; remember('fcc-stock-lvch', nc === 'meta' ? 'meta' : ''); LV.ed = ''; LV.med = ''; LV.rk = ''; LV.rksel = null; LV.rf = null; LV.f = '';
       renderLev(); return;
     }
-    if (t.hasAttribute('data-lvb')) { S.brand = t.getAttribute('data-lvb'); S.market = ''; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); return; }
+    if (t.hasAttribute('data-lvb')) { S.brand = t.getAttribute('data-lvb'); setMks([]); remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); return; }
     if (t.hasAttribute('data-lvf2') && !act) { LV.f = t.getAttribute('data-lvf2'); renderLev(); if (LV.f) { var tw = $('#lev-t'); if (tw && tw.scrollIntoView) tw.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; }
     if (t.hasAttribute('data-lvm')) {
       var all = lvRoster(b), m = t.getAttribute('data-lvm'), cur = (LV.fmk || all).slice();
@@ -1712,13 +1719,16 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     });
     HM.mk = ''; hmLoad(); lvLoad();
   }
-  function mkts() { return ((S.d && S.d.markets) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && (!S.market || m.market === S.market); }); }
+  function setMks(a) { S.mks = (a || []).filter(function (x, i, all) { return x && all.indexOf(x) === i; }); S.market = S.mks.length === 1 ? S.mks[0] : ''; }
+  function inMk(mk) { return !S.mks.length || S.mks.indexOf(mk) >= 0; }
+  function mkWord() { return S.mks.length ? (S.mks.length <= 4 ? S.mks.join(', ') : S.mks.slice(0, 4).join(', ') + ' + ' + (S.mks.length - 4)) : ''; }
+  function mkts() { return ((S.d && S.d.markets) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && inMk(m.market); }); }
   function mechs() { return (S.d && S.d.mechanisms) || []; }
   function render() {
     var d = S.d || {};
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
-    $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.market ? ' · ' + S.market : '');
+    $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.mks.length ? ' · ' + mkWord() : '');
     renderChips(); renderLev(); renderAv(); renderSupp(); renderSv(); renderCov(); renderSim(); renderHeroes(); renderHmap(); renderCuts(); renderMechChips(); renderSetups(); renderHow();
     if (SV.key) svPanel(false);
     foldBar(); foldHash();
@@ -1728,9 +1738,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (!S.brand) { el.innerHTML = ''; return; }
     var b = (d.rosterBrands || []).filter(function (x) { return x.client === S.brand; })[0]; if (!b) { el.innerHTML = ''; return; }
     var by = {}; (d.markets || []).forEach(function (m) { if (m.client === S.brand) by[m.market] = m; });
-    el.innerHTML = '<button class="chip' + (!S.market ? ' on' : '') + '" data-m="">Every market</button>' + b.markets.map(function (mk) {
-      var m = by[mk];
-      return '<button class="chip' + (m ? '' : ' none') + (S.market === mk ? ' on' : '') + '" data-m="' + esc(mk) + '"' + (m ? '' : ' title="Not read yet"') + '>' + esc(mk) + ' <span class="k">' + (m ? (m.stock || []).length : '—') + '</span></button>';
+    // several markets at once: a chip toggles its market in or out; Every market clears the pick
+    el.innerHTML = '<button class="chip' + (!S.mks.length ? ' on' : '') + '" data-m="" aria-pressed="' + !S.mks.length + '">Every market</button>' + b.markets.map(function (mk) {
+      var m = by[mk], on = S.mks.indexOf(mk) >= 0;
+      return '<button class="chip' + (m ? '' : ' none') + (on ? ' on' : '') + '" data-m="' + esc(mk) + '" aria-pressed="' + on + '"' + (m ? '' : ' title="Not read yet"') + '>' + esc(mk) + ' <span class="k">' + (m ? (m.stock || []).length : '—') + '</span></button>';
     }).join('');
   }
   // ---- IN STOCK, MASTER FEED → OUTPUT FEEDS (Ray, 30 Sep 2026: "In the stock management module, bring in the availability
@@ -1888,7 +1899,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var cell = {};
     ms.forEach(function (m) { (m.stock || []).forEach(function (r) { var k = m.cmpid + '|' + r.sk; (cell[k] = cell[k] || []).push(r); mx = Math.max(mx, cell[k].length); }); });
     $('#cov thead').innerHTML = '<tr><th>Market</th>' + M.map(function (x) { return '<th class="num" title="' + esc(x.q) + '">' + (x.k === 'hero' ? heroIcon() : '') + esc(x.label) + '</th>'; }).join('') + '<th class="num">Total</th></tr>';
-    var unread = ((S.d && S.d.unread) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && (!S.market || m.market === S.market); });
+    var unread = ((S.d && S.d.unread) || []).filter(function (m) { return (!S.brand || m.client === S.brand) && inMk(m.market); });
     $('#cov tbody').innerHTML = ms.map(function (m) {
       return '<tr><td class="nm"><b>' + esc(m.client) + '</b> ' + esc(m.market) + '<span class="sub2">' + (m.items ? n0(m.items) + ' products' : '') + '</span></td>' + M.map(function (x) {
         var list = cell[m.cmpid + '|' + x.k] || [];
@@ -1907,7 +1918,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // ---- Hero sizes: the runs table (engine: src/rules.js heroRuns) — every rule on the 'hero'
   // mechanism, market by market, in FeedHero's own run order; same shape and filtering as Cut-offs.
   function renderHeroes() {
-    var list = ((S.d && S.d.heroRuns) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
+    var list = ((S.d && S.d.heroRuns) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && inMk(c.market); });
     var hmk = {}; list.forEach(function (c) { hmk[c.cmpid] = 1; });
     fsum('hero-card', list.length ? nw(list.length, 'hero-size rule') + ' in ' + nw(Object.keys(hmk).length, 'market') : 'no hero-size rule in view');
     $('#heroes tbody').innerHTML = grp(list, function (c) { return c.cmpid; }).map(function (g) {
@@ -1920,7 +1931,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     }).join('') || '<tr><td class="empty" colspan="4">' + (S.d && S.d.tracked ? 'No hero-size rule in view — nothing writes a hero-size field yet.' : 'No rules read yet.') + '</td></tr>';
   }
   function renderCuts() {
-    var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && (!S.market || c.market === S.market); });
+    var list = ((S.d && S.d.cutoffs) || []).filter(function (c) { return (!S.brand || c.client === S.brand) && inMk(c.market); });
     fsum('cut-card', list.length ? nw(list.length, 'cut-off') + ' in rule names' : 'none in view');
     $('#cuts tbody').innerHTML = grp(list, function (c) { return c.cmpid; }).map(function (g) {
       var c = g.x;
@@ -2029,7 +2040,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (key === 'book') {
       var ms = mkts(), bk = svBook(ms, SV.pct, svDays()), top = bk.byCur[0];
       $('#svp-ti').textContent = 'Every market in view';
-      $('#svp-mk').textContent = (S.brand || 'All brands') + (S.market ? ' · ' + S.market : '') + ' · ' + scnName(SV.pct) + ' ' + SV.pct + '%';
+      $('#svp-mk').textContent = (S.brand || 'All brands') + (S.mks.length ? ' · ' + mkWord() : '') + ' · ' + scnName(SV.pct) + ' ' + SV.pct + '%';
       var per = []; ms.forEach(function (m) { var f = svFloor(m.stock); if (f && m.ads) per.push({ m: m, f: f, amt: svCalc(f.n, m.ads, SV.pct, svDays()) }); });
       per.sort(function (a, b) { return a.m.ads.cur === b.m.ads.cur ? b.amt - a.amt : (a.m.ads.cur === (top && top.cur) ? -1 : 1); });
       bd.innerHTML = top ? '<div class="big" id="svp-big"></div><div class="cap">at least, ' + svPer() + ' · ' + top.markets + ' market' + (top.markets === 1 ? '' : 's') + ' in ' + esc(top.cur || 'this currency') + ', each counted once at its largest blocking rule · ' + esc(scnName(SV.pct)).toLowerCase() + ' ' + SV.pct + '%</div>'
@@ -2120,7 +2131,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
         return true;
       });
       if ((S.mech || q) && !st.length) return '';
-      var open = ms.length <= 3 || !!S.market || !!q || !!S.mech;
+      var open = ms.length <= 3 || !!S.mks.length || !!q || !!S.mech;
       // the summary is ONE line (count · market · when read); the plain-words setup and the FeedHero link open with the rules
       return '<details class="fd"' + (open ? ' open' : '') + ' id="set-' + esc(m.cmpid) + '"><summary><span class="sev s1">' + (m.stock || []).length + '</span><span class="tt"><span class="chev">▶</span>' + esc(m.client + ' ' + m.market) + '</span><span class="wh">' + (m.updated ? 'read ' + since(m.updated) : '') + '</span></summary>'
         + '<div class="toolbar set-top"><span class="why">' + esc(m.sentence) + '</span>' + fhA(m.cmpid, null, null, 'All rules in FeedHero') + '</div>'
@@ -2365,7 +2376,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function renderSim() {
     var ms = simMarkets(), sel = $('#sim-mkt');
     if (!SIM.cmpid || !ms.some(function (m) { return m.cmpid === SIM.cmpid; })) {
-      var pick = ms.filter(function (m) { return S.market && m.market === S.market; })[0] || ms[0];
+      var pick = ms.filter(function (m) { return S.mks.length && m.market === S.mks[0]; })[0] || ms[0];
       if (!SIM.D) SIM.cmpid = pick ? pick.cmpid : '';
     }
     sel.innerHTML = ms.map(function (m) { return '<option value="' + esc(m.cmpid) + '"' + (m.cmpid === SIM.cmpid ? ' selected' : '') + '>' + esc(m.client + ' ' + m.market) + '</option>'; }).join('')
@@ -2547,7 +2558,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function hmBrand() { return (HM.d && HM.d.brand) || ''; }
   function hmCensus() { return (HM.d && HM.d.census) || null; }
   function hmLoad() {
-    var mk = HM.mk || S.market || '';
+    var mk = HM.mk || S.market || S.mks[0] || '';
     var u = '/api/rules/hero' + (S.brand ? '?brand=' + encodeURIComponent(S.brand) + (mk ? '&market=' + encodeURIComponent(mk) : '') : '');
     var key = HM.key = u;
     Promise.all([hsLoad(), fetch(u, { credentials: 'same-origin' }).then(function (r) {
@@ -2899,12 +2910,17 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
 
   // ---- wiring ----
-  $('#brand').addEventListener('change', function () { S.brand = this.value; S.market = ''; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); });
-  $('#mkts').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (!b) return; S.market = b.getAttribute('data-m'); setQuery({ market: S.market }); render(); HM.mk = ''; hmLoad(); });
+  $('#brand').addEventListener('change', function () { S.brand = this.value; setMks([]); remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: '' }); load(); });
+  $('#mkts').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-m]'); if (!b) return;
+    var mk = b.getAttribute('data-m'), i = S.mks.indexOf(mk);
+    if (!mk) setMks([]); else if (i >= 0) setMks(S.mks.filter(function (x) { return x !== mk; })); else setMks(S.mks.concat([mk]));
+    setQuery({ market: S.mks.join(',') }); render(); HM.mk = ''; hmLoad();
+  });
   $('#cov').addEventListener('click', function (e) {
     var c = e.target.closest('[data-cell]'); if (!c) return;
     var p = c.getAttribute('data-cell').split('|');
-    S.brand = p[0]; S.market = p[1]; S.mech = p[2]; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: S.market, mech: S.mech });
+    S.brand = p[0]; setMks([p[1]]); S.mech = p[2]; remember('fcc-stock-brand', S.brand); setQuery({ brand: S.brand, market: S.market, mech: S.mech });
     if (S.d && S.d.scope && S.d.scope.brand !== S.brand && S.d.scope.brand) { load(); return; }
     render(); var el = document.getElementById('set-' + ((mkts()[0] || {}).cmpid || '')); if (el) { foldOpen(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   });

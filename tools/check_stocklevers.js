@@ -496,6 +496,35 @@ const lastPut = (p) => p.evaluate(() => window.__puts[window.__puts.length - 1] 
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
+    // ---- SEVERAL MARKETS AT ONCE (Ray, 10 Nov 2026: "allow multiple selection of market too")
+    console.log('· several markets at once');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry', '', STUB_MANY));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    await p.evaluate(() => { try { localStorage.setItem('fcc-stock-lvgrp', '0'); } catch (e) {} });
+    const allMk = await p.$$eval('#mkts [data-m]', (a) => a.map((b) => b.getAttribute('data-m')).filter(Boolean));
+    const pickA = allMk[0], pickB = allMk[2];
+    await p.click('#mkts [data-m="' + pickA + '"]');
+    await p.click('#mkts [data-m="' + pickB + '"]');
+    await p.click('#lev-view [data-lvv="0"]').catch(() => {});
+    const chipOn = await p.$$eval('#mkts [data-m]', (a) => a.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.getAttribute('data-m')));
+    let lvMk = (await rows(p)).map((r) => r.mk);
+    ok('two market chips stay on together, Every market goes off', chipOn.length === 2 && chipOn.indexOf(pickA) >= 0 && chipOn.indexOf(pickB) >= 0, chipOn);
+    ok('…the levers matrix lists exactly those two', lvMk.length === 2 && lvMk.indexOf(pickA) >= 0 && lvMk.indexOf(pickB) >= 0, lvMk);
+    ok('…the address carries both (?market=A,B) and the scope line names them', new URL(p.url()).searchParams.get('market') === pickA + ',' + pickB && (await p.$eval('#scopeline', (x) => x.textContent)).indexOf(pickA + ', ' + pickB) >= 0, p.url());
+    await p.click('#mkts [data-m="' + pickA + '"]');
+    lvMk = (await rows(p)).map((r) => r.mk);
+    ok('a second click takes a market back out', lvMk.length === 1 && lvMk[0] === pickB, lvMk);
+    await p.click('#mkts [data-m=""]');
+    lvMk = (await rows(p)).map((r) => r.mk);
+    ok('Every market clears the pick — every market back', lvMk.length === allMk.length && (await p.$eval('#mkts [data-m=""]', (b) => b.getAttribute('aria-pressed'))) === 'true', lvMk.length);
+    await ctx.close();
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, '?brand=Superdry&market=' + pickA + ',' + pickB, 'try{localStorage.setItem("fcc-stock-lvgrp","0");}catch(e){}', STUB_MANY));
+    await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000 });
+    lvMk = (await rows(p)).map((r) => r.mk);
+    ok('a link carrying two markets opens on those two', lvMk.length === 2 && lvMk.indexOf(pickA) >= 0 && lvMk.indexOf(pickB) >= 0, lvMk);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+
     console.log('· on a phone');
     ({ ctx, p, errs } = await open(browser, 390, 860, '?brand=Superdry'));
     await p.waitForSelector('#lev-t tbody tr[data-mk]', { timeout: 10000, state: 'attached' });

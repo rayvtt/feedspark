@@ -17286,6 +17286,18 @@
    "file": "cloudflare/feedspark-deck/src/stocklevers.js",
    "pattern": "if ((m = /^p:([^|]{1,80})(?:\\|meta)?$/.exec(k))) {",
    "pr": 0
+  },
+  {
+   "name": "Stock: markets are a set — several picked at once, ?market=A,B",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "function inMk(mk) { return !S.mks.length || S.mks.indexOf(mk) >= 0; }",
+   "pr": 0
+  },
+  {
+   "name": "Stock: the levers matrix follows the markets picked",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "var rost = lvRoster(b), pick = rost.filter(inMk);",
+   "pr": 0
   }
  ]
 }

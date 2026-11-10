@@ -1185,6 +1185,12 @@ counts the read markets that run stock rules of their own for that channel. The 
   names them.
 - The summary, CSV, card line, plan heading and every cell tooltip name the channel.
 
+**Several markets at once** (Ray, same day: *"allow multiple selection of market too"*). The market chips at the head
+of the page now toggle: pick GB, FR and DE together, and **Every market** clears the pick. Every card reads the markets
+picked (`S.mks`, `inMk`), and the address carries them (`?market=GB,FR,DE`). The levers matrix, its tiles, ⧉ Copy summary
+and the CSV read only those markets, while a connected rule is still looked for across every market of the brand. A card
+that needs ONE market (the hero-size map, the simulator) reads the single pick, else the first market picked.
+
 Harness: `tools/test_stocklevers.mjs` (the channel block: the Social rule on Meta and never on Google, a shared rule on
 both, the Google line never on Meta, Meta's own threshold, each channel's plan / values / records, the shared period, the
 Meta switch list and records, the worker keys) + `tools/check_stocklevers.js` (a real click on the switch, the matrix
