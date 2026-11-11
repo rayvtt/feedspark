@@ -598,14 +598,14 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     ['question_and_answer', 'document_link', 'related_product', 'item_group_title', 'variant_option', 'popularity_rank']);
 
   const cols = LG.findAttrCols(['id', 'g:title', 'description', 'link', 'image link', 'availability', 'price',
-    'brand', 'gtin', 'item_group_id', 'color', 'size', 'g:product_type(1)', 'sale_price', 'custom_label_0']);
+    'brand', 'gtin', 'item_group_id', 'color', 'size', 'g:product_type(1)', 'material', 'custom_label_0']);
   eq('findAttrCols: g:-prefixed + spaced headers resolve', [cols.title, cols.image_link], [1, 4]);
   eq('findAttrCols: product_type via slot-1 alias', cols.product_type, 12);
   eq('findAttrCols: absent attr -> -1', cols.gender, -1);
 }
 {
   // full scan with opts.attrs: the roster rides the SAME multi-count query
-  const HEADER2 = '"id","g:title","description","link","image link","availability","price","brand","gtin","item_group_id","color","size","g:product_type(1)","sale_price","custom_label_0"\n"sku-1","Boot","d","u","i","in_stock","10","Reiss","123","g1","black","M","Womens > Boots","8","bestseller"';
+  const HEADER2 = '"id","g:title","description","link","image link","availability","price","brand","gtin","item_group_id","color","size","g:product_type(1)","material","custom_label_0"\n"sku-1","Boot","d","u","i","in_stock","10","Reiss","123","g1","black","M","Womens > Boots","8","bestseller"';
   const routes2 = [
     ['select * limit 1', HEADER2],
     // count(A)=rows, count(O)=cl0, count(M)=product_type, then the attr columns in
@@ -634,7 +634,7 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   // 73.7 since 7 Oct 2026: lifestyle_image_link joined the roster as a recommended attribute, absent
   // from this fixture, and with NO profile every recommended attribute counts (a profile waives it
   // outside Fashion — see the depth block)
-  eq('goldenScore: weighted completeness', gs.score, 73.7);
+  eq('goldenScore: weighted completeness', gs.score, 75.5);
   eq('goldenScore: no required attr missing', gs.reqMissing, []);
   eq('goldenScore: conditional gaps flagged', gs.condMissing, ['mpn', 'condition', 'gender', 'age_group']);
   ok('goldenScore: identifier pair merges into one part', gs.parts.filter((p) => p.key === 'gtin/mpn').length === 1 &&
@@ -664,8 +664,8 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     miss.body.indexOf('does not currently carry g:color') > 0 &&
     miss.body.indexOf('required by Google in specific cases') > 0 &&
     miss.body.indexOf('PIM or product export') > 0 && miss.body.indexOf('Best regards,\nRay') > 0, miss.body);
-  const low = LG.attrAskEmail('Reiss', 'gb', spec('sale_price'), 27);
-  ok('attrAskEmail low-coverage: quotes fill % + structured pass', low.subject.indexOf('proposal to lift g:sale_price coverage') > 0 &&
+  const low = LG.attrAskEmail('Reiss', 'gb', spec('material'), 27);
+  ok('attrAskEmail low-coverage: quotes fill % + structured pass', low.subject.indexOf('proposal to lift g:material coverage') > 0 &&
     low.body.indexOf('filled on 27% of products') > 0 && low.body.indexOf('structured pass') > 0, low.body);
   const ai = LG.attrAskEmail('Reiss', 'gb', spec('question_and_answer'), null);
   ok('attrAskEmail ai: conversational framing', ai.body.indexOf('six conversational AI attributes') > 0 &&
@@ -673,12 +673,12 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 }
 {
   const A = (cov) => ({ present: true, filled: Math.round(cov * 10), cov });
-  const base = { attrs: { availability: A(100), color: A(85), sale_price: A(40), product_highlight: A(50), title: A(100) } };
-  const cur = { attrs: { availability: A(88), color: A(83.5), sale_price: A(27), title: A(98), material: A(60) } };
+  const base = { attrs: { availability: A(100), color: A(85), pattern: A(40), product_highlight: A(50), title: A(100) } };
+  const cur = { attrs: { availability: A(88), color: A(83.5), pattern: A(27), title: A(98), material: A(60) } };
   const al = LG.diffCoverage(base, cur);
   eq('diffCoverage: required 12pp drop -> crit', al.filter((a) => a.sev === 'crit').map((a) => a.label), ['availability']);
   ok('diffCoverage: required crit says products will disapprove', al.filter((a) => a.label === 'availability')[0].msg.indexOf('products will disapprove') > 0);
-  eq('diffCoverage: rec 13pp drop -> warn; rec column gone -> warn', al.filter((a) => a.sev === 'warn').map((a) => a.label).sort(), ['product_highlight', 'sale_price']);
+  eq('diffCoverage: rec 13pp drop -> warn; rec column gone -> warn', al.filter((a) => a.sev === 'warn').map((a) => a.label).sort(), ['pattern', 'product_highlight']);
   ok('diffCoverage: gone message carries the was%', al.filter((a) => a.code === 'attr-gone')[0].msg.indexOf('was 50% filled') > 0);
   eq('diffCoverage: new column -> info', al.filter((a) => a.sev === 'info').map((a) => a.label), ['material']);
   ok('diffCoverage: small drops below threshold stay silent', !al.some((a) => a.label === 'color' || a.label === 'title'));
@@ -720,7 +720,7 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 }
 {
   // fixture attrs from the scan test above: gender/age_group absent, color 85 / size 90 present
-  const HEADER2 = '"id","g:title","description","link","image link","availability","price","brand","gtin","item_group_id","color","size","g:product_type(1)","sale_price","custom_label_0"\n"x","B","d","u","i","in_stock","10","R","1","g","black","M","W > B","8","b"';
+  const HEADER2 = '"id","g:title","description","link","image link","availability","price","brand","gtin","item_group_id","color","size","g:product_type(1)","material","custom_label_0"\n"x","B","d","u","i","in_stock","10","R","1","g","black","M","W > B","8","b"';
   const routes2 = [
     ['select * limit 1', HEADER2],
     ['select count(A), count(O), count(M), count(B), count(C), count(D), count(E), count(F), count(G), count(H), count(I), count(J), count(K), count(L), count(N)',
@@ -735,26 +735,26 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   const gs = LG.goldenScore(s.attrs, apparel);
   // 65.9 since 7 Oct 2026: the Fashion profile also stars size_system (absent here, ×2) and the
   // fixture carries no lifestyle_image_link (×1); images per product is not measured on a gviz read
-  eq('goldenScore + apparel profile: absent gender/age_group now count', gs.score, 65.9);
+  eq('goldenScore + apparel profile: absent gender/age_group now count', gs.score, 67.3);
   ok('profiled parts carry the best-practice flag', gs.parts.some((p) => p.key === 'gender' && p.bp && p.missing && p.w === 2));
   eq('profile echoed on the result', gs.profile.industry, 'Fashion');
   const waivedGs = LG.goldenScore(s.attrs, { industry: 'Pet Care', expected: [], waived: ['size_type', 'size_system', 'pattern'] });
-  eq('goldenScore + waivers: irrelevant recs drop out and lift the score', waivedGs.score, 79.4);
+  eq('goldenScore + waivers: irrelevant recs drop out and lift the score', waivedGs.score, 81.5);
   const aiIn = LG.goldenScore(Object.assign({}, s.attrs, { question_and_answer: { present: true, filled: 500, cov: 50 } }),
     { industry: 'Fashion', expected: ['question_and_answer'], waived: [] });
   ok('goldenScore: an expected AI attr joins the score at weight 1',
     aiIn.parts.some((p) => p.key === 'question_and_answer' && p.w === 1 && p.bp) && aiIn.score !== LG.goldenScore(s.attrs).score);
-  eq('goldenScore without profile unchanged', LG.goldenScore(s.attrs).score, 73.7);
-  // ★ on a REC attr must MOVE the number (Ray, 16 Sep 2026: sale_price "doesn't actually
+  eq('goldenScore without profile unchanged', LG.goldenScore(s.attrs).score, 75.5);
+  // ★ on a REC attr must MOVE the number (Ray, 16 Sep 2026: material "doesn't actually
   // do anything") — rec attrs always score, so expected lifts them to weight 2.
-  const recStar = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['sale_price'], waived: [] });
-  eq('goldenScore + ★ rec: sale_price at 24% weighs double, score drops', recStar.score, 72.6);
-  ok('★ rec part carries w:2 + bp', recStar.parts.some((p) => p.key === 'sale_price' && p.w === 2 && p.bp && !p.missing));
+  const recStar = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['material'], waived: [] });
+  eq('goldenScore + ★ rec: material at 24% weighs double, score drops', recStar.score, 74.3);
+  ok('★ rec part carries w:2 + bp', recStar.parts.some((p) => p.key === 'material' && p.w === 2 && p.bp && !p.missing));
   const recStarGone = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['product_highlight'], waived: [] });
-  eq('goldenScore + ★ absent rec: the gap counts at weight 2', recStarGone.score, 72);
+  eq('goldenScore + ★ absent rec: the gap counts at weight 2', recStarGone.score, 73.7);
   ok('★ absent rec part flagged missing at w:2', recStarGone.parts.some((p) => p.key === 'product_highlight' && p.w === 2 && p.bp && p.missing));
-  eq('goldenScore + waived rec: sale_price drops out and lifts the score',
-    LG.goldenScore(s.attrs, { industry: 'Fashion', expected: [], waived: ['sale_price'] }).score, 75);
+  eq('goldenScore + waived rec: material drops out and lifts the score',
+    LG.goldenScore(s.attrs, { industry: 'Fashion', expected: [], waived: ['material'] }).score, 76.8);
 }
 {
   const mail = LG.goldenAlertEmail('Reiss · GB', [{ sev: 'crit', msg: 'availability coverage dropped 12pp' }], 'https://x/golden');
@@ -866,13 +866,13 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   // a late-debut ATTR (Golden Record roster) grows in the same way
   let xml2 = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>';
   for (let i = 1; i <= 54; i++) xml2 += item('sku' + i);
-  for (let i = 55; i <= 58; i++) xml2 += item('sku' + i, '<g:sale_price>5 GBP</g:sale_price>');
+  for (let i = 55; i <= 58; i++) xml2 += item('sku' + i, '<g:material>cotton</g:material>');
   xml2 += '</channel></rss>';
   const col2 = LG.xmlCollector({ client: 'Monsoon', market: 'gb' });
   const parser2 = FA.createXmlParser(col2.onRow);
   parser2.push(xml2); parser2.end();
   const snap2 = col2.finish().snap;
-  ok('xml pipe: late-debut Golden Record attr captured', snap2.attrs.sale_price.present === true && snap2.attrs.sale_price.filled === 4);
+  ok('xml pipe: late-debut Golden Record attr captured', snap2.attrs.material.present === true && snap2.attrs.material.filled === 4);
 }
 
 
@@ -1776,6 +1776,15 @@ console.log('\n── depth in the Golden Score: images, highlights and details 
    demand it. goldenWeak reads the PARTS goldenScore actually weighed, so the number and the list
    are two readings of one pass and can never disagree. */
 {
+  // g:sale_price LEFT THE GOLDEN RECORD (Ray, 11 Nov 2026: "g:sale_price should never be considered for
+  // golden score. Just remove it from everything")
+  ok('sale_price is not an attribute of the Golden Record', !LG.ATTR_SPEC.some((s) => s.key === 'sale_price'));
+  const sp0 = { title: { present: true, cov: 100 }, price: { present: true, cov: 100 } };
+  const sp1 = Object.assign({ sale_price: { present: true, cov: 5 } }, sp0);
+  eq('a sale_price reading moves the score by nothing', LG.goldenScore(sp1).score, LG.goldenScore(sp0).score);
+  eq('an old reading carrying sale_price is never a move in the history',
+    LG.histMoved({ cov: { title: 100, sale_price: 30 } }, { cov: { title: 100 } }), []);
+  ok('nor a change worth recording', !LG.histChanged({ cov: { title: 100, sale_price: 30 } }, { cov: { title: 100 } }));
   console.log('\n── goldenWeak — the thin attributes of the scoring pass itself');
   const prof = { industry: 'Footwear', expected: [], waived: ['material'], qwaived: [] };
   const cov = { id: 100, title: 100, description: 97, link: 100, image_link: 100, availability: 100, price: 100,

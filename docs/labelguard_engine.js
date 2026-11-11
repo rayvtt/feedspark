@@ -820,7 +820,11 @@ export const ATTR_SPEC = [
   // Google's) and `derived` (no column is called "keywords"; it is READ per product across the
   // slots, see kwValueKind). Scored like any recommended attribute.
   { key: 'keywords',      req: 'rec', derived: true, house: true, note: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
-  { key: 'sale_price',    req: 'rec', note: 'with sale_price_effective_date for promos' },
+  // g:sale_price LEFT THE SCORE (Ray, 11 Nov 2026: "g:sale_price should never be considered for golden
+  // score. Just remove it from everything"): a sale price is a promotion the client runs or doesn't, not
+  // a gap in the product's data — so it is no attribute of the Golden Record at all: not scored, not
+  // listed, not alerted, not a move in the history or the portfolio changes (histMoved skips NOT_GOLDEN,
+  // so a reading stored before carries it and is never compared on it).
   // DEPTH, NOT JUST PRESENCE (Ray, 7 Oct 2026: "a new score, image population … the content depth of how
   // many image per product. Industry standard for fashion should be around at least four plus … product
   // details now becoming a bit more important as well for fashion … separated from product highlight").
@@ -1770,6 +1774,8 @@ export function histReading(snap) {
 // what moved between two readings, biggest first: [key, from, to] — null = not in the feed,
 // 'na' = in the feed's categories nobody asks for it. An attribute that appeared or vanished
 // outranks any coverage move.
+// fields that LEFT the Golden Record — a reading stored before still carries them, and they are never a move
+const NOT_GOLDEN = new Set(['sale_price']);
 export function histMoved(a, b) {
   const out = [];
   if (!a || !b) return out;
@@ -1777,6 +1783,7 @@ export function histMoved(a, b) {
   const keys = {};
   [a, b].forEach((x) => { Object.keys(x.cov || {}).forEach((k) => { keys[k] = 1; }); Object.keys(x.sc || {}).forEach((k) => { keys[k] = 1; }); });
   for (const k of Object.keys(keys)) {
+    if (NOT_GOLDEN.has(k)) continue;
     const x = st(a, k), y = st(b, k);
     if (x === y) continue;
     if (typeof x === 'number' && typeof y === 'number' && Math.abs(y - x) < 0.05) continue;
