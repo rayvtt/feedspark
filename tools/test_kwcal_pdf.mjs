@@ -41,6 +41,13 @@ const briefs = {
     comms: [{ when: Date.parse('2026-09-11T10:00:00Z'), note: 'Result: +4.63% impressions · +5.18% clicks' }],
   },
 };
+// the round's own moments each hold a ticket: since 11 Nov 2026 a batch reports the work that
+// went LIVE in its fortnight, so a moment nobody briefed is not part of it and is not covered
+[['rflex', 'R-Flex'], ['atel1', 'Atelier 1'], ['tailor', 'Tailoring']].forEach(([id, name], i) => {
+  briefs['REIS-2026080' + (i + 1)] = { id: 'REIS-2026080' + (i + 1), client: 'Reiss', cat: 'keyword',
+    status: 'running', updated: 2, kw: id,
+    task: 'Keywords Optimisation - ' + name + ' - Marketing Planner - 0826' };
+});
 const rounds = { results: [{ client: 'Reiss', mkt: 'gb', period: 'Aug I', id: 'r1',
   when: Date.parse('2026-08-20T09:00:00Z'), verdict: 'positive', metrics: ['Impressions +12.4%', 'Clicks +8.1%'] }] };
 const INIT = 'window.__B=' + JSON.stringify(briefs) + ';window.__R=' + JSON.stringify(rounds) + ';'

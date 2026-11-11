@@ -172,9 +172,27 @@ KWRES = { Reiss: [
 ].map((r) => ({ ...r, __w: api.periodWin(r) })) };
 is('a moment lands in the batch covering its live-by date', resFor('Reiss', aw26)?.id, 'r1');   // live-by 19 Aug
 is('a later moment lands in the later batch', resFor('Reiss', coats)?.id, 'r2');                 // live-by 21 Sep
-is('a moment outside every window gets nothing', resFor('Reiss', ev('x', 'X', '2026-08-21')), null); // live-by 31 Jul
-is('a market-pinned moment takes its own market’s batch', resFor('Reiss', ev('y', 'Y', '2026-10-12', 'us'))?.id, 'r3');
+// x and y need a ticket of their own, or the gate below answers before the window is tested
+const xEv = ev('x', 'X', '2026-08-21'), yEv = ev('y', 'Y', '2026-10-12', 'us');
+BRIEFS.x = { id: 'x1', client: 'Reiss', kw: 'x', task: 'Keywords Optimisation - X', status: 'done' };
+BRIEFS.y = { id: 'y1', client: 'Reiss', kw: 'y', task: 'Keywords Optimisation - Y', status: 'done' };
+is('a moment outside every window gets nothing', resFor('Reiss', xEv), null);                    // live-by 31 Jul
+is('a market-pinned moment takes its own market’s batch', resFor('Reiss', yEv)?.id, 'r3');
 is('a brand with no archive gets nothing', resFor('Schuh', aw26), null);
+
+/* ---------- A BATCH NEVER LANDS ON WORK NOBODY BRIEFED ----------
+   Ray, 11 Nov 2026, over Schuh's Crocs card: "i never briefed Croc for examples - you could
+   always relocate a brief/ticket back directly with Keywords Calendar - otherwise it doesnt
+   exists". The window join is a date test, so an unbriefed moment inside a reported fortnight
+   used to pick the round up and print its figures as its own. */
+const croc = ev('croc', 'Crocs', '2026-09-09');          // live-by 19 Aug -> inside batch r1
+is('an unbriefed moment inside a reported fortnight gets nothing', resFor('Reiss', croc), null);
+BRIEFS.croc = { id: 'REIS-CROC-01', client: 'Reiss', kw: 'croc', status: 'running',
+  task: 'Keywords Optimisation - Crocs - Marketing Planner - 0826' };
+is('…and the round answers the moment a ticket is linked to it', resFor('Reiss', croc)?.id, 'r1');
+is('…which is exactly the ticket the strip would place', wfFor('Reiss', croc)?.id, 'REIS-CROC-01');
+delete BRIEFS.croc;
+is('…unlink it and the figure goes with it', resFor('Reiss', croc), null);
 
 // ---------- the moment's OWN read-out beats the fortnight round ----------
 // Ray, 21 Sep 2026: Vimalesh answered the Silk brief on its own thread with the numbers.
@@ -206,7 +224,9 @@ is('a plain reply is not a result — the round answers again', resFor('Reiss', 
 // and another moment's ticket can never supply this one's result. BRIEFS.f already owns the
 // Coats moment (newest on a tie), so the read-out goes on the ticket that actually holds it —
 // anything else would be asserting against a ticket the calendar never claimed.
-delete BRIEFS.silk1;
+// silk keeps its own ticket (with no read-out on it) — strip the ticket and the round would
+// rightly answer nothing at all, which would prove the gate rather than the leak
+BRIEFS.silk1.comms = [];
 BRIEFS.f.comms = [{ note: 'Result: +99% impressions', when: 2 }];
 is('a different moment’s read-out never leaks onto this card', resFor('Reiss', silk)?.id, 'r1');
 is('…while its own moment does get it', resFor('Reiss', coats)?.txt, '+99% impressions');
