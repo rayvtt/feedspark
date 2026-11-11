@@ -1093,6 +1093,34 @@ The footnote says how many products came from each source.
 - `simulate`, `simSweep`, `simHeld`, `simValues`;
 - `feedIndex` now also keeps each product's PT (`pt`).
 
+### 3p′. Hero sizes in the simulator
+
+Ray, 11 Nov 2026: *"add hero size option in the simulation too"*.
+
+A fifth rule, **Hero sizes**, runs after sizes in stock and before the block (`SIM_ORDER` rc → qty → sz → hero → block). It
+reads the brand's own **hero-size map** — the one the Hero sizes card draws and edits — and has two modes, the two ways a
+FeedHero stock setup uses hero sizes:
+
+| Mode | What it does | Its row in the rule table |
+|---|---|---|
+| **Hold back broken runs** | holds back every product of a style whose hero sizes in stock are under X% of the hero sizes it is made in (presets 50 · 75 · 100; 100% = any hero size missing) | held back, on its own, share — like the other rules |
+| **Keep hero sizes live** | an EXCEPTION: a product in a hero size is never held back by range completion or sizes in stock (Monsoon's "Include Hero size low RC") | holds nothing back (—); says how many products it lets back in (+N live) |
+
+**Which product is a hero size.** With the products, the simulator reads `/api/rules/hero` for the market (its census and the
+brand's store). A product's Google-feed PT path finds its type's list on the census tree by the longest prefix (case and
+accents folded, as the tree folds them); its size is keyed with the census's own `sizeKey`. A list edited in the Hero sizes
+card reaches the simulator at once — the page re-marks the products when the store moves.
+
+**Refused, never guessed.** A product whose type no list reaches is never judged by the rule, and its row names how many. A
+market whose sizes are not counted yet, or with no type mapped, shows the rule disabled with the reason in words, and a
+remembered "on" is not run there. The sweep honours the exception (a kept hero size is held by no line), the CSV names the
+rule and carries each product's hero size and its style's hero run, and the mode is remembered with the other rules
+(`fcc-stock-sim`).
+
+**Engine.** `heroMark(D, of)` — the page says what each product is on the map (1 / 0 / −1); the engine keeps `rows.hz` and
+each style's hero run `hrun[g] = [made, in stock]`. Harness: `tools/check_stocksim.js` builds a hero census for its own
+invented rows with the real census engine and counts every figure itself.
+
 **Needs a look is gone.** The findings card, its severity filter and its rendering are removed from `/stock`; a forbidden
 manifest marker keeps them out. The cut-offs card now stands on its own row. `/rules` keeps its own findings.
 
