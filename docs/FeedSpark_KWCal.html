@@ -1946,6 +1946,18 @@ function ticketRes(brand,e){
 }
 function resFor(brand,e){ return ticketRes(brand,e)||roundRes(brand,e); }
 function roundRes(brand,e){
+  /* A BATCH NEVER LANDS ON WORK NOBODY BRIEFED (Ray, 11 Nov 2026, over Schuh's Crocs card
+     carrying "11.08% uplift in impressions": "i never briefed Croc for examples - you could
+     always relocate a brief/ticket back directly with Keywords Calendar - otherwise it doesnt
+     exists"). The window join is a DATE test, so every moment sitting in a reported fortnight
+     picked the round up — including a moment that was never briefed, never ran and therefore
+     contributed nothing to the figures in it. That is not an approximation, it is a result
+     reported against work that does not exist, and it reads to a client as this optimisation's
+     own number. A round is the read-out of the WORK THAT WENT LIVE in its fortnight, so a
+     moment must hold a ticket to be part of it; a moment with none keeps its honest blank, and
+     the way back is the one that already exists — the unlinked strip above the board places a
+     ticket onto its moment by hand, and from that moment the round answers. */
+  if(!wfFor(brand,e))return null;
   var rs=KWRES[brand]; if(!rs||!rs.length)return null;
   var mk=evMkt(brand,e), t=schedDate(e).getTime(), out=null;
   for(var i=0;i<rs.length;i++){ var r=rs[i];
@@ -1972,7 +1984,9 @@ function resPop(btn,brand,e,r){
     +(r.own
       // never the fortnight caveat here: this read-out answers THIS optimisation's own brief
       ? '<div class="pm" style="margin:8px 0 0">Reported on this optimisation\u2019s own brief thread — these figures are this moment\u2019s, not a batch average. <a href="/workflow" target="_blank" rel="noopener" style="color:var(--orange-ink)">Open the ticket</a></div>'
-      : '<div class="pm" style="margin:8px 0 0">This batch reports every optimisation that went live in that window, not this moment alone.</div>');
+      : '<div class="pm" style="margin:8px 0 0">This batch reports every optimisation that went live in that window, not this moment alone'
+        +(function(){ var b=wfFor(brand,e); return b?' \u2014 this one through ticket <b>'+esc(b.id)+'</b>':''; })()
+        +'.</div>');
   document.body.appendChild(d);
   var q=btn.getBoundingClientRect();
   d.style.left=Math.min(window.scrollX+q.left,window.scrollX+document.documentElement.clientWidth-d.offsetWidth-14)+'px';
