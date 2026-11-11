@@ -182,12 +182,63 @@ export function abGroups(report) {
       if (!out[g]) out[g] = titleCase(m[2]);
     }
   }
+  // "1. Test : Title without “Schuh”  2. Control: Title with “Schuh”" — the shape Schuh's title
+  // tests are written in: no word "group", a colon, and the descriptor naming the field the test
+  // turns on or off. Only a line that says WITH or WITHOUT is a descriptor; anything else after
+  // "Test:" (a date, a batch name) is not.
+  {
+    const re = /\b(control|test)\s*(?:group)?\s*[:\-–]\s*([^\n]{2,120})/gi; let m;
+    while ((m = re.exec(txt))) {
+      const g = m[1].toLowerCase();
+      if (out[g]) continue;
+      const d = /(with(?:out)?\b[^\n.;]{1,80})/i.exec(m[2]);
+      if (d) out[g] = titleCase(d[1].replace(/\s*\d+\.\s*(?:control|test)\b.*$/i, ''));
+    }
+  }
   // one descriptor implies the other: "test group (with X)" makes the control "Without X"
   const flip = (d) => (/^with\s/i.test(d) ? d.replace(/^with\s/i, 'Without ')
     : /^without\s/i.test(d) ? d.replace(/^without\s/i, 'With ') : null);
   if (out.test && !out.control) out.control = flip(out.test);
   if (out.control && !out.test) out.test = flip(out.control);
   return out;
+}
+/* WHAT THE TEST TURNS ON OR OFF (Ray, 11 Nov 2026, over two Schuh cards both titled "Titles
+   [attribute] placement": "the A/B test title attribute in brackets should be extracted from the
+   email content as well — the first test on the left is brand placements, and the second test on
+   the right is UK/EU"). The sheet's Test Type is a TEMPLATE with a bracketed slot; the write-up says
+   what went in it. Read strongest first: the value the Test / Control lines quote ("Title without
+   “UK EU”"), then "including “X” in product titles", then a heading "Without X vs With X". A quoted
+   value that IS the brand's own name is a brand test, so it reads "Brand", never the name. Two
+   all-caps codes side by side ("UK EU") are one setting read as a pair, so "UK/EU". Nothing found =
+   null, and the bracket stays as the sheet wrote it — never a guess. */
+const Q = '["“”\'‘’]';
+export function abAttribute(report, client) {
+  const txt = String(report || '');
+  const tidy = (v) => {
+    v = String(v || '').replace(/\s+/g, ' ').trim();
+    if (!v || v.length > 40) return null;
+    const ck = abClientKey(client);
+    if (ck && abClientKey(v) === ck) return 'Brand';
+    if (/^[A-Z]{2,4}( [A-Z]{2,4})+$/.test(v)) v = v.replace(/ /g, '/');
+    return v;
+  };
+  // every group line's quoted value; where the two differ ("UK(Number)EU" is a template, "UK EU"
+  // its plain form) the one with the fewest symbols names the attribute
+  const qre = new RegExp('\\b(?:control|test)\\s*(?:group)?\\s*[:\\-–][^\\n]*?\\bwith(?:out)?\\s+' + Q + '([^"“”\'‘’\\n]{1,40})' + Q, 'gi');
+  let qm, best = null; const sym = (v) => (v.match(/[^A-Za-z0-9 ]/g) || []).length;
+  while ((qm = qre.exec(txt))) if (best == null || sym(qm[1]) < sym(best)) best = qm[1];
+  if (best != null) return tidy(best);
+  const incl = new RegExp('\\bincluding\\s+' + Q + '([^"“”\'‘’\\n]{1,40})' + Q, 'i').exec(txt);
+  if (incl) return tidy(incl[1]);
+  const vs = /\bwithout\s+([a-z][\w/&-]{1,30})\s+vs\.?\s+with\s+\1\b/i.exec(txt);
+  if (vs) return tidy(vs[1].replace(/^./, (c) => c.toUpperCase()));
+  return null;
+}
+// the sheet's type with its bracketed slot filled ("Titles [attribute] placement" → "Titles Brand
+// placement"); a type with no slot, or no attribute read, comes back as it was written
+export function abTypeName(type, attr) {
+  const t = String(type || '');
+  return attr && /\[[^\]]{1,30}\]/.test(t) ? t.replace(/\[[^\]]{1,30}\]/, attr) : t;
 }
 export function abWinner(report, metrics) {
   const txt = String(report || '');
@@ -262,7 +313,8 @@ export function parseAbTests(values, opts) {
     // the two groups, named by what sets them apart ("Without Item Type Descriptor") — what the
     // Workflow results lab draws its control and test lanes under; null on a one-group run
     const groups = ab ? abGroups(t.report) : null;
-    return { ...t, metrics, verdict: abVerdict(metrics, t.report), winner, groups, title: isTitleTest(t),
+    const attr = abAttribute(t.report, o.client);
+    return { ...t, metrics, verdict: abVerdict(metrics, t.report), winner, groups, attr, typeName: abTypeName(t.type, attr), title: isTitleTest(t),
       report: String(t.report || '').slice(0, o.reportChars || 3000) };
   });
   return { ok: true, tests: out };

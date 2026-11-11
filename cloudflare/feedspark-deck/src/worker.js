@@ -29,7 +29,7 @@ import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming, scopeViewBy, s
 import { brandsOnSheet, brandToken, rowBrands, splitPlanCache, appendToken, rowCovered, noteRow } from "./planbrand.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
-const AB_SHAPE = 5;   // bump when parseAbTests grows a field the page reads, the served order
+const AB_SHAPE = 6;   // bump when parseAbTests grows a field the page reads, the served order
                        // changes, or the FETCH ITSELF reads more of the sheet (2 = winner/title,
                        // 3 = newest-first, 4 = A1:Z400 -> A1:ZZ5000 — a payload cached under the
                        // old range is missing rows, not just mis-ordered, and no re-sort of it
@@ -2845,7 +2845,7 @@ async function route(request, env, ctx) {
         const r = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/'
           + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } })).json();
         if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });
-        const p = parseAbTests(r.values || []);
+        const p = parseAbTests(r.values || [], { client });
         if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
         // Served and cached NEWEST-FIRST (abSortTests) — parseAbTests itself keeps the sheet's
         // own chronological-ascending order, which every consumer would otherwise have to

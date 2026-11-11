@@ -16079,7 +16079,7 @@
     {
       "name": "Workflow: the fold engine is the one writer for all seven sections",
       "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "var WS_KEYS=['intake','tl','bp','bl','sla','tests','wk'];",
+      "pattern": "var WS_KEYS=['intake','tl','bl','sla'];",
       "pr": 0
     },
     {
@@ -17486,17 +17486,17 @@
     },
     {
       "name": "Workflow: the test register's columns are fixed — a long result can no longer crush Test",
-      "file": "docs/FeedSpark_Workflow.html",
+      "file": "docs/FeedSpark_KWCal.html",
       "pattern": ".tstbl{table-layout:fixed}"
     },
     {
       "name": "Workflow: the Results lab reads every brand's A/B archive beside the register",
-      "file": "docs/FeedSpark_Workflow.html",
+      "file": "docs/FeedSpark_KWCal.html",
       "pattern": "fetch('/api/abtests?client='+encodeURIComponent(b)).then(function(r){return r.json();}).catch(function(){return null;})"
     },
     {
       "name": "Workflow: each Results lab card draws the control and test lanes",
-      "file": "docs/FeedSpark_Workflow.html",
+      "file": "docs/FeedSpark_KWCal.html",
       "pattern": "h+='<div class=\"lab-lanes\">'+lane('control')+lane('test')+'</div>';"
     },
     {
@@ -17513,6 +17513,14 @@
       "name": "KWCal: the batch popover names the ticket it reached this moment through",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "this one through ticket"
-    }
-  ]
+    },
+  {"name": "A/B archive: the [attribute] in a test type is read off the report", "file": "cloudflare/feedspark-deck/src/abtests.js", "pattern": "typeName: abTypeName(t.type, attr)"},
+  {"name": "Keyword calendar: Results lab hides brands per device", "file": "docs/FeedSpark_KWCal.html", "pattern": "localStorage.setItem('fcc-lab-hide'"},
+  {"name": "Keyword calendar: Results lab card carries the completed date", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labDone(r)"},
+  {"name": "Workflow: the Brief pipeline section is gone (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-bp\"", "forbidden": true},
+  {"name": "Workflow: Team workload section is gone (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-wk\"", "forbidden": true},
+  {"name": "Workflow: the test register left for the Keyword calendar (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-tests\"", "forbidden": true},
+  {"name": "Keyword calendar: the test register folds per device", "file": "docs/FeedSpark_KWCal.html", "pattern": "fcc-kw-tests-open"},
+  {"name": "Workflow: an unsaved brief is said on the ledger's head line", "file": "docs/FeedSpark_Workflow.html", "pattern": "function blLine(){"}
+ ]
 }

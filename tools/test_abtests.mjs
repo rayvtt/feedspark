@@ -12,7 +12,7 @@
  * Run: node tools/test_abtests.mjs
  */
 import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow, hasAbHeader, abClientKey,
-  abWinner, abGroups, isTitleTest, abDate, abSortKey, abSortTests }
+  abWinner, abGroups, isTitleTest, abDate, abSortKey, abSortTests, abAttribute, abTypeName }
   from '../cloudflare/feedspark-deck/src/abtests.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -495,6 +495,21 @@ ok('abSortKey is the numeric form abSortTests sorts on (a live date, in ms)',
   ok('an A/B run carries both groups, named by what sets them apart',
      p.tests[0].groups && p.tests[0].groups.control === 'Without Item Type Descriptor' && p.tests[0].groups.test === 'With Item Type Descriptor');
   ok('a single-group run carries no groups — there is no control to name', p.tests[1].groups === null);
+}
+
+// ---- the [attribute] a title test names is read off the report (Ray, 11 Nov 2026) -------------
+{
+  const b = 'Test group - Without “Schuh” in titles. Control group - With “Schuh” in titles. Impressions 6% up.';
+  const u = 'Control group: With “UK(Number)EU” sizes. Test group: Without “UK EU” sizes.';
+  ok('a brand name in the quoted value reads as “Brand”', abAttribute(b, 'Schuh') === 'Brand', abAttribute(b, 'Schuh'));
+  ok('two market codes read as a pair', abAttribute(u, 'Schuh') === 'UK/EU', abAttribute(u, 'Schuh'));
+  ok('no quoted value → no attribute, never a guess', abAttribute('Impressions up 12%.', 'Schuh') === null);
+  ok('the [attribute] placeholder is filled', abTypeName('Titles [attribute] placement', 'Brand') === 'Titles Brand placement');
+  ok('no attribute leaves the type as written', abTypeName('Titles [attribute] placement', null) === 'Titles [attribute] placement');
+  const p = parseAbTests([['Country', 'Test Method', 'Test Type', 'Batch URL', 'Live Date', 'Report Date', 'Graph', 'Report'],
+    ['UK', 'A/B Test', 'Titles [attribute] placement', 'x', '01/09/2026', '01/10/2026', '', b]], { client: 'Schuh' });
+  ok('the payload carries attr + typeName', p.tests[0].attr === 'Brand' && p.tests[0].typeName === 'Titles Brand placement', p.tests[0]);
+  ok('…and the groups named by the quoted value', p.tests[0].groups && /Schuh/.test(p.tests[0].groups.test || ''), p.tests[0].groups);
 }
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
