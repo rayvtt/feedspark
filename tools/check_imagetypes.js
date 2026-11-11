@@ -105,9 +105,18 @@ let NEG = false;
 /* the model's answer, index-keyed — and it deliberately SKIPS photograph 2, which is the
  * case that turns a position-mapped batch into a wall of wrong labels */
 const CLAUDE = { calls: 0, skip: 2, lastModel: null, lastImgs: 0, throttleOnce: false, throttled: 0,
-  refuseUrlOnce: false, urlRefused: 0, lastKinds: [], lastUrls: [] };
+  refuseUrlOnce: false, urlRefused: 0, lastKinds: [], lastUrls: [], holdMs: 0, held: 0 };
 const PHOTOS = {};           // client -> {v,p:{}}  (the stub store)
 const seen = { img: 0, auditPut: null, tagGets: [], photoPuts: 0, feedReads: 0 };
+function answer(v, content0, res) {
+  const n = content0.filter((c) => c && c.type === 'image').length;
+  CLAUDE.lastImgs = n;
+  const tags = [];
+  for (let i = n; i >= 1; i--) if (i !== CLAUDE.skip) tags.push({ i, tag: i === 1 ? 'packshot' : 'model-full', conf: 0.9 });
+  res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
+  res.end(JSON.stringify({ text: JSON.stringify({ tags }), model: v.model,
+    usage: { input_tokens: 400 + n * 690, output_tokens: 20 + n * 18 } }));
+}
 const send = (res, code, type, body) => { res.writeHead(code, { 'content-type': type, 'access-control-allow-origin': '*' }); res.end(body); };
 const srv = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
@@ -179,6 +188,8 @@ const srv = http.createServer((req, res) => {
         return send(res, 200, 'application/json', JSON.stringify({
           error: 'Could not fetch the image from the provided url' })); }
       CLAUDE.calls++; CLAUDE.lastModel = v.model || null;
+      if (CLAUDE.holdMs) { const ms = CLAUDE.holdMs; CLAUDE.holdMs = 0; CLAUDE.held++;
+        return setTimeout(() => answer(v, content0, res), ms); }
       const content = content0;
       const n = content.filter((c) => c && c.type === 'image').length;
       CLAUDE.lastImgs = n;
@@ -506,6 +517,44 @@ console.log('· a CDN the API cannot fetch from falls back to our own proxy, and
   await page.selectOption('#ptfil', 'all'); await page.waitForTimeout(150);
 }
 
+console.log('· a hand tag set while the run is in flight is never overwritten by the model');
+{
+  // put two photographs back on the list and hold the model's answer, so a tag can be set
+  // by hand on one of them WHILE its own batch is in flight — todo was taken at the start,
+  // so that photograph is still in the batch and the verdict would land on top of it
+  const keys = await page.evaluate(() => window.__imgPage.photos.keys);
+  const mine = keys[3], theirs = keys[4];
+  await page.evaluate((ks) => window.fetch('/api/images/photos?client=Atelier', { method: 'PUT',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ photos: { p: {} }, clear: ks }) })
+    .then(() => window.__imgPage.load()), [mine, theirs]);
+  await page.waitForFunction((ks) => { const p = window.__imgPage.photos.PHOTOS;
+    return p && p.p && !p.p[ks[0]] && !p.p[ks[1]]; }, [mine, theirs], { timeout: 10000 });
+  await page.selectOption('#ptfil', 'un'); await page.waitForTimeout(150);
+  const held0 = CLAUDE.held, skipWas = CLAUDE.skip;
+  CLAUDE.skip = 0;              // the model names EVERY picture in this batch, so the hand
+                                // tag is really being written over rather than merely skipped
+  CLAUDE.holdMs = 2500;
+  await page.click('#ptai');
+  await page.waitForFunction(() => /Reading photographs/.test(document.querySelector('#mstate').textContent),
+    null, { timeout: 8000 });
+  // the model will answer 'model-full' for this one; the AM says swatch, by hand
+  await page.selectOption('#pt-rows .strip .g[data-ph="' + mine + '"] select.phsel', 'swatch');
+  await page.waitForFunction((k) => { const p = window.__imgPage.photos.PHOTOS;
+    return p && p.p && p.p[k] && p.p[k].tag === 'swatch'; }, mine, { timeout: 8000 });
+  await page.waitForFunction(() => !document.querySelector('#ptai').textContent.includes('Stop'), null, { timeout: 20000 });
+  t('the answer really was held, so the tag was set mid-flight', CLAUDE.held === held0 + 1, String(CLAUDE.held - held0));
+  t('and the model named every picture in that batch, including the hand-tagged one',
+    CLAUDE.skip === 0 && CLAUDE.lastImgs >= 2, JSON.stringify({ skip: CLAUDE.skip, imgs: CLAUDE.lastImgs }));
+  const after = await page.evaluate((ks) => { const p = window.__imgPage.photos.PHOTOS.p;
+    return { mine: p[ks[0]] || null, theirs: p[ks[1]] || null }; }, [mine, theirs]);
+  t('the hand tag stands \u2014 the model\u2019s verdict did not land on top of it',
+    after.mine && after.mine.tag === 'swatch' && after.mine.by === 'manual', JSON.stringify(after.mine));
+  t('and the photograph nobody touched did take the model\u2019s verdict',
+    after.theirs && after.theirs.by === 'ai', JSON.stringify(after.theirs));
+  CLAUDE.skip = skipWas;
+  await page.selectOption('#ptfil', 'all'); await page.waitForTimeout(150);
+}
+
 console.log('· the product search reads the photograph’s own tag, so the two surfaces agree');
 {
   await page.click('#findp > .fhd .fold').catch(() => {});
@@ -516,15 +565,24 @@ console.log('· the product search reads the photograph’s own tag, so the two 
   const caps = await page.$$eval('#psout .strip .g .cap', (cs) => cs.map((c) => c.textContent.trim()));
   t('the product’s own images carry the names set on the photographs',
     caps.length === 2 && caps.every((c) => c === 'Packshot / flat-lay'), JSON.stringify(caps));
-  // AT-4 carries the photograph the model skipped: the search must say so, not borrow one
-  await page.fill('#psq', 'AT-4');
+  // and an unnamed photograph reads as unnamed: AT-6 carries one picture, so take its tag
+  // off and ask the search about it
+  const k6 = await page.evaluate(() => window.__imgPage.photos.keys.find((k) => /1182940573361908/.test(k)));
+  await page.evaluate((k) => window.fetch('/api/images/photos?client=Atelier', { method: 'PUT',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ photos: { p: {} }, clear: [k] }) })
+    .then(() => window.__imgPage.load()), k6);
+  await page.waitForFunction((k) => { const p = window.__imgPage.photos.PHOTOS; return p && p.p && !p.p[k]; },
+    k6, { timeout: 10000 });
+  await page.fill('#psq', 'AT-6');
   await page.click('#psgo');
-  await page.waitForFunction(() => /AT-4/.test(document.querySelector('#psout').textContent), null, { timeout: 20000 });
-  const c4 = await page.$$eval('#psout .strip .g .cap', (cs) => cs.map((c) => c.textContent.trim()));
+  await page.waitForFunction(() => /AT-6/.test(document.querySelector('#psout').textContent), null, { timeout: 20000 });
+  const c6 = await page.$$eval('#psout .strip .g .cap', (cs) => cs.map((c) => c.textContent.trim()));
+  const labels = await page.evaluate(() => (window.FeedImages.TAXONOMY || []).map((x) => x.label));
   // it reads its shot code (an honest "which group is this in"), or a dash — never a shot
-  // type it was never given, and never the name the picture beside it was given
-  t('and the picture the model left unnamed reads as unnamed, never as its neighbour',
-    c4.length === 2 && (/^code /.test(c4[0]) || c4[0] === '—') && c4[0] !== c4[1], JSON.stringify(c4));
+  // type it was never given
+  t('AT-6 carries one picture', c6.length === 1, JSON.stringify(c6));
+  t('and a picture with no tag reads as unnamed, never as a shot type',
+    (/^code /.test(c6[0]) || c6[0] === '—') && labels.indexOf(c6[0]) < 0, JSON.stringify(c6));
 }
 
 console.log('· the estate: which clients have no shot code to name them with');

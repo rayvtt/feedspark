@@ -302,6 +302,24 @@ model did not name **unnamed** — offered again on the next run, never inheriti
 label. That is what turns a skipped picture into one gap instead of a wall of confidently wrong
 labels; the harness plants the position-mapped version and requires it to fail.
 
+### A hand tag always wins, including one set mid-run
+
+`phRun` takes its list of photographs once, so a photograph the AM names **while the run is in
+flight** is still in its batch and the model's verdict would land on top of it — quietly undoing a
+person's decision, the one thing this module promises never to do. `phApply` drops any key that
+has since become a hand tag. The rendered harness holds the model's answer for 2.5 s with the
+skip switched off (so the model really does name that picture), sets a tag by hand while the batch
+is in flight, and asserts the hand tag stands and its neighbour still takes the model's verdict —
+with the guard removed it reads back `{tag:'model-full', by:'ai'}`, which is the bug.
+
+### Read once per render
+
+Three surfaces draw off the same verdict — the headline, the filter and every tile — and on a
+13,000-photograph feed resolving each of them separately is ~67,000 reads a render, the lesson the
+Workflow board already learned. `photoReport` hands back the verdicts it computed, the page seeds
+one per-render cache (`PHRES`) off them, and `photoIndex` is rebuilt only when the rows themselves
+change (`PHIDXFOR`).
+
 ### Storage
 
 `imgphotos:<client>` — its **own** KV key, not `imgtags:<client>`, because every page load reads

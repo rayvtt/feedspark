@@ -10082,6 +10082,24 @@
    "pr": 0
   },
   {
+   "name": "Photograph tags: a hand tag set while a run is in flight is never overwritten",
+   "file": "docs/FeedSpark_Images.html",
+   "pattern": "if(own&&own.by!=='ai'){ delete r.patch[k]",
+   "pr": 0
+  },
+  {
+   "name": "Photograph tags: every photograph is resolved once per render, not once per surface",
+   "file": "docs/FeedSpark_Images.html",
+   "pattern": "PHRES=st.verdicts",
+   "pr": 0
+  },
+  {
+   "name": "Photograph tags: the report hands back the verdicts it already computed",
+   "file": "docs/imagetype_engine.js",
+   "pattern": "index: idx, verdicts: verdicts",
+   "pr": 0
+  },
+  {
    "name": "Image types: every verdict names the lane it rests on",
    "file": "docs/imagetype_engine.js",
    "pattern": "function resolveType",

@@ -1169,10 +1169,14 @@ table.est td.feed{min-width:110px}
      shot code it belongs to. ONE resolver, so the tile, the filter and the head can never
      disagree about whether a picture is named — a photograph already named through its code
      must not read "not named" on its own tile and "named" in the count above it. */
+  var PHRES=null;                 // photograph -> its verdict, ONE reading per render
   function phRes(k){
+    if(PHRES&&Object.prototype.hasOwnProperty.call(PHRES,k))return PHRES[k];
     var E=TYE(); if(!E||!E.photoTag)return null;
     if(!PHTOK)PHTOK=phToks();
-    return E.photoTag(k,{photos:(PHOTOS&&PHOTOS.p)||{},tags:TAGS,audits:AUDIT||{},tok:PHTOK[k]});
+    var v=E.photoTag(k,{photos:(PHOTOS&&PHOTOS.p)||{},tags:TAGS,audits:AUDIT||{},tok:PHTOK[k]});
+    if(PHRES)PHRES[k]=v;
+    return v;
   }
   function phRows(){ var c=ROWS[CLIENT+'|'+MKT]; return (c&&c.rows)||null; }
 
@@ -1197,9 +1201,12 @@ table.est td.feed{min-width:110px}
       .catch(function(){ setState('Photograph tag saved on screen but not to the server — this needs the live worker.'); });
   }
 
+  var PHIDXFOR=null;              // the rows the index was built from, so it is built once
   function phBuild(){
     var E=TYE(),rows=phRows();
+    if(PHIDX&&PHIDXFOR===rows)return;
     PHIDX=(E&&E.photoIndex&&rows)?E.photoIndex(rows):null;
+    PHIDXFOR=rows;
   }
   /* the shot code of a photograph, where the feed has one — so the "Shot code" grouping
      and the tile's own caption read the same token the cards above do */
@@ -1224,7 +1231,11 @@ table.est td.feed{min-width:110px}
     var E=TYE(),rows=phRows();
     if(!PHIDX||!E||!rows)return null;
     if(!PHTOK)PHTOK=phToks();
-    return E.photoReport(rows,{photos:(PHOTOS&&PHOTOS.p)||{},tags:TAGS,audits:AUDIT||{},tokOf:PHTOK},PHIDX);
+    var st=E.photoReport(rows,{photos:(PHOTOS&&PHOTOS.p)||{},tags:TAGS,audits:AUDIT||{},tokOf:PHTOK},PHIDX);
+    // the report has just resolved every photograph; seed the render's cache off its own
+    // verdicts rather than asking the engine for each of them a second and a third time
+    if(PHRES&&st&&st.verdicts)PHRES=st.verdicts;
+    return st;
   }
 
   function renderPertag(){
@@ -1248,11 +1259,12 @@ table.est td.feed{min-width:110px}
       head.innerHTML=''; cost.innerHTML=''; rowsEl.innerHTML=''; more.innerHTML=''; fsum('pertag','not read yet'); return; }
     em.hidden=true;
     phBuild(); if(!PHTOK)PHTOK=phToks();
+    PHRES={};                    // one reading per photograph per render, never three
     var st=phStats(); if(!st){ head.innerHTML=''; return; }
 
     // THE HEAD STATES THE UNIT, because "13,315 photographs" and "53,718 images" are both
     // true of this feed and a reader who takes one for the other misreads every figure here
-    var perSlot=st.photos?Math.round(st.slots/st.photos*100)/100:0;
+    var perSlot=st.perPhoto;      // the engine's own reading, never a second sum of it
     head.innerHTML='<div class="ch"><b>'+fmt(st.photos)+'</b> distinct photograph'+(st.photos===1?'':'s')
       +' fill <b>'+fmt(st.slots)+'</b> image slot'+(st.slots===1?'':'s')+' on this feed — '+perSlot+' slot'+(perSlot===1?'':'s')
       +' each, because a style\'s size variants repeat the same files. A tag is set on the <b>photograph</b>, so one decision covers every product and slot it fills.</div>'
@@ -1390,8 +1402,18 @@ table.est td.feed{min-width:110px}
       PHSPEND.usd+=E.runCost(d.usage,d.model||AI_MODEL);
     } else if(d&&!d.error){ PHSPEND.calls++; }
     var r=phMap(batch,(d&&d.text)||'',taxonomy());
+    // A HAND TAG ALWAYS WINS — including one set WHILE THE RUN WAS IN FLIGHT. `todo` is
+    // taken once at the start, so a photograph the AM named in the meantime is still in
+    // its batch; storing the model's verdict over it would quietly undo a person's
+    // decision, which is the one thing this module promises never to do.
+    var kept=0;
+    Object.keys(r.patch).forEach(function(k){
+      var own=phRule(k);
+      if(own&&own.by!=='ai'){ delete r.patch[k]; r.named--; return; }
+      kept++;
+    });
     PHSPEND.named+=r.named; PHSPEND.missed+=r.missed;
-    return r.named?savePhotos(r.patch):Promise.resolve();
+    return kept?savePhotos(r.patch):Promise.resolve();
   }
   function phRun(){
     if(PHBUSY){ PHSTOP=true; return; }

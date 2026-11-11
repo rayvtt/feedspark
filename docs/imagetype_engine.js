@@ -459,10 +459,12 @@
     ctx = ctx || {};
     idx = idx || photoIndex(rows);
     var i, k, v, named = 0, slotsNamed = 0, ai = 0, hand = 0, byLane = {}, byTag = {}, need = { code: 0, image: 0 };
-    var tokOf = ctx.tokOf || {};
+    var tokOf = ctx.tokOf || {}, verdicts = {};
     for (i = 0; i < idx.keys.length; i++) {
       k = idx.keys[i];
       v = photoTag(k, { photos: ctx.photos, tags: ctx.tags, audits: ctx.audits, tok: tokOf[k] });
+      verdicts[k] = v;              // handed back, so a caller drawing the same photographs
+                                    // reads these verdicts rather than resolving them again
       if (v && v.tag && !v.mixed) {
         named++; slotsNamed += idx.map[k].n;
         byLane[v.lane] = (byLane[v.lane] || 0) + 1;
@@ -474,7 +476,7 @@
       ai: ai, hand: hand,
       left: idx.photos - named, perPhoto: idx.photos ? Math.round(idx.slots / idx.photos * 100) / 100 : 0,
       pct: idx.photos ? Math.round(named / idx.photos * 1000) / 10 : 0,
-      byLane: byLane, byTag: byTag, need: need, index: idx };
+      byLane: byLane, byTag: byTag, need: need, index: idx, verdicts: verdicts };
   }
 
   /* groupRows — the review, grouped the way the reader asked for. Never changes a

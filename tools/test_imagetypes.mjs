@@ -330,6 +330,11 @@ const CAP = {
   eq('two decisions are still to make', rep.left, 2);
   eq('and the report says what kind of read would make them', rep.need.image, 2);
   eq('slots per photograph is stated, since both numbers are true of this feed', rep.perPhoto, 2.5);
+  // the report hands back the verdicts it already computed, so a caller drawing the same
+  // photographs reads them rather than resolving every one of them a second and third time
+  eq('the report hands back one verdict per photograph', Object.keys(rep.verdicts).length, 4);
+  eq('and each is the same verdict photoTag gives for that photograph',
+    rep.verdicts['cdn.example/upload1.jpg'].lane, T.photoTag('cdn.example/upload1.jpg', { photos }).lane);
 
   /* ---- grouping is a view, never the unit ---- */
   eq('the engine offers exactly the ways Ray named, and no more',
@@ -454,6 +459,12 @@ const CAP = {
   ok('so a photograph already named through its code is never paid for twice',
     /var todo=PHIDX\.keys\.filter\(function\(k\)\{ var v=phRes\(k\); return !\(v&&v\.tag\); \}\)/.test(page));
   ok('and the tile names which lane named it', /v\.lane==='decided'\?'\u270e'/.test(page));
+  ok('the verdicts are read ONCE per render, not once per surface', /PHRES=\{\};/.test(page));
+  ok('seeded off the report\u2019s own verdicts rather than resolved again', /PHRES=st\.verdicts/.test(page));
+  ok('and the index is built once for a set of rows, not once per render', /PHIDXFOR===rows/.test(page));
+  ok('a hand tag set while a run is in flight is never overwritten by the model',
+    /if\(own&&own\.by!=='ai'\)\{ delete r\.patch\[k\]/.test(page));
+  ok('the head reads the engine\u2019s own slots-per-photograph', /var perSlot=st\.perPhoto;/.test(page));
   ok('and its head states the unit, since slots and photographs are both true of a feed',
     /distinct photograph/.test(page) && /image slot/.test(page));
 
