@@ -1318,16 +1318,47 @@ table.est td.feed{min-width:110px}
       +'\n\nReply with STRICT JSON and nothing else: {"tags":[{"i":<the photograph\'s number>,"tag":"<one id from the list>","conf":<0-1>}]}\n'
       +'Use the exact number each photograph was given. Give every photograph its own entry. Never invent an id that is not in the list — if none of them fits a photograph, leave that photograph out of the array rather than guessing.';
   }
+  /* HOW THE MODEL GETS THE PICTURE.
+   * By URL normally — the API fetches it itself and our request stays tiny. TWO facts about
+   * the estate decide the detail: the feeds write `&amp;` into the URL (the parser hands it
+   * over as it was written) and some write `http://` (Superdry's CDN does, and 301s to
+   * https). An entity-escaped or http URL is not something to hand an external API and hope,
+   * so the ampersand is decoded and http is upgraded — measured: that host serves the same
+   * file over https.
+   * AND IF A HOST STILL WILL NOT SERVE IT, the pictures go as DATA, fetched through
+   * /api/catalog/img — our own host-allowlisted proxy, same origin, redirects resolved. That
+   * is the fallback rather than the default because it costs the AM's own upload bandwidth
+   * (a 13,000-photograph library would be ~850 MB of it); it is switched on by a refusal,
+   * never by a guess, and stays on for the rest of the run. */
+  var PHB64=false;
+  function phUrl(u){ return String(u||'').replace(/&amp;/g,'&').replace(/^http:\/\//i,'https://'); }
+  function phData(u){
+    return fetch('/api/catalog/img?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)
+      +'&url='+encodeURIComponent(phUrl(u)))
+      .then(function(r){ if(!r.ok)throw new Error('the image proxy said '+r.status); return r.blob(); })
+      .then(function(bl){ return new Promise(function(res,rej){
+        var fr=new FileReader();
+        fr.onload=function(){ var s=String(fr.result||''),c=s.indexOf(',');
+          res({type:'base64',media_type:(bl.type||'image/jpeg').split(';')[0],data:s.slice(c+1)}); };
+        fr.onerror=function(){ rej(new Error('could not read the image')); };
+        fr.readAsDataURL(bl); }); });
+  }
+  function phSources(batch){
+    if(!PHB64)return Promise.resolve(batch.map(function(x){ return {type:'url',url:phUrl(x.url)}; }));
+    return Promise.all(batch.map(function(x){ return phData(x.url); }));
+  }
   function phCall(batch){
-    var content=[];
-    batch.forEach(function(x,i){
-      content.push({type:'image',source:{type:'url',url:x.url}});
-      content.push({type:'text',text:'Photograph '+(i+1)});
+    return phSources(batch).then(function(srcs){
+      var content=[];
+      srcs.forEach(function(src,i){
+        content.push({type:'image',source:src});
+        content.push({type:'text',text:'Photograph '+(i+1)});
+      });
+      content.push({type:'text',text:'Name each of the '+batch.length+' photographs above, by its number.'});
+      return fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({model:AI_MODEL,max_tokens:Math.min(1200,120+batch.length*60),system:phSystem(),messages:[{role:'user',content:content}]})})
+        .then(function(r){return r.json()});
     });
-    content.push({type:'text',text:'Name each of the '+batch.length+' photographs above, by its number.'});
-    return fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({model:AI_MODEL,max_tokens:Math.min(1200,120+batch.length*60),system:phSystem(),messages:[{role:'user',content:content}]})})
-      .then(function(r){return r.json()});
   }
   /* PHMAP:START — the answer, mapped onto the pictures it was about.
    * Pure and lifted by name in tools/test_imagetypes.mjs, because this is the one place a
@@ -1411,6 +1442,12 @@ table.est td.feed{min-width:110px}
             if(++waits>PH_WAITS){ setState('Still rate limited after '+PH_WAITS+' waits — stopping. '+fmt(PHSPEND.named)+' named; press ✦ again later.'); PHSTOP=true; return next(); }
             return hold(d&&d.retryS,next);            // the SAME batch is retried, never skipped
           }
+          if(/image|url|fetch|media|download/i.test(err)&&!PHB64){
+            // the API could not fetch these pictures from the client's CDN — send them as
+            // data through our own proxy instead, and retry THIS batch rather than losing it
+            PHB64=true; clear();
+            setState('The model could not fetch the images from the client’s CDN — sending them through our own proxy instead.',true);
+            return next(); }
           if(err){ setState('AI tagging unavailable: '+(d.message||err)+' — name them from the dropdowns.'); PHSTOP=true; }
           i+=batch.length;
           return phApply(batch,d).then(function(){ clear(); return next(); }); })

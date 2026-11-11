@@ -10064,6 +10064,24 @@
    "pr": 0
   },
   {
+   "name": "Photograph tags: the rate limit is a wait, and the same batch is retried",
+   "file": "docs/FeedSpark_Images.html",
+   "pattern": "Paused on the rate limit",
+   "pr": 0
+  },
+  {
+   "name": "Photograph tags: the URL handed to the model is one the API can fetch",
+   "file": "docs/FeedSpark_Images.html",
+   "pattern": "function phUrl",
+   "pr": 0
+  },
+  {
+   "name": "Photograph tags: a CDN the API cannot fetch from falls back to our own proxy",
+   "file": "docs/FeedSpark_Images.html",
+   "pattern": "function phData",
+   "pr": 0
+  },
+  {
    "name": "Image types: every verdict names the lane it rests on",
    "file": "docs/imagetype_engine.js",
    "pattern": "function resolveType",

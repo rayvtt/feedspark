@@ -279,6 +279,15 @@ ride one call. `T.runEstimate(n, opts)` states what a run would cost and how lon
 for the whole Superdry GB library, ~1,332 calls, about $1.20, about 1h50 — and the card then
 prints the real spend, read off each answer's own `usage` through `T.runCost`.
 
+**The picture reaches the model as a URL the API can actually fetch.** By URL normally, so the
+request stays small — but the estate writes `&amp;` into its URLs (the parser hands them over as
+written) and some write `http://`: Superdry's CDN does, and 301s to https, which the same file is
+served over (measured). The ampersand is decoded and http upgraded. And if a host still will not
+serve it, the pictures go as **data**, fetched through `/api/catalog/img` — our own
+host-allowlisted proxy, same origin, redirects resolved — switched on by a refusal, never by a
+guess, with the refused batch retried rather than lost. It is the fallback and not the default
+because it costs the AM's own upload bandwidth (~850 MB for a 13,000-photograph library).
+
 **The throttle is a wait, not an end.** A library that size is more calls than the window
 allows, so a 429 pauses the run with the clock on screen and retries **the same batch** rather
 than abandoning a run the AM asked for and leaving them to click again every ten minutes; ⏹ Stop

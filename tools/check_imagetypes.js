@@ -89,7 +89,8 @@ const AT_ITEMS = [
   { id: 'AT-3', grp: 'G1', urls: [au(0), au(1)] },
   { id: 'AT-4', grp: 'G2', urls: [au(2), au(3)] },
   { id: 'AT-5', grp: 'G2', urls: [au(2), au(3)] },
-  { id: 'AT-6', grp: 'G3', urls: [au(4)] },
+  // written as the real feeds write it: http, and the query's ampersand entity-escaped
+  { id: 'AT-6', grp: 'G3', urls: ['http://cdn.atelier.invalid/' + PH[4] + '.jpg?format=jpg&amp;width=658'] },
 ];
 const AT_SLOTS = AT_ITEMS.reduce((a, i) => a + i.urls.length, 0);          // 11
 const AT_FEED = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>'
@@ -103,7 +104,8 @@ const AT_FEED = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.
 let NEG = false;
 /* the model's answer, index-keyed — and it deliberately SKIPS photograph 2, which is the
  * case that turns a position-mapped batch into a wall of wrong labels */
-const CLAUDE = { calls: 0, skip: 2, lastModel: null, lastImgs: 0, throttleOnce: false, throttled: 0 };
+const CLAUDE = { calls: 0, skip: 2, lastModel: null, lastImgs: 0, throttleOnce: false, throttled: 0,
+  refuseUrlOnce: false, urlRefused: 0, lastKinds: [], lastUrls: [] };
 const PHOTOS = {};           // client -> {v,p:{}}  (the stub store)
 const seen = { img: 0, auditPut: null, tagGets: [], photoPuts: 0, feedReads: 0 };
 const send = (res, code, type, body) => { res.writeHead(code, { 'content-type': type, 'access-control-allow-origin': '*' }); res.end(body); };
@@ -170,8 +172,14 @@ const srv = http.createServer((req, res) => {
       if (CLAUDE.throttleOnce) { CLAUDE.throttleOnce = false; CLAUDE.throttled++;
         return send(res, 429, 'application/json', JSON.stringify({
           error: 'rate limited — 120 calls per 10 minutes on /api/claude', retryS: 5 })); }
+      const content0 = ((v.messages || [])[0] || {}).content || [];
+      CLAUDE.lastKinds = content0.filter((c) => c && c.type === 'image').map((c) => c.source.type);
+      CLAUDE.lastUrls = content0.filter((c) => c && c.type === 'image' && c.source.type === 'url').map((c) => c.source.url);
+      if (CLAUDE.refuseUrlOnce && CLAUDE.lastKinds.indexOf('url') >= 0) { CLAUDE.refuseUrlOnce = false; CLAUDE.urlRefused++;
+        return send(res, 200, 'application/json', JSON.stringify({
+          error: 'Could not fetch the image from the provided url' })); }
       CLAUDE.calls++; CLAUDE.lastModel = v.model || null;
-      const content = ((v.messages || [])[0] || {}).content || [];
+      const content = content0;
       const n = content.filter((c) => c && c.type === 'image').length;
       CLAUDE.lastImgs = n;
       // every picture but the one we skip, and ON PURPOSE OUT OF ORDER — a correct
@@ -437,6 +445,17 @@ console.log('· the model names them in batches, and never labels the picture be
   t('the folded head would keep the finding', /4 of 5/.test(sum) && /1 left/.test(sum), sum);
 }
 
+console.log('· the picture reaches the model as a URL the API can actually fetch');
+{
+  const urls = CLAUDE.lastUrls;
+  t('the pictures went by URL, so the request stays small',
+    CLAUDE.lastKinds.length === 4 && CLAUDE.lastKinds.every((k) => k === 'url'), JSON.stringify(CLAUDE.lastKinds));
+  t('an entity-escaped ampersand is decoded before it is handed over',
+    urls.every((u) => u.indexOf('&amp;') < 0) && urls.some((u) => /\?format=jpg&width=/.test(u)), JSON.stringify(urls));
+  t('and an http URL is upgraded \u2014 the CDN serves the same file over https',
+    urls.every((u) => /^https:/.test(u)), JSON.stringify(urls));
+}
+
 console.log('· the rate limit is a wait, not an end — the same batch is retried, never skipped');
 {
   // put one photograph back on the list, then refuse the first call with the worker's own
@@ -461,6 +480,29 @@ console.log('· the rate limit is a wait, not an end — the same batch is retri
   t('and the photograph the refusal would have skipped is named',
     await page.evaluate((k) => !!window.__imgPage.photos.PHOTOS.p[k], keys[0]));
   t('the refusal was really served', CLAUDE.throttled === 1, String(CLAUDE.throttled));
+  await page.selectOption('#ptfil', 'all'); await page.waitForTimeout(150);
+}
+
+console.log('· a CDN the API cannot fetch from falls back to our own proxy, and loses no photograph');
+{
+  const keys = await page.evaluate(() => window.__imgPage.photos.keys);
+  const k = keys[1];
+  await page.evaluate((kk) => window.fetch('/api/images/photos?client=Atelier', { method: 'PUT',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ photos: { p: {} }, clear: [kk] }) })
+    .then(() => window.__imgPage.load()), k);
+  await page.waitForFunction((kk) => { const p = window.__imgPage.photos.PHOTOS; return p && p.p && !p.p[kk]; }, k, { timeout: 10000 });
+  await page.selectOption('#ptfil', 'un'); await page.waitForTimeout(150);
+  const img0 = seen.img, calls0 = CLAUDE.calls;
+  CLAUDE.refuseUrlOnce = true;
+  await page.click('#ptai');
+  await page.waitForFunction(() => !document.querySelector('#ptai').textContent.includes('Stop'), null, { timeout: 30000 });
+  t('the URL form was really refused once', CLAUDE.urlRefused === 1, String(CLAUDE.urlRefused));
+  t('the retry sent the picture as data instead',
+    CLAUDE.lastKinds.length > 0 && CLAUDE.lastKinds.every((x) => x === 'base64'), JSON.stringify(CLAUDE.lastKinds));
+  t('fetched through our own host-allowlisted proxy, not out to the CDN', seen.img > img0, String(seen.img - img0));
+  t('and the photograph the refusal would have lost is named',
+    await page.evaluate((kk) => !!window.__imgPage.photos.PHOTOS.p[kk], k));
+  t('the run did not stop on it', CLAUDE.calls === calls0 + 1, String(CLAUDE.calls - calls0));
   await page.selectOption('#ptfil', 'all'); await page.waitForTimeout(150);
 }
 
