@@ -405,6 +405,7 @@
   var PHOTO_GROUPINGS = [
     { id: 'item',  label: 'Item ID',       hint: 'one row per product, its own images — the feed as it ships' },
     { id: 'group', label: 'Item group ID', hint: 'one row per style, every photograph its variants share' },
+    { id: 'photo', label: 'Image URL',     hint: 'one row per photograph — no repeats, the shortest way through a library' },
     { id: 'code',  label: 'Shot code',     hint: 'one row per shot code — only where the filenames carry one' }
   ];
 
@@ -479,6 +480,17 @@
   /* groupRows — the review, grouped the way the reader asked for. Never changes a
    * tag or a count: a photograph a group repeats is listed once in that group. */
   function groupRows(rows, by, tokOf) {
+    // by image URL: one row per photograph, which is the unit itself — the only grouping
+    // that shows each decision exactly once, and the shortest way through a whole library
+    if (by === 'photo') {
+      var pi = photoIndex(rows);
+      return pi.keys.map(function (k) {
+        var e = pi.map[k], sl = Object.keys(e.slots).map(Number).sort(function (a, b) { return a - b; });
+        return { key: k, label: e.ids[0] || k, rows: [],
+          sub: e.n + ' image slot' + (e.n === 1 ? '' : 's') + (e.ids.length > 1 ? ' · ' + e.ids.length + ' products' : ''),
+          photos: [{ key: k, url: e.url, slot: sl.length ? sl[0] : 0, id: e.ids[0] || '' }] };
+      });
+    }
     if (by === 'item' || !by) {
       return (rows || []).map(function (r) {
         return { key: r.id, label: r.ti || r.id, sub: r.id, rows: [r],

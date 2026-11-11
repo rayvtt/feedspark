@@ -358,6 +358,9 @@ console.log('· Tag the photographs — the unit, the grouping and the batch, on
   t('by item group: one row per style — 3, as counted here', gg.length === 3, JSON.stringify(gg));
   t('and the three-variant style lists its two photographs once, not six times',
     gg.filter((g) => g.n === 2).length === 2 && gg.some((g) => g.n === 1), JSON.stringify(gg));
+  const gp = await groupsOf('photo');
+  t('by image URL: one row per photograph, each decision shown exactly once',
+    gp.length === 5 && gp.every((g) => g.n === 1), JSON.stringify(gp));
   const gc = await groupsOf('code');
   const uniq = async () => page.evaluate(() => {
     const seenK = {}; let dup = 0, n = 0;

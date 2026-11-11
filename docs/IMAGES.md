@@ -264,9 +264,11 @@ spellings of two shot types, from either hand.
 ### Grouping is a view, never the unit
 
 `T.groupRows(rows, by, tokOf)` groups by **item id** (the screenshot's rows), **item_group_id**
-(one row per style, each photograph listed once however many variants share it) or **shot code**
-(where the feed has one, with the rest named as having none rather than dropped). What is read,
-what is stored and what every figure says are the same whichever is chosen.
+(one row per style, each photograph listed once however many variants share it), **image URL**
+(one row per photograph — each decision shown exactly once, the shortest way through a library)
+or **shot code** (where the feed has one, with the rest named as having none rather than
+dropped). What is read, what is stored and what every figure says are the same whichever is
+chosen.
 
 ### The cheapest model that can see, batched and index-keyed
 

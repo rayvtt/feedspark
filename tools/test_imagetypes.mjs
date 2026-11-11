@@ -332,7 +332,12 @@ const CAP = {
   eq('slots per photograph is stated, since both numbers are true of this feed', rep.perPhoto, 2.5);
 
   /* ---- grouping is a view, never the unit ---- */
-  eq('the engine offers exactly the three Ray named', T.PHOTO_GROUPINGS.map((g) => g.id).join(','), 'item,group,code');
+  eq('the engine offers exactly the ways Ray named, and no more',
+    T.PHOTO_GROUPINGS.map((g) => g.id).join(','), 'item,group,photo,code');
+  const byPhoto = T.groupRows(rows, 'photo');
+  eq('by image URL: one row per photograph, each decision shown exactly once', byPhoto.length, 4);
+  ok('every row carries one picture', byPhoto.every((g) => g.photos.length === 1));
+  ok('and says what that one decision covers', /3 image slots/.test(byPhoto[0].sub), byPhoto[0].sub);
   const byItem = T.groupRows(rows, 'item');
   eq('by item id: one row per product', byItem.length, 5);
   eq('each carrying its own two images', byItem[0].photos.length, 2);
@@ -347,8 +352,9 @@ const CAP = {
   eq('every grouping is over the same photographs', [
     new Set(byItem.flatMap((g) => g.photos.map((p) => p.key))).size,
     new Set(byGrp.flatMap((g) => g.photos.map((p) => p.key))).size,
+    new Set(byPhoto.flatMap((g) => g.photos.map((p) => p.key))).size,
     new Set(byCode.flatMap((g) => g.photos.map((p) => p.key))).size,
-  ].join(','), '4,4,4');
+  ].join(','), '4,4,4,4');
   ok('a style with no item group is named, not filed under a blank',
     T.groupRows([{ id: 'X', urls: [u(9)], slots: [0] }], 'group')[0].key === '(no item group)');
 
