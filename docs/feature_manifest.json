@@ -10100,6 +10100,36 @@
    "pr": 0
   },
   {
+   "name": "Browser tripwires: the fixture lives in Node, never in file:// web storage",
+   "file": "tools/lib/pwsettle.js",
+   "pattern": "async function bridge",
+   "pr": 0
+  },
+  {
+   "name": "Browser tripwires: wait for the panel repainted AFTER the read, not a duration",
+   "file": "tools/lib/pwsettle.js",
+   "pattern": "function repainted",
+   "pr": 0
+  },
+  {
+   "name": "Browser tripwires: ONE dialog handler with a queue, never a stale page.once",
+   "file": "tools/lib/pwsettle.js",
+   "pattern": "function dialogs",
+   "pr": 0
+  },
+  {
+   "name": "Golden plan-brief tripwire: no fixed sleeps, the fixture comes from Node",
+   "file": "tools/check_grplanbrief.js",
+   "pattern": "await repainted(page);",
+   "pr": 0
+  },
+  {
+   "name": "Golden report-editor tripwire: a debounced save is waited for as a PUT",
+   "file": "tools/check_grtext.js",
+   "pattern": "const afterPut =",
+   "pr": 0
+  },
+  {
    "name": "Image types: every verdict names the lane it rests on",
    "file": "docs/imagetype_engine.js",
    "pattern": "function resolveType",

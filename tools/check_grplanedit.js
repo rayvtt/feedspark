@@ -15,6 +15,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const req = createRequire(path.join(process.env.NODE_PATH || '/usr/lib/node_modules', 'x'));
+const { settle, served, repainted, dialogs, instrumentSrc, bridge, bridgeSrc } = require('./lib/pwsettle.js');
 let chromium;
 try { ({ chromium } = req('playwright')); } catch (e) { console.log('· playwright unavailable — skipped'); process.exit(0); }
 
@@ -49,8 +50,16 @@ const QUALITY = {
   const errs = [];
   const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
   page.on('pageerror', (e) => errs.push(e.message));
+  const DLG = dialogs(page);   // ONE handler, a queue of replies — a stale `once` is what crashed check_grtext
   await page.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
   await page.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
+  // the team's plan lives in NODE, so the reload below really keeps it — file:// web
+  // storage, which this used to round-trip through, is dropped at random by Chromium
+  const FX = await bridge(page.context(), { grplan: {} });
+  await page.context().addInitScript(bridgeSrc());
+  // counts the plan read and every write of #det-panel, so a wait is about the board
+  // having been re-rendered rather than about the clock (tools/lib/pwsettle.js)
+  await page.addInitScript(instrumentSrc('det-panel'));
   await page.addInitScript(({ ATTRS, QUALITY, COV }) => {
     const NOW = Date.now(), cov = {}, attrs = {};
     ATTRS.forEach((k) => {
@@ -63,7 +72,7 @@ const QUALITY = {
       'Superdry|gb': { client: 'Superdry', mkt: 'gb', status: 'ok', t: NOW, rows: 900, score: 97, ai: { n: 0, of: 6 }, cov: peerCov, reqMissing: [] },
       'Monsoon|gb': { client: 'Monsoon', mkt: 'gb', status: 'ok', t: NOW, rows: 800, score: 85, ai: { n: 0, of: 6 }, cov: peerCov, reqMissing: [] },
     };
-    window.__store = JSON.parse(sessionStorage.getItem('__store') || '{}'); window.__puts = [];
+    window.__store = (window.__fx && window.__fx.grplan) || {}; window.__puts = [];
     const real = window.fetch.bind(window);
     window.fetch = (url, opts) => {
       const u = String(url), j = (o) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(o) });
@@ -72,16 +81,28 @@ const QUALITY = {
       if (u.includes('/api/golden/quality')) return j({ quality: QUALITY });
       if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
       if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
-      if (u.includes('/api/state?ns=grplan')) { window.__gets = (window.__gets || 0) + 1; return j({ grplan: JSON.parse(JSON.stringify(window.__store)) }); }
+      if (u.includes('/api/state?ns=grplan')) return window.__fxReady.then((f) => {
+        window.__gets = (window.__gets || 0) + 1; window.__count('plan');
+        window.__store = f.grplan || {};         // the fixture is held in NODE, so a reload keeps it
+        return j({ grplan: JSON.parse(JSON.stringify(window.__store)) }); });
       if (u.endsWith('/api/state') && opts && opts.method === 'PUT') {
-        const b = JSON.parse(opts.body); if (b.grplan) { window.__store = b.grplan; window.__puts.push(b.grplan); sessionStorage.setItem('__store', JSON.stringify(b.grplan)); return j({ grplan: b.grplan }); }
+        const b = JSON.parse(opts.body);
+        if (b.grplan) { window.__store = b.grplan; window.__puts.push(b.grplan);
+          return window.__fxSave('grplan', b.grplan).then(() => j({ grplan: b.grplan })); }
       }
       return j({});
     };
   }, { ATTRS, QUALITY, COV });
   await page.goto(PAGE);
   await page.waitForSelector('#ap-tier', { timeout: 15000 });
-  await page.waitForTimeout(700);
+  /* THE BOARD IS READ WHEN IT HAS STOPPED CHANGING. planSection kicks off the shared-state
+   * read on its first render and re-renders when it lands, so the old 700ms was a bet on
+   * how fast the machine is — and the reported failures ("a move, an edit or a drag did not
+   * land") are what losing that bet looks like. */
+  await served(page, 'plan');
+  await repainted(page);
+  await settle(page, '#det-panel');
+  const quiet = () => settle(page, '#det-panel', { quiet: 120 });
   const read = () => page.evaluate(() => {
     const t = document.getElementById('ap-tier');
     return { lanes: Array.from(t.querySelectorAll('.ap-lane')).map((l) => Array.from(l.querySelectorAll('.ap-tk[data-apid]')).map((c) => ({ id: c.getAttribute('data-apid'), t: (c.querySelector('.ap-t') || {}).innerText || '', tag: (c.querySelector('.ap-tag') || {}).innerText || '' }))),
@@ -103,7 +124,7 @@ const QUALITY = {
   console.log('-- move with ›');
   const first = before.lanes[0][0];
   await page.click('#ap-tier .ap-tk[data-apid="' + first.id + '"] [data-apmv][data-d="1"]');
-  await page.waitForTimeout(150);
+  await quiet();
   r = await read();
   ok('the task leaves the first month and lands at the end of the second', !r.lanes[0].some((c) => c.id === first.id) && r.lanes[1][r.lanes[1].length - 1].id === first.id, r.lanes.map((l) => l.map((c) => c.id)));
   let st = await it();
@@ -117,7 +138,7 @@ const QUALITY = {
   await page.fill('#ap-tier .ap-in-t', 'Send GTINs for the spring range first');
   await page.selectOption('#ap-tier .ap-in-o', 'fs');
   await page.click('#ap-tier [data-apsave]');
-  await page.waitForTimeout(150);
+  await quiet();
   r = await read();
   const edc = r.lanes.flat().find((c) => c.id === ed.id);
   ok('the card reads the new wording and says it was edited', edc && edc.t === 'Send GTINs for the spring range first' && edc.tag === 'edited', edc);
@@ -127,12 +148,12 @@ const QUALITY = {
   console.log('-- take out, put back');
   const n0 = nAct(r), gone = r.lanes[2][0];
   await page.click('#ap-tier .ap-tk[data-apid="' + gone.id + '"] [data-apdel]');
-  await page.waitForTimeout(150);
+  await quiet();
   r = await read();
   ok('taken out: off the board, one fewer action, listed as taken out', !r.lanes.flat().some((c) => c.id === gone.id) && nAct(r) === n0 - 1 && /1 task taken out/.test(r.rem), { n: nAct(r), rem: r.rem });
   await page.click('#ap-tier .ap-rem summary');
   await page.click('#ap-tier [data-apback="' + gone.id + '"]');
-  await page.waitForTimeout(150);
+  await quiet();
   r = await read();
   ok('put back: on the board again', r.lanes.flat().some((c) => c.id === gone.id) && nAct(r) === n0 && !r.rem, { n: nAct(r) });
 
@@ -141,7 +162,7 @@ const QUALITY = {
   await page.fill('#ap-tier .ap-in-t', 'Review the Christmas gifting titles');
   await page.fill('#ap-tier .ap-in-w', 'Agreed on the October call.');
   await page.click('#ap-tier [data-apsave]');
-  await page.waitForTimeout(150);
+  await quiet();
   r = await read();
   const add = r.lanes[2].find((c) => c.t === 'Review the Christmas gifting titles');
   ok('the new task is in the third month, marked added, and counted', add && add.tag === 'added' && nAct(r) === n0 + 1, { add, n: nAct(r) });
@@ -151,7 +172,7 @@ const QUALITY = {
   console.log('-- drag into another month');
   const dragc = r.lanes[2][0];
   await page.dragAndDrop('#ap-tier .ap-tk[data-apid="' + dragc.id + '"]', '#ap-tier .ap-lane[data-apm="0"] .ap-lh');
-  await page.waitForTimeout(200);
+  await quiet();
   r = await read();
   ok('dragged onto the first month: it is there now, at the top', r.lanes[0][0] && r.lanes[0][0].id === dragc.id && !r.lanes[2].some((c) => c.id === dragc.id), r.lanes.map((l) => l.map((c) => c.id)));
   st = await it();
@@ -161,7 +182,9 @@ const QUALITY = {
   const kept = r;
   await page.reload();
   await page.waitForSelector('#ap-tier', { timeout: 15000 });
-  await page.waitForTimeout(700);
+  await served(page, 'plan'); await repainted(page); await settle(page, '#det-panel');
+  await page.waitForSelector('#ap-tier', { timeout: 15000 });
+  await quiet();
   r = await read();
   ok('the same board after a reload', JSON.stringify(r.lanes) === JSON.stringify(kept.lanes), { was: kept.lanes.map((l) => l.length), now: r.lanes.map((l) => l.length) });
 
@@ -197,7 +220,7 @@ const QUALITY = {
 
   console.log('-- phone');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForTimeout(150);
+  await quiet();
   const ph = await page.evaluate(() => { const b = document.querySelector('#ap-tier .ap-board'); const t = document.getElementById('ap-tier').getBoundingClientRect();
     const wide = Array.from(document.querySelectorAll('#ap-tier *')).filter((e) => e.getBoundingClientRect().right > t.right + 1).map((e) => e.className).slice(0, 5);
     return { cols: b ? getComputedStyle(b).gridTemplateColumns.split(' ').length : 0, over: wide.length > 0, wide, tr: t.right, iw: innerWidth }; });
@@ -205,13 +228,15 @@ const QUALITY = {
   await page.setViewportSize({ width: 1360, height: 950 });
 
   console.log('-- back to the audit');
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();          // ↺ asks before it drops the market's edits
   await page.click('#ap-reset');
-  await page.waitForTimeout(200);
+  await quiet();
   r = await read();
   st = await it();
   ok('↺ puts the audit\'s plan back and clears the store for this market', JSON.stringify(r.lanes.map((l) => l.map((c) => c.id))) === JSON.stringify(before.lanes.map((l) => l.map((c) => c.id))) && !Object.keys(st).length && !r.reset, r.lanes.map((l) => l.length));
 
+  ok('every dialog this run expected actually opened', DLG.pending() === 0, DLG.pending());
+  ok('and no prompt appeared that nobody planned for', DLG.unexpected().length === 0, DLG.unexpected());
   ok('no page errors', errs.length === 0, errs);
   await browser.close();
   console.log(fail ? '\n✗ ' + fail + ' check(s) failed' : '\n✓ Golden action plan on screen: moved, reworded, taken out, added, dragged — saved for the team, and the download follows');

@@ -177,6 +177,56 @@ A `PostToolUse` hook on `mcp__github__create_pull_request` injects an instructio
 `subscribe_pr_activity` for the PR that was just opened — CI failures and review comments then
 arrive as webhook events. Nobody asks for babysitting; no session polls.
 
+### 5. `tools/lib/pwsettle.js` — a browser tripwire waits for a CONDITION, never a duration
+
+Three /golden Playwright tripwires — `check_grplanbrief`, `check_grtext`, `check_grplanedit` —
+went red intermittently on **`main` itself** through October and November 2026, which made
+several sessions' presync red for reasons unrelated to what they were shipping and cost each a
+25-minute re-run. Measured 11 Nov 2026 by interleaving a clean `origin/main` worktree against a
+feature branch on the same machine, alternating runs: `check_grplanbrief` failed **4 of 5 runs on
+main** and 0 of 5 on the branch. Run alone it had passed 8/8 — **so running one in isolation is
+the wrong experiment**; interleave, or you will conclude the branch is at fault.
+
+**One cause behind all three, and it was not timing.** Each carried its fixtures across a reload
+through **web storage on a `file://` page** (`localStorage` in one, `sessionStorage` in the other
+two). Chromium gives a `file://` page an opaque origin and does not guarantee storage on it:
+1 of 24 seed → reload → read cycles came back with *nothing*, the board correctly rendered "No
+task briefed yet", and the assertions read that as the page failing. No wait fixes it — the data
+never arrived. The fixture now lives in **Node** and the page asks for it through a Playwright
+binding, which is reinstalled on every navigation; writes come back the same way, so a value the
+page saved survives the next reload because Node is holding it.
+
+On top of that, every fixed sleep was a bet on how fast the machine is. The helpers:
+
+| | what it waits for |
+|---|---|
+| `bridge(ctx, initial)` / `bridgeSrc()` | the fixture, held in Node — never in `file://` storage |
+| `served(page, …keys)` | the harness's own stub has **answered** those reads |
+| `repainted(page)` | the panel was written again **after** the last read was answered |
+| `settle(page, sel)` | that container has **stopped changing** (quiet window, real budget) |
+| `dialogs(page)` | **one** dialog handler with a queue of replies |
+
+Two rules worth stating because each cost a debugging session:
+
+- **A debounced save is a timer, not a render.** /golden's report editor saves 700 ms after the
+  last keystroke, so "the DOM stopped changing" says nothing about whether the edit reached the
+  store. Wait for the PUT (the stub counts them), and report a save that never came as a named
+  finding, not a raw timeout.
+- **`page.once('dialog', …)` that never fires stays registered.** A slow dialog leaves its
+  handler behind and the next one is answered twice — `dialog.accept: Cannot accept dialog which
+  is already handled`, surfacing in an unrelated block three screens later. `dialogs(page)` is
+  one handler and a queue; assert `pending() === 0` so a click that failed to open its prompt is
+  a finding rather than a crash later.
+
+Each of the three now passes **20 consecutive runs**, and each was checked against a planted
+regression in the page (the ticket tie, the plan save, the editor save) to prove it still fails
+when the page is genuinely wrong — a tripwire that cannot fail is worse than a flaky one.
+
+**Still carrying the same channel:** `tools/check_grreveal.js` and `tools/check_pcchanges.js` use
+`sessionStorage.getItem('__seeded')` as a seed-once guard. A dropped read there means re-seeding
+rather than empty data (and in `check_grreveal` a `localStorage.clear()` mid-test), so they are
+latent flakes of the same family — worth moving onto `bridge` the next time either is touched.
+
 ---
 
 # Parallel Editing — Ray + Claude on one deck
