@@ -17435,6 +17435,26 @@
    "name": "Golden: a stored reading's sale_price is never a history / portfolio move",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "const NOT_GOLDEN = new Set(['sale_price']);"
+  },
+  {
+   "name": "Workflow: the test register's columns are fixed — a long result can no longer crush Test",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": ".tstbl{table-layout:fixed}"
+  },
+  {
+   "name": "Workflow: the Results lab reads every brand's A/B archive beside the register",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fetch('/api/abtests?client='+encodeURIComponent(b)).then(function(r){return r.json();}).catch(function(){return null;})"
+  },
+  {
+   "name": "Workflow: each Results lab card draws the control and test lanes",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "h+='<div class=\"lab-lanes\">'+lane('control')+lane('test')+'</div>';"
+  },
+  {
+   "name": "A/B archive: the two groups ride the payload",
+   "file": "cloudflare/feedspark-deck/src/abtests.js",
+   "pattern": "const groups = ab ? abGroups(t.report) : null;"
   }
  ]
 }

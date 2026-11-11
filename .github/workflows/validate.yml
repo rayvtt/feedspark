@@ -65,6 +65,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tools/check_wfboot.js
       - name: Workflow — every section is a box that folds (tile heads, the tail folded, a line that survives every fold)
         run: NODE_PATH=$(npm root -g) node tools/check_wffold.js
+      - name: Workflow — the test register fits, and the results lab shows control against test
+        run: NODE_PATH=$(npm root -g) node tools/check_tstlab.js
       - name: Workflow — a refused write is reported on its head line, never as a band that lingers
         run: NODE_PATH=$(npm root -g) node tools/check_nolinger.js
       - name: Workflow — briefing a task records ASPL as its owner and the due date briefed
