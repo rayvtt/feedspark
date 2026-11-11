@@ -10016,7 +10016,7 @@
    "pr": 0
   },
   {
-   "name": "Photograph tags: grouping is a view \u2014 item id, item group, shot code",
+   "name": "Photograph tags: grouping is a view — item id, item group, shot code",
    "file": "docs/imagetype_engine.js",
    "pattern": "function groupRows",
    "pr": 0
@@ -16077,9 +16077,9 @@
    "pr": 0
   },
   {
-   "name": "Workflow: the fold engine is the one writer for all seven sections",
+   "name": "Workflow: the fold engine is the one writer for the four sections (pipeline, tests, workload removed 11 Nov 2026)",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "var WS_KEYS=['intake','tl','bp','bl','sla','tests','wk'];",
+   "pattern": "var WS_KEYS=['intake','tl','bl','sla'];",
    "pr": 0
   },
   {
@@ -17485,18 +17485,18 @@
    "pattern": "const NOT_GOLDEN = new Set(['sale_price']);"
   },
   {
-   "name": "Workflow: the test register's columns are fixed — a long result can no longer crush Test",
-   "file": "docs/FeedSpark_Workflow.html",
+   "name": "Keyword calendar: the test register's columns are fixed — a long result can no longer crush Test",
+   "file": "docs/FeedSpark_KWCal.html",
    "pattern": ".tstbl{table-layout:fixed}"
   },
   {
-   "name": "Workflow: the Results lab reads every brand's A/B archive beside the register",
-   "file": "docs/FeedSpark_Workflow.html",
+   "name": "Keyword calendar: the Results lab reads every brand's A/B archive beside the register",
+   "file": "docs/FeedSpark_KWCal.html",
    "pattern": "fetch('/api/abtests?client='+encodeURIComponent(b)).then(function(r){return r.json();}).catch(function(){return null;})"
   },
   {
-   "name": "Workflow: each Results lab card draws the control and test lanes",
-   "file": "docs/FeedSpark_Workflow.html",
+   "name": "Keyword calendar: each Results lab card draws the control and test lanes",
+   "file": "docs/FeedSpark_KWCal.html",
    "pattern": "h+='<div class=\"lab-lanes\">'+lane('control')+lane('test')+'</div>';"
   },
   {
@@ -17510,14 +17510,42 @@
    "pattern": "typeName: abTypeName(t.type, attr)"
   },
   {
-   "name": "Workflow: Results lab hides brands per device",
-   "file": "docs/FeedSpark_Workflow.html",
+   "name": "Keyword calendar: Results lab hides brands per device",
+   "file": "docs/FeedSpark_KWCal.html",
    "pattern": "localStorage.setItem('fcc-lab-hide'"
   },
   {
-   "name": "Workflow: Results lab card carries the completed date",
-   "file": "docs/FeedSpark_Workflow.html",
+   "name": "Keyword calendar: Results lab card carries the completed date",
+   "file": "docs/FeedSpark_KWCal.html",
    "pattern": "function labDone(r)"
+  },
+  {
+   "name": "Workflow: the Brief pipeline section is gone (Ray, 11 Nov 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "id=\"ws-bp\"",
+   "forbidden": true
+  },
+  {
+   "name": "Workflow: Team workload section is gone (Ray, 11 Nov 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "id=\"ws-wk\"",
+   "forbidden": true
+  },
+  {
+   "name": "Workflow: the test register left for the Keyword calendar (Ray, 11 Nov 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "id=\"ws-tests\"",
+   "forbidden": true
+  },
+  {
+   "name": "Keyword calendar: the test register folds per device",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "fcc-kw-tests-open"
+  },
+  {
+   "name": "Workflow: an unsaved brief is said on the ledger's head line",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function blLine(){"
   }
  ]
 }

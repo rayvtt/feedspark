@@ -168,8 +168,7 @@ const sum = (pg, k) => pg.evaluate((kk) => {
   console.log('\n── a brief whose save the server refuses');
   await fetch(U + '/__mode?briefs=0');
   ({ ctx, pg } = await open());
-  await pg.evaluate(() => { const b = document.getElementById('wsc-bp');
-    if (b && document.getElementById('ws-bp').classList.contains('folded')) b.click(); });
+  /* the Brief pipeline section left the page (Ray, 11 Nov 2026); the warning rides the LEDGER's head now */
   /* A real stage move: the modal's own stage button → setStage → persist → the refused PUT. */
   const moved = await pg.evaluate(() => { if (!window.FCCTicket) return 'no opener';
     window.FCCTicket('MONS-20261001-01');
@@ -181,8 +180,8 @@ const sum = (pg, k) => pg.evaluate((kk) => {
   await pg.waitForTimeout(300);
   lin = await lingering(pg);
   ok('no band says it over the board', lin.length === 0, lin);
-  s = await sum(pg, 'bp');
-  ok('the pipeline\'s own head line says the brief is not saved yet', /not saved to the pipeline yet/.test(s.line || ''), s.line);
+  s = await sum(pg, 'bl');
+  ok('the ledger\'s head line says the brief is not saved yet', /not saved to the pipeline yet/.test(s.line || ''), s.line);
   ok('and the head explains it on hover', /only on this device/.test(s.title || ''), s.title);
   await ctx.close();
 

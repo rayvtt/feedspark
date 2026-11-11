@@ -22,7 +22,7 @@ catch (e) { console.log('· playwright not installed — workflow fold tripwire 
 const ROOT = path.resolve(__dirname, '..');
 const PORT = 8861, U = 'http://127.0.0.1:' + PORT;
 const PAGE = path.join(ROOT, 'docs/FeedSpark_Workflow.html');
-const KEYS = ['intake', 'tl', 'bp', 'bl', 'sla', 'tests', 'wk'];
+const KEYS = ['intake', 'tl', 'bl', 'sla'];   // Brief pipeline, the test register and Team workload left the page (Ray, 11 Nov 2026)
 
 let pass = 0, fail = 0, NOFOLD = false;
 const ok = (n, c, got) => { if (c) { pass++; console.log('  ✓ ' + n); }
@@ -94,11 +94,11 @@ const read = pg => pg.evaluate(KS => KS.map(k => {
     const pg = await c.newPage(); pg.on('pageerror', e => { fail++; console.log('  ✗ pageerror ' + e.message); });
     await pg.goto(U + '/workflow', { waitUntil: 'load' }); await pg.waitForTimeout(4500); return { c, pg }; };
 
-  /* ---------- 1. seven boxes, each with a tile head ---------- */
-  console.log('\n-- seven boxes, not seven floating headings --');
+  /* ---------- 1. four boxes, each with a tile head ---------- */
+  console.log('\n-- four boxes, not four floating headings --');
   let { c, pg } = await fresh();
   let S = await read(pg);
-  ok('every one of the seven sections is on the page', S.every(x => !x.missing), S.filter(x => x.missing).map(x => x.k));
+  ok('every one of the four sections is on the page', S.every(x => !x.missing), S.filter(x => x.missing).map(x => x.k));
   ok('each is a real box — a measured border and a radius', S.every(x => x.border >= 1 && x.radius >= 8),
      S.map(x => x.k + ':' + x.border + '/' + x.radius));
   ok('each head names its section', S.every(x => x.title.length > 3), S.map(x => x.title));
@@ -135,25 +135,24 @@ const read = pg => pg.evaluate(KS => KS.map(k => {
   await pg.waitForTimeout(400);
   let s2 = (await read(pg)).find(x => x.k === 'sla');
   ok('a click on the tile opens the section', !s2.folded && s2.bodyH > 20, { folded: s2.folded, h: s2.bodyH });
-  await pg.click('#wsc-tests');
+  await pg.click('#wsc-tl');
   await pg.waitForTimeout(400);
-  let s3 = (await read(pg)).find(x => x.k === 'tests');
-  ok('so does the chevron', !s3.folded, s3.folded);
+  let s3 = (await read(pg)).find(x => x.k === 'tl');
+  ok('so does the chevron — it folds an open one', s3.folded, s3.folded);
   await pg.reload({ waitUntil: 'load' }); await pg.waitForTimeout(4500);
   let R = await read(pg); const r2 = {}; R.forEach(x => r2[x.k] = x);
-  ok('after a reload both are still open', !r2.sla.folded && !r2.tests.folded,
-     { sla: r2.sla.folded, tests: r2.tests.folded });
-  ok('and the ones nobody touched are still folded', r2.wk.folded && r2.bl.folded,
-     { wk: r2.wk.folded, bl: r2.bl.folded });
+  ok('after a reload both choices hold', !r2.sla.folded && r2.tl.folded,
+     { sla: r2.sla.folded, tl: r2.tl.folded });
+  ok('and the one nobody touched is still folded', r2.bl.folded, { bl: r2.bl.folded });
 
   /* ---------- 4. the head never swallows its own controls ---------- */
   console.log('\n-- the tile never swallows its own controls --');
-  const before = (await read(pg)).find(x => x.k === 'wk').folded;
-  await pg.click('#ws-wk .wsh .info-btn');
+  const before = (await read(pg)).find(x => x.k === 'bl').folded;
+  await pg.click('#ws-bl .wsh .info-btn');
   await pg.waitForTimeout(300);
-  const after = (await read(pg)).find(x => x.k === 'wk').folded;
+  const after = (await read(pg)).find(x => x.k === 'bl').folded;
   ok('clicking the ⓘ does not fold or open the section', before === after, { before, after });
-  const popOpen = await pg.evaluate(() => { const p = document.querySelector('#ws-wk .info-pop');
+  const popOpen = await pg.evaluate(() => { const p = document.querySelector('#ws-bl .info-pop');
     if (!p) return 'no pop'; return getComputedStyle(p).position === 'absolute'; });
   ok('the ⓘ still owns the long explainer', popOpen === true, popOpen);
 
@@ -170,7 +169,7 @@ const read = pg => pg.evaluate(KS => KS.map(k => {
      await pg.evaluate(() => document.querySelectorAll('#bl-rows tr').length) > 0);
   await pg.click('#ws-all'); await pg.waitForTimeout(600);
   A = await read(pg);
-  ok('fold all folds every one of the seven', A.every(x => x.folded), A.filter(x => !x.folded).map(x => x.k));
+  ok('fold all folds every one of the four', A.every(x => x.folded), A.filter(x => !x.folded).map(x => x.k));
   ok('and every head still says what is inside it', A.every(x => x.sum.length > 4), A.map(x => x.k + ':' + x.sum));
 
   /* ---------- 6. a jump into a folded section opens it ---------- */
@@ -183,11 +182,11 @@ const read = pg => pg.evaluate(KS => KS.map(k => {
   let h = (await read(pg)).find(x => x.k === 'sla');
   ok('an in-page jump opens the folded section it points at', !h.folded && h.bodyH > 20, { folded: h.folded, h: h.bodyH });
   await pg.evaluate(() => { location.hash = ''; });
-  await pg.goto(U + '/workflow?x=1#tests-body', { waitUntil: 'load' }); await pg.waitForTimeout(4500);
-  h = (await read(pg)).find(x => x.k === 'tests');
+  await pg.goto(U + '/workflow?x=1#bl-rows', { waitUntil: 'load' }); await pg.waitForTimeout(4500);
+  h = (await read(pg)).find(x => x.k === 'bl');
   ok('and so does a cold load on that address', !h.folded && h.bodyH > 20, { folded: h.folded, h: h.bodyH });
   const kept = await pg.evaluate(() => { try { return JSON.parse(localStorage.getItem('fcc-wf-fold') || '{}'); } catch (e) { return {}; } });
-  ok('without rewriting the folds this device chose', kept.wk === 0 && kept.tests === 0, kept);
+  ok('without rewriting the folds this device chose', kept.bl === 0 && kept.tl === 0, kept);
   await c.close();
 
   /* ---------- 7. the choice a person already made on the two old pills carries over ---------- */

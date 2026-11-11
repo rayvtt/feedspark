@@ -666,6 +666,129 @@ window.addEventListener('load',restore);
 [data-theme=dark] .cal .cell{border-bottom-color:#181B22}
 [data-theme=dark] .cal .lane-end{border-bottom-color:var(--line)}
 </style>
+<style>/* TEST & EXPERIMENT REGISTER + RESULTS LAB — moved here from Workflow (Ray, 11 Nov 2026:
+   "move test & experiment register to keywords calendar"). */
+  .kwt{margin:22px 0 0;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);box-shadow:var(--shadow)}
+  .kwt-h{display:flex;align-items:center;gap:12px;width:100%;font:inherit;text-align:left;background:transparent;border:0;padding:14px 18px;cursor:pointer;color:var(--ink)}
+  .kwt-h .t{font-size:17px;font-weight:900}.kwt-h .s{font-size:12.5px;color:var(--muted);font-weight:700;flex:1;min-width:0}
+  .kwt-h .s .wsw{color:var(--orange-deep)}
+  .kwt-h .chev{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--muted);transition:transform .2s}
+  .kwt:not(.folded) .kwt-h .chev{transform:rotate(90deg)}
+  .kwt-b{padding:0 18px 18px}.kwt.folded .kwt-b{display:none}
+  #kw-tests[data-tv=lab] #tst-reg,#kw-tests[data-tv=reg] #tst-lab{display:none}
+  #kw-tests .mini-btn{font:inherit;font-size:11px;font-weight:800;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  #kw-tests .mini-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  #kw-tests .it-scroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+  #kw-tests .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  #kw-tests .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #kw-tests .itbl thead th.it-act{text-align:right}
+  #kw-tests .itbl tbody td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden}
+  #kw-tests .itbl tbody tr:last-child td{border-bottom:0}
+  #kw-tests .itbl .c-client{font-weight:800}
+  #kw-tests .itbl .c-task{color:var(--ink);line-height:1.35;white-space:normal;word-break:break-word}
+  #kw-tests .itbl .c-owner{color:var(--muted);font-weight:700}
+  #kw-tests .it-empty{text-align:center;color:var(--muted);padding:18px}
+  /* tests register */
+  .tst-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .tstbl td{font-size:12.5px}
+  /* THE REGISTER'S COLUMNS ARE FIXED (Ray, 11 Nov 2026: "test registers has issue"): it was auto
+     layout, and a result written as a sentence sat in a nowrap badge — one long result widened
+     Status / result to ~600px and the browser paid for it out of Test, which word-breaks, so test
+     names printed one syllable a line. Fixed layout + a result that wraps under its headline figure. */
+  .tstbl{table-layout:fixed}
+  .tstbl col.tc-client{width:11%}.tstbl col.tc-test{width:auto}.tstbl col.tc-hypo{width:21%}
+  .tstbl col.tc-cohort{width:12%}.tstbl col.tc-ro{width:86px}.tstbl col.tc-res{width:21%}.tstbl col.tc-act{width:96px}
+  .tstbl td.c-client{white-space:normal}
+  .tstbl .c-act{white-space:nowrap;text-align:right}
+  .tst-res-txt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-top:4px;font-size:11.5px;color:var(--muted);line-height:1.35;word-break:break-word}
+  .tst-badge{font-size:10px;font-weight:900;border-radius:100px;padding:2px 9px;white-space:nowrap;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+  .tst-view{display:inline-flex;border:1px solid var(--line);border-radius:100px;padding:2px;background:var(--wash)}
+  .tst-view button{font:inherit;font-size:12px;font-weight:800;border:0;background:transparent;color:var(--muted);padding:5px 12px;border-radius:100px;cursor:pointer}
+  .tst-view button[aria-selected=true]{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  #ws-tests[data-tv=lab] #tst-reg,#ws-tests[data-tv=reg] #tst-lab{display:none}
+  /* results lab — colours: TEST group = blue, CONTROL group = orange (the FCC's validated chart pair) */
+  .lab{--lab-t:#2563EB;--lab-c:#ED6F0B;--lab-n:#9AA3AE;position:relative}
+  [data-theme=dark] .lab{--lab-t:#4C82E0;--lab-c:#C67B28;--lab-n:#6B7480}
+  .lab-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:12px}
+  .lab-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .lab-chip{font:inherit;font-size:11.5px;font-weight:800;border:1px solid var(--line);background:var(--paper);color:var(--ink-2,var(--ink));border-radius:100px;padding:4px 11px;cursor:pointer}
+  .lab-chip[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .lab-chip .n{font-weight:700;opacity:.65;margin-left:4px}
+  .lab-chip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
+  .lab-q{font:inherit;font-size:16px;margin-left:auto;min-width:180px;flex:0 1 240px;border:1px solid var(--line);border-radius:100px;padding:5px 12px;background:var(--paper);color:var(--ink)}
+  @media (min-width:761px){.lab-q{font-size:12.5px}}
+  .lab-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
+  .lab-k{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:10px 12px;min-width:0}
+  .lab-k b{display:block;font-size:22px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+  .lab-k span{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .lab-k.t b{color:var(--lab-t)}.lab-k.c b{color:var(--lab-c)}
+  .lab-k .bar{display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:6px;background:var(--wash);gap:2px}
+  .lab-field-w{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:12px 14px;margin-bottom:12px}
+  .lab-sub{font-size:12px;color:var(--muted);margin-bottom:6px}.lab-sub b{color:var(--ink);font-weight:900}
+  .lab-field svg{display:block;width:100%;height:auto;overflow:visible}
+  .lab-field .dot{cursor:pointer;transition:r .15s}
+  .lab-field .dot:hover,.lab-field .dot.hl{r:8}
+  .lab-src{font-size:11.5px;color:var(--muted);margin:0 0 10px}
+  .lab-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;align-items:start}
+  .lab-card{border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:var(--shadow);overflow:hidden;min-width:0}
+  .lab-card.flash{outline:2px solid var(--orange);outline-offset:2px}
+  .lab-ch{padding:12px 14px 8px}
+  .lab-meta{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .lab-nm{font-size:14px;font-weight:900;line-height:1.3;margin:4px 0 2px;color:var(--ink);word-break:break-word}
+  .lab-hy{font-size:12px;color:var(--muted);line-height:1.35}
+  .lab-at{font-size:11.5px;color:var(--muted);margin:1px 0 3px}.lab-at b{color:var(--ink);font-weight:800}
+  .lab-dt{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted);margin:2px 0 4px}.lab-dt b{color:var(--ink);font-weight:800}
+  .lab-dt .dn b{color:var(--good)}
+  .lab-bv{position:relative}.lab-bv summary{list-style:none;cursor:pointer;font-size:11.5px;font-weight:800;border:1px solid var(--line);border-radius:100px;padding:4px 11px;background:var(--paper);color:var(--ink)}
+  .lab-bv summary::-webkit-details-marker{display:none}.lab-bv summary.hid{border-color:var(--orange);color:var(--orange-ink)}
+  .lab-bvp{position:absolute;z-index:25;top:calc(100% + 6px);left:0;min-width:230px;max-height:320px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.14);padding:8px 10px}
+  .lab-bvp label{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:4px 0;cursor:pointer}.lab-bvp label span{margin-left:auto;color:var(--muted);font-size:11px}
+  .lab-bvh{display:flex;gap:6px;margin-bottom:4px}.lab-bvn{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35}
+  .lab-sort{font:inherit;font-size:16px;border:1px solid var(--line);border-radius:100px;padding:4px 10px;background:var(--paper);color:var(--ink)}
+  @media (min-width:761px){.lab-sort{font-size:12px}}
+  .lab-verd{font-size:10.5px;font-weight:900;border-radius:100px;padding:2px 9px;white-space:nowrap;border:1px solid}
+  .lab-verd.t{color:var(--lab-t);border-color:var(--lab-t)}.lab-verd.c{color:var(--lab-c);border-color:var(--lab-c)}
+  .lab-verd.n{color:var(--muted);border-color:var(--line)}.lab-verd.r{color:#2F6FB0;border-color:#CFE0F0;background:rgba(91,130,190,.1)}
+  .lab-lanes{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .lab-lane{padding:8px 14px;min-width:0;position:relative}
+  .lab-lane+.lab-lane{border-left:1px solid var(--line)}
+  .lab-lane .g{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+  .lab-lane.c .g{color:var(--lab-c)}.lab-lane.t .g{color:var(--lab-t)}
+  .lab-lane .d{font-size:12px;font-weight:800;color:var(--ink);line-height:1.3;margin-top:2px;word-break:break-word}
+  .lab-lane.won{background:color-mix(in srgb,var(--lab-w) 9%,transparent)}
+  .lab-lane.c{--lab-w:var(--lab-c)}.lab-lane.t{--lab-w:var(--lab-t)}
+  .lab-lane .won-tag{position:absolute;top:8px;right:10px;font-size:10px;font-weight:900;color:var(--paper);background:var(--lab-w);border-radius:100px;padding:1px 7px}
+  .lab-mets{padding:10px 14px 4px}
+  .lab-m{display:grid;grid-template-columns:86px 1fr 60px;gap:4px 10px;align-items:center;margin-bottom:8px}
+  .lab-m .l{font-size:11.5px;font-weight:800;color:var(--ink)}
+  .lab-m .bars{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .lab-m .b{height:9px;border-radius:0 4px 4px 0;min-width:2px;transform-origin:left;animation:labgrow .7s cubic-bezier(.2,.8,.2,1) both}
+  .lab-m .b.c{background:var(--lab-c)}.lab-m .b.t{background:var(--lab-t)}
+  .lab-m .v{font-size:12.5px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
+  .lab-m .v.up{color:var(--good)}.lab-m .v.dn{color:var(--risk)}
+  @keyframes labgrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @media (prefers-reduced-motion:reduce){.lab-m .b{animation:none}}
+  .lab-key{font-size:10.5px;color:var(--muted);padding:0 14px 8px}
+  .lab-run{padding:10px 14px}
+  .lab-run .trk{height:8px;border-radius:4px;background:var(--wash);overflow:hidden;border:1px solid var(--line)}
+  .lab-run .trk i{display:block;height:100%;background:repeating-linear-gradient(45deg,var(--lab-t),var(--lab-t) 6px,color-mix(in srgb,var(--lab-t) 70%,#fff) 6px,color-mix(in srgb,var(--lab-t) 70%,#fff) 12px)}
+  .lab-run .tx{font-size:11.5px;color:var(--muted);margin-top:5px}
+  .lab-none{padding:10px 14px;font-size:12px;color:var(--muted)}
+  .lab-rep{border-top:1px solid var(--line)}
+  .lab-rep summary{cursor:pointer;font-size:11.5px;font-weight:800;color:var(--muted);padding:8px 14px}
+  .lab-rep p{font-size:12px;line-height:1.45;color:var(--ink);padding:0 14px 12px;margin:0;white-space:pre-wrap;max-height:220px;overflow:auto}
+  .lab-more{text-align:center;margin-top:12px}
+  .lab-empty{padding:18px;text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--line);border-radius:12px}
+  .lab-tip{position:absolute;z-index:30;pointer-events:none;background:var(--ink);color:var(--paper);font-size:11.5px;line-height:1.35;border-radius:8px;padding:7px 10px;max-width:280px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+  .lab-tip b{font-weight:900}
+  @media (max-width:760px){.lab-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lab-cards{grid-template-columns:1fr}.lab-q{margin-left:0;flex:1 1 100%}}
+  .tst-badge.win{color:var(--good);background:rgba(72,208,126,.14);border:1px solid #CDE9D8}
+  .tst-badge.running{color:#2F6FB0;background:rgba(91,130,190,.13);border:1px solid #CFE0F0}
+  .tst-badge.done{color:var(--muted);background:var(--wash);border:1px solid var(--line)}
+  .tst-ro{font-weight:800;white-space:nowrap}
+  .tst-ro.soon{color:var(--orange-deep)}
+  .tst-ro.over{color:#C0392B}
+</style>
 
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
@@ -714,6 +837,44 @@ window.addEventListener('load',restore);
   </div>
   <section class="hband" id="hoursrail" hidden></section>
   <div id="ov" hidden></div>
+  <!-- TEST & EXPERIMENT REGISTER — moved from Workflow (Ray, 11 Nov 2026). Folds like every section. -->
+  <section class="kwt folded" id="kw-tests" data-tv="lab">
+    <button type="button" class="kwt-h" id="kwt-tog" aria-expanded="false" aria-controls="kwt-body">
+      <span class="t">Test &amp; experiment register</span><span class="s" id="kwt-sum">Every A/B test, read against its control</span><span class="chev" aria-hidden="true">›</span></button>
+    <div class="kwt-b" id="kwt-body">
+  <div class="tst-head">
+    <div class="tst-view" role="tablist" aria-label="How to read the tests">
+      <button type="button" role="tab" data-tv="lab" id="tv-lab">◧ Results lab</button>
+      <button type="button" role="tab" data-tv="reg" id="tv-reg">☰ Register</button>
+    </div>
+    <button class="btn" id="test-add" type="button">＋ Add test</button>
+  </div>
+  <!-- RESULTS LAB (Ray, 11 Nov 2026: "find a new interactive, visually impactful way to showcase all the
+       test results and how each of the testing components run in the test and control groups") -->
+  <div id="tst-lab" class="lab">
+    <div class="lab-bar">
+      <div class="lab-chips" id="lab-brands"></div>
+      <div class="lab-chips" id="lab-outs"></div>
+      <details class="lab-bv" id="lab-bv"><summary id="lab-bv-sum">👁 Brands shown</summary><div class="lab-bvp" id="lab-bvp"></div></details>
+      <select id="lab-sort" class="lab-sort" aria-label="Order the tests" data-no-keep><option value="move">Biggest move first</option><option value="new">Newest completed first</option><option value="old">Oldest completed first</option></select>
+      <input type="search" id="lab-q" class="lab-q" placeholder="Find a test…" aria-label="Find a test" data-no-keep>
+    </div>
+    <div class="lab-kpis" id="lab-kpis"></div>
+    <div class="lab-field-w">
+      <div class="lab-sub"><b>Every result on one scale</b> <span id="lab-field-note"></span></div>
+      <div id="lab-field" class="lab-field"></div>
+    </div>
+    <div class="lab-src" id="lab-src"></div>
+    <div class="lab-cards" id="lab-cards"></div>
+    <div class="lab-more" id="lab-more"></div>
+    <div class="lab-tip" id="lab-tip" hidden></div>
+  </div>
+  <div id="tst-reg" class="it-scroll"><table class="itbl tstbl">
+    <colgroup><col class="tc-client"><col class="tc-test"><col class="tc-hypo"><col class="tc-cohort"><col class="tc-ro"><col class="tc-res"><col class="tc-act"></colgroup>
+    <thead><tr><th>Client</th><th>Test</th><th>Hypothesis</th><th>Cohort</th><th>Completed</th><th>Status / result</th><th class="it-act">·</th></tr></thead>
+    <tbody id="tests-body"></tbody></table></div>
+    </div>
+  </section>
 </main>
 
 <div id="pdf-doc" aria-hidden="true"></div>
@@ -3332,5 +3493,289 @@ function boot(){
 $('#brand').addEventListener('change',function(){ CLIENT=this.value; hideErr(); $('#mstate').textContent=''; if(CLIENT!=='*')loadMkts(); render(); liveTick();
   try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT));localStorage.setItem('fcc-kw-client',CLIENT)}catch(e){} });
 boot();
+})();
+</script>
+<script>
+/* TEST & EXPERIMENT REGISTER + RESULTS LAB (moved from Workflow, Ray 11 Nov 2026: "move test &
+   experiment register to keywords calendar"). Its own block: it reads /api/tests and /api/abtests and
+   needs nothing of the calendar's state. Workflow still reads the same /api/tests store. */
+(function(){
+'use strict';
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function today(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function isoDate(iso){ if(!iso)return null; var p=(''+iso).split('-'); if(p.length!==3)return null; var d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d)?null:d; }
+function humanISO(iso){ var d=isoDate(iso); if(!d)return iso?esc(iso):'—'; return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}); }
+function wsWarn(s){ return '<span class="wsw">'+s+'</span>'; }
+function ktSum(h){ var e=document.getElementById('kwt-sum'); if(e)e.innerHTML=h||''; }
+// the brands this lab reads: the calendar's own brand list, plus any brand already on the register
+function ktClients(){ var o={}; document.querySelectorAll('#brand option').forEach(function(x){ var v=x.value; if(v&&v!=='*')o[v]=1; });
+  TESTS.forEach(function(t){ if(t.client)o[t.client]=1; }); return Object.keys(o); }
+var TESTS=[];
+function saveTests(){ try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS));}catch(e){}
+  fetch('/api/tests',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(TESTS)}).catch(function(){}); }
+  function renderTests(){ var host=document.getElementById('tests-body'); if(!host)return;
+    (function(){ var due=TESTS.filter(function(t){ return t.readout&&!t.result&&isoDate(t.readout)<=today(); }).length;
+      ktSum(!TESTS.length?'No tests on the register yet'
+        :(TESTS.length+' test'+(TESTS.length===1?'':'s')
+          +(due?(' \u00b7 '+wsWarn(due+' awaiting analysis')):''))); })();
+    if(!TESTS.length){ host.innerHTML='<tr><td colspan="7" class="it-empty">No tests yet — add one, or they seed from your test-category plan tasks.</td></tr>'; renderLab(); return; }
+    host.innerHTML=TESTS.map(function(t,i){ var days=t.readout?Math.round((isoDate(t.readout)-today())/86400000):null;
+      var rocls=(days!=null&&!t.result)?(days<0?'over':days<=7?'soon':''):'';
+      // a result is a HEADLINE FIGURE over its wording: the figure in the badge, a sentence wraps beneath
+      var hl=t.result?labHead(t.result):'', long=t.result&&hl!==String(t.result).trim();
+      var stat=t.result?('<span class="tst-badge win" title="'+esc(t.result)+'">'+esc(hl)+'</span>'+(long?'<div class="tst-res-txt" title="'+esc(t.result)+'">'+esc(t.result)+'</div>':''))
+        :'<span class="tst-badge '+esc(t.status||'running')+'">'+esc(t.status||'running')+'</span>';
+      return '<tr><td class="c-client">'+esc(t.client)+'</td><td class="c-task">'+esc(t.name)+'</td>'
+        +'<td>'+esc(t.hypo||'—')+'</td><td class="c-owner">'+esc(t.skus||'—')+'</td>'
+        +'<td class="tst-ro '+rocls+'">'+(t.readout?humanISO(t.readout):'—')+'</td><td>'+stat+'</td>'
+        +'<td class="c-act"><button class="mini-btn" data-te="'+i+'">Edit</button> <button class="mini-btn" data-td="'+i+'">✕</button></td></tr>'; }).join('');
+    host.querySelectorAll('[data-te]').forEach(function(b){ b.onclick=function(){ editTest(+b.getAttribute('data-te')); }; });
+    host.querySelectorAll('[data-td]').forEach(function(b){ b.onclick=function(){ if(confirm('Delete this test?')){ TESTS.splice(+b.getAttribute('data-td'),1); saveTests(); renderTests(); } }; });
+    renderLab();
+  }
+  function editTest(i){ var t=i>=0?TESTS[i]:{client:ktClients()[0]||'',name:'',hypo:'',skus:'',start:'',readout:'',status:'running',result:''};
+    var name=prompt('Test name:',t.name); if(name===null)return; if(!name.trim())return;
+    var client=prompt('Client:',t.client)||t.client;
+    var hypo=prompt('Hypothesis:',t.hypo)||'';
+    var skus=prompt('SKUs / cohort:',t.skus)||'';
+    var readout=prompt('Completed / analysis date (YYYY-MM-DD, blank if TBC):',t.readout)||'';
+    var result=prompt('Result (blank if still running, e.g. +24.7%):',t.result)||'';
+    var nt={client:client,name:name.trim(),hypo:hypo,skus:skus,start:t.start||'',readout:readout.trim(),status:result?'done':'running',result:result.trim()};
+    if(i>=0)TESTS[i]=nt; else TESTS.push(nt); saveTests(); renderTests(); }
+
+
+  /* ---- RESULTS LAB (Ray, 11 Nov 2026: "find a new interactive, visually impactful way to showcase all
+     the test results and how each of the testing components run in the test and control groups
+     specifically"). Two sources, read side by side and never merged: the register above (what the team
+     typed) and every brand's A/B TEST ARCHIVE (/api/abtests — the plan tab the team writes each test up
+     in, parsed server-side into figures, the two groups and who won). A figure is ALWAYS the report's
+     own: the change the TEST group showed against its CONTROL (on a one-group run, after against
+     before). Nothing here is averaged into a new number, and a test whose write-up carries no figure
+     says so instead of drawing a zero.
+     Colour = the GROUP: blue the test group, orange the control group, grey no call. ---- */
+  /* TESTLAB-VIZ:ENGINE-START */
+  var LAB_MET=[['impressions','Impressions'],['clicks','Clicks'],['ctr','CTR'],['conversions','Conversions'],['revenue','Revenue'],['result','Result']];
+  function labKey(w){ w=String(w||'').toLowerCase();
+    if(!w)return 'result'; if(/^impr/.test(w))return 'impressions'; if(/^ctr|click.?through/.test(w))return 'ctr';
+    if(/^click/.test(w))return 'clicks'; if(/^conv/.test(w))return 'conversions'; if(/^(revenue|sales)/.test(w))return 'revenue';
+    return LAB_MET.some(function(m){return m[0]===w;})?w:'result'; }
+  var LAB_W='(impressions?|clicks?|ctr|click[- ]through(?: rate)?|conversions?|conv\\.?|revenue|sales)';
+  function labPct(txt){ var s=String(txt||''), out={}, m, DOWN=/\b(decreas|down|drop|lower|fell|declin|less)/i;
+    function put(k,num,ctx){ var v=parseFloat(String(num).replace(/[−–]/,'-')); if(!isFinite(v))return;
+      if(v>0&&!/^\s*\+/.test(num)&&DOWN.test(ctx))v=-v; if(out[k]===undefined)out[k]=Math.round(v*100)/100; }
+    var a=new RegExp(LAB_W+'\\s*[:\\-–]?\\s*([+\\-−–]?\\d+(?:\\.\\d+)?)\\s*%\\s*(increase|decrease|uplift|lift|up|down|lower|higher)?','gi');
+    while((m=a.exec(s)))put(labKey(m[1]),m[2],m[0]);
+    var b=new RegExp('([+\\-−–]?\\d+(?:\\.\\d+)?)\\s*%\\s*(?:(?:uplift|increase|decrease|lift|rise|drop|up|down|higher|lower|more|fewer)\\s+)?(?:(?:in|on|to|of)\\s+)?(?:the\\s+)?'+LAB_W+'?','gi');
+    while((m=b.exec(s)))put(labKey(m[2]),m[1],s.slice(Math.max(0,m.index-14),m.index+m[0].length));
+    return out; }
+  // the badge's headline: the first figure the wording carries, else the wording itself if it is short
+  function labHead(txt){ var t=String(txt||'').trim(); if(t.length<=18)return t;
+    var m=/[+\-−–]?\d+(?:\.\d+)?\s*%/.exec(t); return m?m[0].replace(/\s+/g,''):t.slice(0,16)+'…'; }
+  function labCall(mets){ var v=Object.keys(mets).map(function(k){return mets[k];}).filter(function(x){return x;});
+    if(!v.length)return null; var g=v.filter(function(x){return x>0;}).length, b=v.length-g; return g===b?null:(g>b?'test':'control'); }
+  // one row per test, whichever book it came from. state: test | control | none | running
+  function labRows(tests, arch){ var rows=[];
+    (tests||[]).forEach(function(t,i){ var mets=t.result?labPct(t.result):{};
+      if(t.result&&!Object.keys(mets).length){ var n=parseFloat(String(t.result).replace(/[−–]/,'-')); if(isFinite(n)&&/%/.test(t.result))mets={result:n}; }
+      var st=!t.result?'running':(labCall(mets)||'none');
+      rows.push({id:'r'+i, src:'reg', brand:t.client||'', name:t.name||'', hypo:t.hypo||'', cohort:t.skus||'', kind:'ab',
+        groups:null, mets:mets, state:st, how:Object.keys(mets).length?'figures':null, start:t.start||'', readout:t.readout||'', report:t.result||'', ri:i}); });
+    Object.keys(arch||{}).forEach(function(b){ var a=arch[b]; ((a&&a.tests)||[]).forEach(function(t,i){
+      var ab=/^a\/?b\b/i.test(String(t.method||'')), mets={};
+      Object.keys(t.metrics||{}).forEach(function(k){ var v=t.metrics[k]; if(typeof v==='number'&&isFinite(v))mets[labKey(k)]=v; });
+      var st=(t.winner&&t.winner.group)||labCall(mets)||'none';
+      rows.push({id:'a'+i+'|'+b, src:'arc', brand:b, name:(t.typeName||t.type||'Test')+(t.country?(' · '+t.country):''), attr:t.attr||'', hypo:'', cohort:'',
+        kind:ab?'ab':'single', method:t.method||'', groups:t.groups||null, mets:mets, state:st,
+        how:t.winner?t.winner.how:(Object.keys(mets).length?'figures':null), winLabel:t.winner?t.winner.label:'',
+        live:t.live||'', reportDate:t.reportDate||'', report:t.report||'', batch:t.batch||''}); }); });
+    return rows; }
+  function labSummary(rows){ var s={n:rows.length,test:0,control:0,none:0,running:0,fig:0};
+    rows.forEach(function(r){ s[r.state]=(s[r.state]||0)+1; if(Object.keys(r.mets).length)s.fig++; }); return s; }
+  // a symmetric square-root scale: +126% and +4% both readable on one axis, zero dead centre
+  function labX(v,max,w){ var f=function(x){return (x<0?-1:1)*Math.sqrt(Math.abs(x));}; return w/2+(f(v)/f(max))*(w/2); }
+  function labTicks(max){ return [5,10,20,50,100,200,500].filter(function(t){return t<=max;}); }
+  /* TESTLAB-VIZ:ENGINE-END */
+
+  var LAB={brand:'*',out:'*',q:'',all:false,arch:{},asked:{},pending:0,open:{},sort:'move',hide:{}};
+  // brands kept OFF the lab — this device's choice (a brand Ray does not want on a shared screen), never shared state
+  try{ (JSON.parse(localStorage.getItem('fcc-lab-hide'))||[]).forEach(function(b){ LAB.hide[b]=1; }); }catch(e){}
+  try{ var _ls=localStorage.getItem('fcc-lab-sort'); if(_ls)LAB.sort=_ls; }catch(e){}
+  function labSaveHide(){ try{ localStorage.setItem('fcc-lab-hide',JSON.stringify(Object.keys(LAB.hide))); }catch(e){} }
+  // the day the test was COMPLETED: the archive's report date, the register's analysis date once it
+  // carries a result; a running test has none — "not completed" is never a date
+  function labDone(r){ if(r.state==='running')return ''; return r.src==='arc'?(r.reportDate||''):(r.result||r.report?(r.readout||''):''); }
+  var LAB_OUT=[['*','All'],['test','Test group won'],['control','Control group won'],['none','No call'],['running','Running']];
+  function labView(v){ var sec=document.getElementById('kw-tests'); if(!sec)return;
+    if(v){ try{localStorage.setItem('fcc-tst-view',v);}catch(e){} }
+    var cur=v; if(!cur){ try{cur=localStorage.getItem('fcc-tst-view');}catch(e){} } cur=cur==='reg'?'reg':'lab';
+    sec.setAttribute('data-tv',cur);
+    ['lab','reg'].forEach(function(k){ var b=document.getElementById('tv-'+k); if(b)b.setAttribute('aria-selected',String(k===cur)); });
+    if(cur==='lab')labLoad(); }
+  function labLoad(){ var sec=document.getElementById('kw-tests'); if(!sec||sec.getAttribute('data-tv')!=='lab'||sec.classList.contains('folded'))return;
+    var want=ktClients().filter(function(b){ return !LAB.asked[b]&&(typeof inScopeClient!=='function'||inScopeClient(b)); });
+    if(!want.length)return;
+    want.forEach(function(b){ LAB.asked[b]=1; }); LAB.pending+=want.length; renderLab();
+    var q=want.slice(), run=function(){ var b=q.shift(); if(!b)return;
+      fetch('/api/abtests?client='+encodeURIComponent(b)).then(function(r){return r.json();}).catch(function(){return null;})
+        .then(function(d){ if(d&&d.ok&&d.tests&&d.tests.length)LAB.arch[b]=d; LAB.pending--; renderLab(); run(); }); };
+    for(var i=0;i<3;i++)run(); }
+  function labPass(r){ if(LAB.brand!=='*'&&r.brand!==LAB.brand)return false; if(LAB.out!=='*'&&r.state!==LAB.out)return false;
+    if(LAB.q){ var h=(r.brand+' '+r.name+' '+r.hypo+' '+r.cohort+' '+r.method+' '+(r.groups?(r.groups.control+' '+r.groups.test):'')+' '+r.report).toLowerCase();
+      if(LAB.q.toLowerCase().split(/\s+/).some(function(w){return w&&h.indexOf(w)<0;}))return false; }
+    return true; }
+  function labDate(s){ if(!s)return null; var m=/^(\d{4})-(\d\d)-(\d\d)/.exec(s); if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+    m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(String(s).trim()); if(m){var y=+m[3]; if(y<100)y+=2000; return new Date(y,+m[2]-1,+m[1]);} return null; }
+  function labFmtD(s){ var d=labDate(s); return d?d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):''; }
+  function labSign(v){ return (v>0?'+':v<0?'−':'')+Math.abs(v).toLocaleString('en-GB',{maximumFractionDigits:2})+'%'; }
+  function labGroupName(r,g){ if(r.kind==='single')return g==='control'?'Before launch':'After launch';
+    var d=r.groups&&r.groups[g]; return d||(g==='control'?'As it was':'With the change'); }
+  function renderLab(){ var host=document.getElementById('tst-lab'); if(!host)return;
+    var every=labRows(TESTS,LAB.arch), all=every.filter(function(r){ return !LAB.hide[r.brand]; }), rows=all.filter(labPass), S=labSummary(rows);
+    labBrandsShown(every);
+    // brand chips: every brand with at least one test, counted on the outcome filter
+    var bc={}; all.forEach(function(r){ if(LAB.out==='*'||r.state===LAB.out)bc[r.brand]=(bc[r.brand]||0)+1; });
+    var brands=Object.keys(bc).sort();
+    if(LAB.brand!=='*'&&!bc[LAB.brand]&&!LAB.pending)LAB.brand='*';
+    document.getElementById('lab-brands').innerHTML=['*'].concat(brands).map(function(b){
+      var n=b==='*'?all.filter(function(r){return LAB.out==='*'||r.state===LAB.out;}).length:bc[b];
+      return '<button type="button" class="lab-chip" data-lb="'+esc(b)+'" aria-pressed="'+(LAB.brand===b)+'">'+(b==='*'?'All brands':esc(b))+'<span class="n">'+n+'</span></button>'; }).join('');
+    var oc={}; all.forEach(function(r){ if(LAB.brand==='*'||r.brand===LAB.brand)oc[r.state]=(oc[r.state]||0)+1; });
+    var DOTC={test:'var(--lab-t)',control:'var(--lab-c)',none:'var(--lab-n)',running:'transparent;border:1.5px solid var(--lab-t)'};
+    document.getElementById('lab-outs').innerHTML=LAB_OUT.map(function(o){
+      var n=o[0]==='*'?Object.keys(oc).reduce(function(a,k){return a+oc[k];},0):(oc[o[0]]||0);
+      return '<button type="button" class="lab-chip" data-lo="'+o[0]+'" aria-pressed="'+(LAB.out===o[0])+'">'+(o[0]!=='*'?'<i style="background:'+DOTC[o[0]]+'"></i>':'')+o[1]+'<span class="n">'+n+'</span></button>'; }).join('');
+    // KPIs
+    var dec=S.test+S.control, pc=function(n){return dec?Math.round(n/dec*100):0;};
+    document.getElementById('lab-kpis').innerHTML=
+      '<div class="lab-k"><b>'+S.n+'</b><span>tests</span></div>'
+      +'<div class="lab-k t"><b>'+S.test+'</b><span>test group won</span><div class="bar"><i style="width:'+pc(S.test)+'%;background:var(--lab-t)"></i><i style="width:'+pc(S.control)+'%;background:var(--lab-c)"></i></div></div>'
+      +'<div class="lab-k c"><b>'+S.control+'</b><span>control group won</span></div>'
+      +'<div class="lab-k"><b>'+(S.none||0)+'</b><span>no call</span></div>'
+      +'<div class="lab-k"><b>'+(S.running||0)+'</b><span>running</span></div>';
+    labField(rows);
+    var arcN=Object.keys(LAB.arch).length;
+    document.getElementById('lab-src').innerHTML=(LAB.pending?('Reading each brand’s A/B test archive · '+LAB.pending+' to go · '):'')
+      +'Register '+all.filter(function(r){return r.src==='reg';}).length+' · A/B test archives '+all.filter(function(r){return r.src==='arc';}).length+' tests from '+arcN+' brand'+(arcN===1?'':'s')
+      +' · each figure is the report’s own: the test group against its control (one-group runs: after against before)';
+    // cards — decided first (biggest move first), then running, then no call
+    var ord={test:0,control:0,running:1,none:2};
+    var mx=function(r){ return Math.max.apply(null,[0].concat(Object.keys(r.mets).map(function(k){return Math.abs(r.mets[k]);}))); };
+    var dk=function(r){ var d=labDate(labDone(r)); return d?d.getTime():null; };
+    if(LAB.sort==='move') rows.sort(function(a,b){ return (ord[a.state]-ord[b.state])||(mx(b)-mx(a))||a.brand.localeCompare(b.brand); });
+    else rows.sort(function(a,b){ var x=dk(a), y=dk(b); if(x==null&&y==null)return mx(b)-mx(a); if(x==null)return 1; if(y==null)return -1; return LAB.sort==='new'?(y-x):(x-y); });
+    var CAP=12, shown=LAB.all?rows:rows.slice(0,CAP);
+    var cards=document.getElementById('lab-cards');
+    cards.innerHTML=rows.length?shown.map(labCard).join(''):'<div class="lab-empty">'+(LAB.pending?'Reading the archives…':'No test matches this view.')+'</div>';
+    document.getElementById('lab-more').innerHTML=rows.length>CAP?'<button type="button" class="btn sm" id="lab-all">'+(LAB.all?'Show the first '+CAP:'Show all '+rows.length+' tests')+'</button>':''; }
+  function labBrandsShown(every){ var p=document.getElementById('lab-bvp'), sm=document.getElementById('lab-bv-sum'); if(!p||!sm)return;
+    var n={}; every.forEach(function(r){ n[r.brand]=(n[r.brand]||0)+1; }); var bs=Object.keys(n).sort();
+    var shown=bs.filter(function(b){ return !LAB.hide[b]; }).length;
+    sm.textContent='👁 Brands shown · '+shown+' of '+bs.length;
+    sm.classList.toggle('hid',shown<bs.length);
+    var key=bs.join('|')+'#'+Object.keys(LAB.hide).sort().join('|'); if(p.getAttribute('data-k')===key)return; p.setAttribute('data-k',key);
+    p.innerHTML='<div class="lab-bvh"><button type="button" class="mini-btn" data-bva="1">Show all</button><button type="button" class="mini-btn" data-bva="0">Hide all</button></div>'
+      +bs.map(function(b){ return '<label><input type="checkbox" data-bvb="'+esc(b)+'"'+(LAB.hide[b]?'':' checked')+'> '+esc(b)+' <span>'+n[b]+'</span></label>'; }).join('')
+      +'<div class="lab-bvn">A hidden brand leaves every count, the chart and the cards on this device. The register tab still lists it.</div>'; }
+  function labCard(r){ var mk=LAB_MET.filter(function(m){return r.mets[m[0]]!==undefined;});
+    var vc={test:['t','Test group won'],control:['c','Control group won'],none:['n','No call'],running:['r','Running']}[r.state];
+    if(r.state!=='running'&&r.kind==='single'&&r.state!=='none')vc=r.state==='test'?['t','Moved up after launch']:['c','Moved down after launch'];
+    var meta=[esc(r.brand)]; if(r.method)meta.push(esc(r.method)); if(r.src==='reg')meta.push('register');
+    var done=labDone(r), dl=[];
+    if(r.live)dl.push('<span>Live <b>'+esc(labFmtD(r.live)||r.live)+'</b></span>');
+    dl.push(done?'<span class="dn">✓ Completed <b>'+esc(labFmtD(done)||done)+'</b></span>'
+      :(r.state==='running'?'<span>Not completed yet</span>':'<span>Completed date not recorded</span>'));
+    var h='<article class="lab-card" id="lab-'+esc(r.id)+'"><div class="lab-ch"><div class="lab-meta">'+meta.join(' · ')+' <span class="lab-verd '+vc[0]+'">'+vc[1]+'</span></div>'
+      +'<div class="lab-nm">'+esc(r.name)+'</div>'+(r.attr?'<div class="lab-at">Tested · <b>'+esc(r.attr)+'</b></div>':'')
+      +'<div class="lab-dt">'+dl.join('')+'</div>'+(r.hypo?'<div class="lab-hy">'+esc(r.hypo)+'</div>':'')+(r.cohort?'<div class="lab-hy">Cohort · '+esc(r.cohort)+'</div>':'')+'</div>';
+    var lane=function(g){ var won=r.state===g; return '<div class="lab-lane '+(g==='test'?'t':'c')+(won?' won':'')+'"><div class="g">'+(r.kind==='single'?(g==='control'?'Baseline':'Measured'):(g==='control'?'Control group':'Test group'))+'</div><div class="d">'+esc(labGroupName(r,g))+'</div>'+(won?'<span class="won-tag">won</span>':'')+'</div>'; };
+    h+='<div class="lab-lanes">'+lane('control')+lane('test')+'</div>';
+    if(mk.length){ var top=Math.max.apply(null,[100].concat(mk.map(function(m){return 100+r.mets[m[0]];})));
+      h+='<div class="lab-mets">'+mk.map(function(m,i){ var v=r.mets[m[0]], tw=Math.max(0,100+v)/top*100, cw=100/top*100;
+        return '<div class="lab-m"><div class="l">'+m[1]+'</div><div class="bars">'
+          +'<div class="b c" style="width:'+cw.toFixed(1)+'%;animation-delay:'+(i*60)+'ms" title="'+esc(labGroupName(r,'control'))+' = 100"></div>'
+          +'<div class="b t" style="width:'+tw.toFixed(1)+'%;animation-delay:'+(i*60+120)+'ms" title="'+esc(labGroupName(r,'test'))+' = '+(100+v).toFixed(1)+'"></div></div>'
+          +'<div class="v '+(v>0?'up':v<0?'dn':'')+'">'+labSign(v)+'</div></div>'; }).join('')+'</div>'
+        +'<div class="lab-key">Bars index the '+(r.kind==='single'?'baseline':'control group')+' at 100 — the blue bar is where the '+(r.kind==='single'?'measured period':'test group')+' landed'+(r.how==='prose'?' · the winner is the one the write-up names':'')+'</div>'; }
+    else if(r.state==='running'){ var s=labDate(r.start||r.live), e=labDate(r.readout||r.reportDate), now=today(), pct=null, tx='Measuring — no analysis date set';
+      if(e){ var d=Math.round((e-now)/86400000); tx=d>0?('Analysis in '+d+' day'+(d===1?'':'s')+' · '+labFmtD(r.readout||r.reportDate)):d===0?'Analysis due today':('Analysis '+(-d)+' day'+(d===-1?'':'s')+' overdue');
+        if(s&&e>s)pct=Math.max(2,Math.min(100,Math.round((now-s)/(e-s)*100))); }
+      h+='<div class="lab-run"><div class="trk"><i style="width:'+(pct==null?35:pct)+'%"></i></div><div class="tx">'+tx+'</div></div>'; }
+    else h+='<div class="lab-none">No figure in the write-up — the result is recorded in words only'+(r.report?' (below)':'')+'.</div>';
+    if(r.report&&(r.src==='arc'||r.report.length>18))h+='<details class="lab-rep"'+(LAB.open[r.id]?' open':'')+' data-lr="'+esc(r.id)+'"><summary>Read the write-up</summary><p>'+esc(r.report)+'</p></details>';
+    return h+'</article>'; }
+  function labField(rows){ var host=document.getElementById('lab-field'); if(!host)return;
+    var mets=LAB_MET.filter(function(m){ return rows.some(function(r){return r.mets[m[0]]!==undefined;}); });
+    var pts=0; rows.forEach(function(r){ pts+=Object.keys(r.mets).length; });
+    document.getElementById('lab-field-note').textContent=pts?('· '+pts+' figure'+(pts===1?'':'s')+' from '+rows.filter(function(r){return Object.keys(r.mets).length;}).length+' tests · hover a dot, click to open its test'):'';
+    if(!mets.length){ host.innerHTML='<div class="lab-empty" style="margin:0">'+(LAB.pending?'Reading the archives…':'No test in this view reports a figure yet.')+'</div>'; return; }
+    var max=10; rows.forEach(function(r){ Object.keys(r.mets).forEach(function(k){ max=Math.max(max,Math.abs(r.mets[k])); }); });
+    max=Math.min(Math.max(max*1.08,10),600);
+    var W=1000, L=110, P=24, iw=W-L-P, rh=34, H=mets.length*rh+34, x=function(v){return L+labX(Math.max(-max,Math.min(max,v)),max,iw);};
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Every test result by metric, test group against control">';
+    svg+='<rect x="'+L+'" y="0" width="'+(iw/2)+'" height="'+(H-30)+'" fill="var(--lab-c)" opacity=".05"/><rect x="'+(L+iw/2)+'" y="0" width="'+(iw/2)+'" height="'+(H-30)+'" fill="var(--lab-t)" opacity=".05"/>';
+    labTicks(max).forEach(function(t){ [t,-t].forEach(function(v){ var X=x(v); svg+='<line x1="'+X+'" x2="'+X+'" y1="0" y2="'+(H-30)+'" stroke="var(--line)"/><text x="'+X+'" y="'+(H-14)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+(v>0?'+':'−')+t+'%</text>'; }); });
+    svg+='<line x1="'+x(0)+'" x2="'+x(0)+'" y1="0" y2="'+(H-30)+'" stroke="var(--ink)" stroke-width="1.5"/><text x="'+x(0)+'" y="'+(H-14)+'" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">0</text>';
+    svg+='<text x="'+(L+6)+'" y="'+(H-2)+'" font-size="10.5" fill="var(--lab-c)" font-weight="700">◂ the test group did worse</text><text x="'+(W-P-6)+'" y="'+(H-2)+'" text-anchor="end" font-size="10.5" fill="var(--lab-t)" font-weight="700">the test group did better ▸</text>';
+    var COL={test:'var(--lab-t)',control:'var(--lab-c)',none:'var(--lab-n)',running:'var(--lab-n)'};
+    mets.forEach(function(m,i){ var y=i*rh+rh/2;
+      svg+='<line x1="'+L+'" x2="'+(W-P)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)" stroke-dasharray="2 4"/><text x="'+(L-12)+'" y="'+(y+4)+'" text-anchor="end" font-size="12" font-weight="700" fill="var(--ink)">'+m[1]+'</text>';
+      var here=rows.filter(function(r){return r.mets[m[0]]!==undefined;}).sort(function(a,b){return a.mets[m[0]]-b.mets[m[0]];});
+      // jitter dots that would sit on top of each other into alternating lanes
+      var last=-99, lane=0;
+      here.forEach(function(r){ var v=r.mets[m[0]], X=x(v); lane=(X-last<9)?(lane+1)%3:0; last=X; var Y=y+(lane===0?0:lane===1?-8:8);
+        svg+='<circle class="dot" cx="'+X.toFixed(1)+'" cy="'+Y+'" r="6" fill="'+COL[r.state]+'" stroke="var(--paper)" stroke-width="2" data-ld="'+esc(r.id)+'" data-lm="'+m[0]+'"'+(Math.abs(v)>max?' stroke-dasharray="2 2"':'')+'/>'; }); });
+    host.innerHTML=svg+'</svg>'; }
+  function labRowById(id){ return labRows(TESTS,LAB.arch).filter(function(r){return r.id===id;})[0]; }
+  function labTip(e,show){ var tip=document.getElementById('lab-tip'), wrap=document.getElementById('tst-lab'); if(!tip||!wrap)return;
+    if(!show){ tip.hidden=true; return; }
+    var d=e.target.closest('[data-ld]'); if(!d){ tip.hidden=true; return; }
+    var r=labRowById(d.getAttribute('data-ld')); if(!r)return; var k=d.getAttribute('data-lm'), name=(LAB_MET.filter(function(m){return m[0]===k;})[0]||['',''])[1];
+    tip.innerHTML='<b>'+esc(r.brand)+' · '+esc(r.name)+'</b><br>'+name+' '+labSign(r.mets[k])+' — '+(r.kind==='single'?'after against before':esc(labGroupName(r,'test'))+' against '+esc(labGroupName(r,'control')))
+      +'<br>'+({test:'Test group won',control:'Control group won',none:'No call',running:'Running'}[r.state]);
+    tip.hidden=false; var wr=wrap.getBoundingClientRect(), tr=tip.getBoundingClientRect();
+    var lx=e.clientX-wr.left+12, ly=e.clientY-wr.top-tr.height-10; if(lx+tr.width>wr.width)lx=e.clientX-wr.left-tr.width-12; if(ly<0)ly=e.clientY-wr.top+16;
+    tip.style.left=Math.max(0,lx)+'px'; tip.style.top=ly+'px'; }
+  function labJump(id){ var r=labRowById(id); if(!r)return;
+    if(!document.getElementById('lab-'+id)){ LAB.all=true; renderLab(); }
+    var el=document.getElementById('lab-'+id); if(!el)return; el.scrollIntoView({block:'center',behavior:'smooth'});
+    el.classList.add('flash'); setTimeout(function(){ el.classList.remove('flash'); },1600); }
+  (function(){ var sec=document.getElementById('kw-tests'); if(!sec)return;
+    sec.addEventListener('click',function(e){ var t;
+      if((t=e.target.closest('button[data-tv]')))return labView(t.getAttribute('data-tv'));
+      if((t=e.target.closest('[data-lb]'))){ LAB.brand=t.getAttribute('data-lb'); LAB.all=false; return renderLab(); }
+      if((t=e.target.closest('[data-lo]'))){ LAB.out=t.getAttribute('data-lo'); LAB.all=false; return renderLab(); }
+      if((t=e.target.closest('[data-bva]'))){ var on=t.getAttribute('data-bva')==='1';
+        document.querySelectorAll('#lab-bvp [data-bvb]').forEach(function(c){ var b=c.getAttribute('data-bvb'); if(on)delete LAB.hide[b]; else LAB.hide[b]=1; });
+        if(!on)LAB.brand='*'; labSaveHide(); return renderLab(); }
+      if(e.target.closest('#lab-all')){ LAB.all=!LAB.all; return renderLab(); }
+      if((t=e.target.closest('circle[data-ld]')))return labJump(t.getAttribute('data-ld'));
+    });
+    sec.addEventListener('toggle',function(e){ var d=e.target; if(d&&d.getAttribute&&d.getAttribute('data-lr'))LAB.open[d.getAttribute('data-lr')]=d.open; },true);
+    var q=document.getElementById('lab-q'); if(q)q.addEventListener('input',function(){ LAB.q=q.value.trim(); LAB.all=false; renderLab(); });
+    sec.addEventListener('change',function(e){ var c=e.target;
+      if(c.getAttribute&&c.getAttribute('data-bvb')){ var b=c.getAttribute('data-bvb'); if(c.checked)delete LAB.hide[b]; else { LAB.hide[b]=1; if(LAB.brand===b)LAB.brand='*'; } labSaveHide(); renderLab(); }
+      if(c.id==='lab-sort'){ LAB.sort=c.value; try{localStorage.setItem('fcc-lab-sort',c.value);}catch(err){} LAB.all=false; renderLab(); } });
+    var so=document.getElementById('lab-sort'); if(so)so.value=LAB.sort;
+    var f=document.getElementById('lab-field');
+    if(f){ f.addEventListener('mousemove',function(e){ labTip(e,true); }); f.addEventListener('mouseleave',function(e){ labTip(e,false); }); }
+    // opening the folded section reads the archives the first time
+    new MutationObserver(function(){ labLoad(); }).observe(sec,{attributes:true,attributeFilter:['class']});
+    labView();
+  })();
+
+// THE FOLD — per device (fcc-kw-tests-open); a #kw-tests link opens it for the visit
+function ktSet(open,keep){ var sec=document.getElementById('kw-tests'), b=document.getElementById('kwt-tog'); if(!sec)return;
+  sec.classList.toggle('folded',!open); if(b)b.setAttribute('aria-expanded',String(open));
+  if(keep){ try{localStorage.setItem('fcc-kw-tests-open',open?'1':'0');}catch(e){} } }
+(function(){ var b=document.getElementById('kwt-tog'); if(b)b.onclick=function(){ ktSet(document.getElementById('kw-tests').classList.contains('folded'),true); };
+  var o=null; try{o=localStorage.getItem('fcc-kw-tests-open');}catch(e){}
+  ktSet(o==='1'||location.hash==='#kw-tests',false);
+  window.addEventListener('hashchange',function(){ if(location.hash==='#kw-tests'){ ktSet(true,false); document.getElementById('kw-tests').scrollIntoView(); } });
+  var a=document.getElementById('test-add'); if(a)a.onclick=function(){ editTest(-1); };
+  fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(Array.isArray(d))TESTS=d; renderTests(); labLoad(); })
+    .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'))||[];}catch(e){} renderTests(); labLoad(); });
+  // the brand list arrives with the calendar's own boot; a lab already open reads the new brands
+  var sel=document.getElementById('brand'); if(sel)new MutationObserver(function(){ labLoad(); }).observe(sel,{childList:true});
+})();
 })();
 </script>
