@@ -18,6 +18,11 @@
  *   · the rule table's rows add up to the total; "on its own" is each rule alone
  *   · the comparison with the Google feed today (newly held / brought back)
  *   · the category table, the CSV, the rules remembered on the device, the phone, and "Needs a look" gone
+ *   · HERO SIZES (Ray, 11 Nov 2026: "add hero size option in the simulation too"): a hero census built for THESE rows with
+ *     the real census engine, the brand's lists for two types — "hold back broken runs" at 100% / 50% alone and after
+ *     range completion, "keep hero sizes live" exempting hero sizes from range completion (its row says what it lets
+ *     back in), the CSV naming the rule and each product's hero size, the mode remembered, and a market with no list
+ *     mapped saying so rather than counting nothing
  *
  * Run: node tools/check_stocksim.js      (PW_CHROMIUM overrides the browser path)
  */
@@ -62,6 +67,34 @@ function heldBy(p, R) {
   return '';
 }
 const count = (R) => IN.filter((p) => heldBy(p, R)).length;
+
+// ---- the hero sizes: Women's tees hero 10 + 12, men's coats hero 8 + 10 + 12, kids' shoes and the bag on no list. A
+// style's hero run = its hero sizes in stock ÷ the hero sizes it is made in (every size is made, the first k in stock).
+const HERO = { 'Women > Tops > Tees': ['10', '12'], 'Men > Coats': ['8', '10', '12'] };
+const heroL = (p) => (p.k == null ? null : HERO[p.cat] || null);
+const heroOf = (p) => { const L = heroL(p); return L ? (L.indexOf(p.s) >= 0 ? 1 : 0) : -1; };
+const heroPc = (p) => { const L = heroL(p); if (!L) return null; return (L.filter((z) => SIZES.indexOf(z) < p.k).length / L.length) * 100; };
+function heldByH(p, R) {
+  const keep = R.hero && R.hero.m === 'keep' && heroOf(p) === 1;
+  if (!keep && R.rc && p.k != null && (p.k / 10) * 100 < R.rc) return 'rc';
+  if (R.qty && p.q < R.qty) return 'qty';
+  if (!keep && R.sz && p.k != null && p.k < R.sz) return 'sz';
+  if (R.hero && R.hero.m !== 'keep') { const h = heroPc(p); if (h != null && h < R.hero.v) return 'hero'; }
+  if (R.block && R.block.indexOf(p.cat.split(' > ')[0]) >= 0) return 'block';
+  return '';
+}
+const countH = (R) => IN.filter((p) => heldByH(p, R)).length;
+const HERO_RESP = (() => {
+  const E = require(path.join(D, 'catalog_engine.js')), H = require(path.join(D, 'herosize_engine.js'));
+  const ti = H.treeIndex(E), FH = ['g:id', 'g:item_group_id', 'g:product_type'];
+  ti.onRow(null, FH); P.filter((p) => p.feed).forEach((p) => ti.onRow([p.id, p.g, p.cat], FH));
+  const c = H.census(E, ti.finish());
+  c.onRow(null, ['id', 'title', 'size', 'item_group_id', 'availability', 'quantity', 'product_type', 'brand']);
+  P.forEach((p) => c.onRow([p.id, p.t, p.s, p.g, p.inS ? 'in stock' : 'out of stock', p.q, 'Master type', p.br]));
+  const store = {};
+  Object.keys(HERO).forEach((k) => { store['m:Superdry|' + k.toLowerCase()] = { k, s: HERO[k], src: 'set', fw: 0, by: 'Analyst A', at: 1 }; });
+  return { ok: true, brand: 'Superdry', market: 'GB', census: Object.assign({ client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', t: Date.now() }, c.finish()), store, markets: [{ market: 'GB', census: true }] };
+})();
 const todayHeld = IN.filter((p) => p.feed !== 'in stock').length;
 
 // ---- FeedHero's suppfeed stock is NOT the simulator's (Ray, 26 Oct 2026: "the supp feed is product quantity only so it
@@ -84,6 +117,7 @@ window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Prom
  if(url.indexOf('/api/feed/proxy')>=0){window.__simReads=(window.__simReads||[]).concat([url]);return tx(${JSON.stringify(FEED)},'application/xml');}
  if(url.indexOf('/api/catalog/master/file')>=0)return tx(${JSON.stringify(MASTER)},'text/csv');
  if(url.indexOf('/api/catalog/master')>=0)return j({ok:true,rows:${P.length},lastImport:'2026-10-22 05:00:00'});
+ if(url.indexOf('/api/rules/hero')>=0){var hr=${JSON.stringify(HERO_RESP)};if(window.__NOHERO)hr.store={};return j(hr);}
  if(url.indexOf('/api/rules/stocksrc')>=0){window.__srcAsked=(window.__srcAsked||0)+1;}if(url.indexOf('/api/rules/stocksrc')>=0)return window.__SRC?j({ok:true,done:true,cmpid:'superdry_gb',at:Date.now(),supp:1,rows:window.__SRC}):j({ok:true,nosupp:true,done:true,note:'no suppfeed stock field'});
 ${RS.stubLines()}
  return j({ok:false,error:'stub'},404);};`;
@@ -205,6 +239,51 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('the simulator never asks for the suppfeed read', (await p.evaluate(() => window.__srcAsked || 0)) === 0);
     const foot = await p.$eval('#sim-foot', (e) => e.textContent);
     ok('the card names the master, never the suppfeed', /read off the master/.test(foot) && !/suppfeed|range_comp/.test(foot), foot);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+
+    console.log('· hero sizes');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, null, null, 'localStorage.removeItem("fcc-stock-sim");'));
+    await read(p);
+    let hc = await p.$eval('#sim-ctl [data-r="hero"]', (e) => ({ off: e.classList.contains('off'), on: e.querySelector('[data-on="hero"]').checked, dis: e.querySelector('[data-on="hero"]').disabled, mode: (e.querySelector('[data-hm].on') || {}).getAttribute && e.querySelector('[data-hm].on').getAttribute('data-hm'), txt: e.textContent }));
+    const heroIn = IN.filter((pp) => heroOf(pp) === 1).length, otherIn = IN.filter((pp) => heroOf(pp) === 0).length;
+    ok('a Hero sizes rule sits in the controls, off on a fresh device, on "hold back broken runs", counting ' + heroIn + ' in-stock products in a hero size', hc.off && !hc.on && !hc.dis && hc.mode === 'hold' && new RegExp(heroIn + ' in-stock products in a hero size · ' + otherIn + ' in another size').test(hc.txt), hc);
+    await p.uncheck('#sim-ctl input[data-on="rc"]'); await p.waitForTimeout(60);
+    await p.click('#sim-ctl [data-pre="hero|100"]'); await p.waitForTimeout(80);
+    k = await kpi(p);
+    ok('hero sizes under 100% alone (a style missing any hero size) holds back ' + countH({ hero: { m: 'hold', v: 100 } }), k[1] === countH({ hero: { m: 'hold', v: 100 } }), [k[1], countH({ hero: { m: 'hold', v: 100 } })]);
+    await p.click('#sim-ctl [data-pre="hero|50"]'); await p.waitForTimeout(80);
+    k = await kpi(p);
+    ok('…under 50% holds back ' + countH({ hero: { m: 'hold', v: 50 } }), k[1] === countH({ hero: { m: 'hold', v: 50 } }), [k[1], countH({ hero: { m: 'hold', v: 50 } })]);
+    await p.check('#sim-ctl input[data-on="rc"]'); await p.click('#sim-ctl [data-pre="rc|20"]'); await p.waitForTimeout(80);
+    const RH = { rc: 20, hero: { m: 'hold', v: 50 } };
+    k = await kpi(p);
+    let hrows = await p.$$eval('#sim-rules tbody tr', (t) => t.map((r) => Array.from(r.cells).map((c) => c.textContent)));
+    const hTake = hrows.filter((r) => /^Hero sizes/.test(r[0]))[0];
+    ok('after range completion under 20% it takes only what RC left: ' + IN.filter((pp) => heldByH(pp, RH) === 'hero').length + ' of ' + countH(RH), k[1] === countH(RH) && hTake && +hTake[1].replace(/\D/g, '') === IN.filter((pp) => heldByH(pp, RH) === 'hero').length && +hTake[2].replace(/\D/g, '') === countH({ hero: { m: 'hold', v: 50 } }), [k[1], countH(RH), hTake]);
+    await p.click('#sim-ctl [data-pre="rc|50"]'); await p.click('#sim-ctl [data-hm="keep"]'); await p.waitForTimeout(80);
+    const RK = { rc: 50, hero: { m: 'keep' } }, rescued = IN.filter((pp) => heldByH(pp, { rc: 50 }) && !heldByH(pp, RK)).length;
+    k = await kpi(p);
+    hrows = await p.$$eval('#sim-rules tbody tr', (t) => t.map((r) => Array.from(r.cells).map((c) => c.textContent)));
+    const kRow = hrows.filter((r) => /^Hero sizes/.test(r[0]))[0];
+    ok('"keep hero sizes live" exempts them from range completion under 50%: ' + countH({ rc: 50 }) + ' → ' + countH(RK), k[1] === countH(RK) && countH(RK) < countH({ rc: 50 }), [k[1], countH(RK)]);
+    ok('…its row holds nothing back and says what it lets back in (+' + rescued + ' live)', kRow && kRow[1].trim() === '—' && new RegExp('\\+' + rescued + ' live').test(kRow[2]) && new RegExp(rescued + ' products the rules above would hold back stay live').test(kRow[0]), kRow);
+    const sweep = await p.$$eval('#sim-sweep .bar', (b) => b.map((x) => +x.getAttribute('data-sx') === 100 ? x.getAttribute('data-tip') : null).filter(Boolean)[0]);
+    ok('the sweep honours the exception: at 100% it holds ' + countH({ rc: 100, hero: { m: 'keep' } }), new RegExp('>' + countH({ rc: 100, hero: { m: 'keep' } }) + ' products held back').test(sweep), sweep);
+    await p.click('#sim-ctl [data-hm="hold"]'); await p.click('#sim-ctl [data-pre="hero|100"]'); await p.waitForTimeout(80);
+    const RC = { rc: 50, hero: { m: 'hold', v: 100 } };
+    const [hdl] = await Promise.all([p.waitForEvent('download'), p.click('#sim-csv')]);
+    const hcsv = fs.readFileSync(await hdl.path(), 'utf8').replace(/^\uFEFF/, '').trim().split('\n');
+    ok('⬇ CSV names the hero rule and every product\'s hero size (' + countH(RC) + ' rows)', hcsv.length - 1 === countH(RC) && /hero size,style hero sizes in stock,style hero sizes made,style hero %/.test(hcsv[0]) && hcsv.filter((l) => /,hero sizes,/.test(l)).length === IN.filter((pp) => heldByH(pp, RC) === 'hero').length, [hcsv.length - 1, countH(RC), hcsv[0]]);
+    const hm = await p.evaluate(() => JSON.parse(localStorage.getItem('fcc-stock-sim') || '{}').hero);
+    ok('the hero rule is remembered on this device (on, hold, 100%)', hm && hm.on && hm.m === 'hold' && hm.v === 100, hm);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, null, null, 'window.__NOHERO=1;localStorage.setItem("fcc-stock-sim",JSON.stringify({rc:{on:true,v:20},hero:{on:true,m:"hold",v:100}}));'));
+    await read(p);
+    hc = await p.$eval('#sim-ctl [data-r="hero"]', (e) => ({ dis: e.querySelector('[data-on="hero"]').disabled, txt: e.textContent }));
+    k = await kpi(p);
+    ok('a market with no hero list mapped says so and counts nothing for the rule (remembered on, but not run)', hc.dis && /No product type of Superdry GB has hero sizes mapped yet/.test(hc.txt) && k[1] === count({ rc: 20 }), [hc, k[1]]);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 

@@ -534,6 +534,8 @@ const DEFAULT_FEEDS = {
     dk: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_dk/6d19138f306b180edc9233b3bb4554b5/superdry_dk_gb_output.xml' },
     es: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_es/b7687bb2913f6e6deb310421ebb8d76d/superdry_es_gb_output.xml' },
     us: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_us/90b8bebfae4c7f43b1fe6dea56081da1/superdry_us_gb_output.xml' },
+    // Superdry IT's Google Shopping + Meta feeds, both created in FeedHero 6 Nov 2026 — read off output_feeds 11 Nov 2026
+    it: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_it/c4d89ea28f51ef5363abb34cbc94fd5c/superdry_it_gb_output.xml' },
     'gb-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/superdry_gb/2d98a671028d410b7572d2bb3c78a0ca/superdry_gb_fb_output.xml' },
     // Superdry's non-GB Meta catalogues are FeedHero 'Facebook TSV' files (16 Oct 2026: the sheets answered gviz 410).
     // NOT the 'Facebook German/French/Netherlands' fb_lang_feed XMLs — those are Meta LANGUAGE OVERRIDE feeds (id +
@@ -542,6 +544,7 @@ const DEFAULT_FEEDS = {
     'de-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_tsv/superdry_de/eb9803a536590b1854ab3ab60023da25/superdry_de_fb_tsv_output.tsv' },
     'fr-fb': { xml: 'https://s3.feedhero.net/output_feeds/fb_tsv/superdry_fr/1d91616b1594ade0c45276aa6b46be43/superdry_fr_fb_tsv_output.tsv' },
     'nl-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb_tsv/superdry_nl/3c5c1a8c47d6f80048f7a0c5cd23309a/superdry_nl_fb_tsv_output.tsv' },
+    'it-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/superdry_it/f354d9a2b3e0c499c203400ff57134d9/superdry_it_fb_output.xml' },  // FeedHero 'Meta' (a full catalogue, not a language override)
   },
   'American Golf': { gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/american_golf/96357050a3ca0230515509d2987ca800/american_golf_uk_gb_output.xml' } },
   Reiss: {

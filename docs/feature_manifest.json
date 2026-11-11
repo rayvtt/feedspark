@@ -16878,9 +16878,9 @@
    "pr": 0
   },
   {
-   "name": "Catalogue engine: the stock-rule simulator, each product counted once in run order",
+   "name": "Catalogue engine: the stock-rule simulator, each product counted once in run order (hero sizes join before the block, 11 Nov 2026)",
    "file": "docs/catalog_engine.js",
-   "pattern": "var SIM_ORDER = ['rc', 'qty', 'sz', 'block'];",
+   "pattern": "var SIM_ORDER = ['rc', 'qty', 'sz', 'hero', 'block'];",
    "pr": 0
   },
   {
@@ -17297,6 +17297,48 @@
    "name": "Stock tripwire: the redesigned page, every figure recomputed from the stub",
    "file": "tools/check_stockeven.js",
    "pattern": "console.log('· the page as redesigned — Stock health first, the cut cards gone');",
+   "pr": 0
+  },
+  {
+   "name": "Stock simulator: heroMark keeps each product's hero size and each style's hero run",
+   "file": "docs/catalog_engine.js",
+   "pattern": "function heroMark(D, of) {",
+   "pr": 0
+  },
+  {
+   "name": "Stock simulator: the exception keeps a hero size out of range completion and sizes in stock",
+   "file": "docs/catalog_engine.js",
+   "pattern": "keep = !!(hr && hr.m === 'keep' && R.hz[i] === 1);",
+   "pr": 0
+  },
+  {
+   "name": "Stock simulator: the page marks hero sizes off the brand's hero map (longest PT prefix, the census's sizeKey)",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "function simHeroMark() {",
+   "pr": 0
+  },
+  {
+   "name": "Stock simulator: the hero rule says why it cannot run, never a silent zero",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "function simHeroWhy() {",
+   "pr": 0
+  },
+  {
+   "name": "Stock simulator: a hero list edited on the Hero sizes card reaches the simulator",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "HM.ver = (HM.ver || 0) + 1; if (SIM.D && SIM.H) simLater();",
+   "pr": 0
+  },
+  {
+   "name": "check_stocksim: hero sizes counted against a census built for its own rows",
+   "file": "tools/check_stocksim.js",
+   "pattern": "function heldByH(p, R) {",
+   "pr": 0
+  },
+  {
+   "name": "Stock simulator: a hero-size rule, two modes — hold back broken runs / keep hero sizes live",
+   "file": "docs/FeedSpark_Stock.html",
+   "pattern": "Hold back broken runs</button>",
    "pr": 0
   },
   {
