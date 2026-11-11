@@ -33,7 +33,7 @@ const ARCH = {
   Schuh: [
     { country: 'UK', method: 'Single Group', type: 'Keyword', live: '01/05/2026', reportDate: '20/05/2026', metrics: { impressions: 12, clicks: 18, conversions: 9 },
       verdict: 'positive', winner: null, groups: null, report: 'Up after launch.' },
-    { country: 'IE', method: 'A/B Test', type: 'Colour Test', live: '01/06/2026', reportDate: '', metrics: {}, verdict: 'unknown', winner: null,
+    { country: 'IE', method: 'A/B Test', type: 'Titles [attribute] placement', typeName: 'Titles Brand placement', attr: 'Brand', live: '01/06/2026', reportDate: '', metrics: {}, verdict: 'unknown', winner: null,
       groups: { control: 'Without Colour', test: 'With Colour' }, report: 'Inconclusive, shared on the call.' }] };
 // independent expectations, from the stub
 const FIGS = 1 + 2 /* register: 24.7 | 4.63 imp + 5.18 clk */ + 2 + 3;
@@ -108,6 +108,31 @@ const srv = http.createServer((q, r) => {
   ok('hovering a dot names the test, the metric and both groups', /Reiss.*Title Test[\s\S]*With Item Type Descriptor against Without Item Type Descriptor/.test(await pg.evaluate(() => document.getElementById('lab-tip').textContent)));
   await dot.click(); await pg.waitForTimeout(250);
   ok('clicking it flags its card', await pg.evaluate(() => document.getElementById('lab-a0|Reiss').classList.contains('flash')));
+
+  console.log('\n-- the attribute, the completed date, the order --');
+  const A = await pg.evaluate(() => { const c = document.getElementById('lab-a1|Schuh'), r = document.getElementById('lab-a0|Reiss'), run = document.getElementById('lab-r1');
+    return { nm: c.querySelector('.lab-nm').textContent, at: c.querySelector('.lab-at') && c.querySelector('.lab-at').textContent,
+      done: r.querySelector('.lab-dt').textContent, run: run.querySelector('.lab-dt').textContent }; });
+  ok('the [attribute] in the test type is filled from the report', A.nm === 'Titles Brand placement · IE', A.nm);
+  ok('…and the attribute tested is its own field on the card', /Tested · Brand/.test(A.at || ''), A.at);
+  ok('the day a test was completed is its own field', /Completed 1 Apr 26/.test(A.done), A.done);
+  ok('a running test is never given a completed date', /Not completed yet/.test(A.run), A.run);
+  await pg.selectOption('#lab-sort', 'new'); await pg.waitForTimeout(200);
+  ok('Newest completed first puts the latest completion first', await pg.evaluate(() => document.querySelector('#lab-cards .lab-card').id) === 'lab-a0|Schuh');
+  await pg.selectOption('#lab-sort', 'move'); await pg.waitForTimeout(200);
+
+  console.log('\n-- brands shown --');
+  await pg.click('#lab-bv-sum'); await pg.uncheck('[data-bvb="Schuh"]'); await pg.waitForTimeout(250);
+  const H = await pg.evaluate(() => ({ cards: document.querySelectorAll('#lab-cards .lab-card').length, dots: document.querySelectorAll('#lab-field circle[data-ld]').length,
+    chip: !!document.querySelector('[data-lb="Schuh"]'), kpi: +document.querySelector('#lab-kpis .lab-k b').textContent, sum: document.getElementById('lab-bv-sum').textContent }));
+  ok('a hidden brand leaves the cards', H.cards === N - 2, H.cards);
+  ok('…the dot field', H.dots === FIGS - 3, H.dots);
+  ok('…the brand chips and the counts', !H.chip && H.kpi === N - 2, H);
+  ok('the control says how many brands are shown', /3 of 4/.test(H.sum), H.sum);
+  await open();
+  ok('hiding a brand is kept on this device', await pg.evaluate(() => document.querySelectorAll('#lab-cards .lab-card').length) === N - 2);
+  await pg.click('#lab-bv-sum'); await pg.click('[data-bva="1"]'); await pg.waitForTimeout(250);
+  ok('Show all brings every brand back', await pg.evaluate(() => document.querySelectorAll('#lab-cards .lab-card').length) === N);
 
   console.log('\n-- the register --');
   await pg.click('#tv-reg'); await pg.waitForTimeout(300);

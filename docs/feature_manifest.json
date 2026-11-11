@@ -17503,6 +17503,21 @@
    "name": "A/B archive: the two groups ride the payload",
    "file": "cloudflare/feedspark-deck/src/abtests.js",
    "pattern": "const groups = ab ? abGroups(t.report) : null;"
+  },
+  {
+   "name": "A/B archive: the [attribute] in a test type is read off the report",
+   "file": "cloudflare/feedspark-deck/src/abtests.js",
+   "pattern": "typeName: abTypeName(t.type, attr)"
+  },
+  {
+   "name": "Workflow: Results lab hides brands per device",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "localStorage.setItem('fcc-lab-hide'"
+  },
+  {
+   "name": "Workflow: Results lab card carries the completed date",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function labDone(r)"
   }
  ]
 }
