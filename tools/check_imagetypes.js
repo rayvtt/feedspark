@@ -73,8 +73,39 @@ const IDX = { 'Northwind|gb': { client: 'Northwind', mkt: 'gb', t: NW.t, rows: 4
   'Atelier|gb': { client: 'Atelier', mkt: 'gb', t: AT.t, rows: 500, withImg: 500, imgs: 1000,
     slots: AT.slots, learnable: false, toks: 61, tokCover: 0.42, tops: [] } };
 
+/* ---- Atelier's live feed, for the photograph tagger (Ray, 11 Nov 2026) ------------
+ * The shape the estate's unpatterned feeds really have: opaque hashed filenames, and a
+ * style's size variants repeating the same two photographs — one of them served under a
+ * different render query, which is the case photoKey exists for. Counted HERE so every
+ * figure on the page is compared against a number this file worked out:
+ *   6 products · 11 image slots · 5 DISTINCT photographs (u1 and u2 fill 3 slots each,
+ *   u3 and u4 two each, u5 one) · 3 item groups.                                      */
+const PH = ['upload7731180266241935', 'upload2240917734168123', 'upload5519038827416602',
+  'upload9043116628350774', 'upload1182940573361908'];
+const au = (n, q) => 'https://cdn.atelier.invalid/' + PH[n] + '.jpg' + (q || '');
+const AT_ITEMS = [
+  { id: 'AT-1', grp: 'G1', urls: [au(0, '?width=658'), au(1)] },
+  { id: 'AT-2', grp: 'G1', urls: [au(0, '?width=900'), au(1, '?width=900')] },
+  { id: 'AT-3', grp: 'G1', urls: [au(0), au(1)] },
+  { id: 'AT-4', grp: 'G2', urls: [au(2), au(3)] },
+  { id: 'AT-5', grp: 'G2', urls: [au(2), au(3)] },
+  { id: 'AT-6', grp: 'G3', urls: [au(4)] },
+];
+const AT_SLOTS = AT_ITEMS.reduce((a, i) => a + i.urls.length, 0);          // 11
+const AT_FEED = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>'
+  + AT_ITEMS.map((i) => '<item><g:id>' + i.id + '</g:id><title>Atelier ' + i.id + '</title>'
+    + '<g:item_group_id>' + i.grp + '</g:item_group_id>'
+    + '<g:link>https://atelier.invalid/' + i.id + '</g:link>'
+    + '<g:image_link>' + i.urls[0] + '</g:image_link>'
+    + i.urls.slice(1).map((u) => '<g:additional_image_link>' + u + '</g:additional_image_link>').join('')
+    + '</item>').join('') + '</channel></rss>';
+
 let NEG = false;
-const seen = { img: 0, auditPut: null, tagGets: [] };
+/* the model's answer, index-keyed — and it deliberately SKIPS photograph 2, which is the
+ * case that turns a position-mapped batch into a wall of wrong labels */
+const CLAUDE = { calls: 0, skip: 2, lastModel: null, lastImgs: 0 };
+const PHOTOS = {};           // client -> {v,p:{}}  (the stub store)
+const seen = { img: 0, auditPut: null, tagGets: [], photoPuts: 0, feedReads: 0 };
 const send = (res, code, type, body) => { res.writeHead(code, { 'content-type': type, 'access-control-allow-origin': '*' }); res.end(body); };
 const srv = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
@@ -120,6 +151,33 @@ const srv = http.createServer((req, res) => {
       AUDIT[client] = Object.assign(AUDIT[client] || {}, seen.auditPut);
       send(res, 200, 'application/json', JSON.stringify({ ok: true, client, audit: AUDIT[client] })); });
   }
+  if (p === '/api/feed/proxy') { seen.feedReads++;
+    return send(res, 200, 'application/xml', client === 'Atelier' ? AT_FEED : '<rss><channel></channel></rss>'); }
+  if (p === '/api/images/photos') {
+    if (req.method === 'GET') return send(res, 200, 'application/json',
+      JSON.stringify({ ok: true, client, photos: PHOTOS[client] || null }));
+    let b = ''; req.on('data', (d) => { b += d; });
+    return req.on('end', () => { seen.photoPuts++; let v = {}; try { v = JSON.parse(b); } catch (e) {}
+      const cur = PHOTOS[client] || (PHOTOS[client] = { v: 1, p: {} });
+      Object.assign(cur.p, (v.photos && v.photos.p) || {});
+      (v.clear || []).forEach((k) => { delete cur.p[k]; });
+      cur.n = Object.keys(cur.p).length;
+      send(res, 200, 'application/json', JSON.stringify({ ok: true, client, photos: cur })); });
+  }
+  if (p === '/api/claude') {
+    let b = ''; req.on('data', (d) => { b += d; });
+    return req.on('end', () => { let v = {}; try { v = JSON.parse(b); } catch (e) {}
+      CLAUDE.calls++; CLAUDE.lastModel = v.model || null;
+      const content = ((v.messages || [])[0] || {}).content || [];
+      const n = content.filter((c) => c && c.type === 'image').length;
+      CLAUDE.lastImgs = n;
+      // every picture but the one we skip, and ON PURPOSE OUT OF ORDER — a correct
+      // mapping reads the number, never the position in this array
+      const tags = [];
+      for (let i = n; i >= 1; i--) if (i !== CLAUDE.skip) tags.push({ i, tag: i === 1 ? 'packshot' : 'model-full', conf: 0.9 });
+      send(res, 200, 'application/json', JSON.stringify({ text: JSON.stringify({ tags }),
+        model: v.model, usage: { input_tokens: 400 + n * 690, output_tokens: 20 + n * 18 } })); });
+  }
   if (p.startsWith('/api/')) return send(res, 200, 'application/json', JSON.stringify({ ok: true }));
   return send(res, 404, 'text/plain', 'no');
 });
@@ -131,6 +189,7 @@ const t = (n, ok, x) => { ok ? pass++ : fail++; console.log((ok ? '  ✓ ' : '  
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 1440, height: 1000 } });
 const page = await ctx.newPage();
+const AT_SLOTS_EXPECTED = AT_SLOTS;
 const errors = [];
 page.on('pageerror', (e) => { errors.push(String(e.message).slice(0, 120)); if (process.env.IMGT_DEBUG) console.log('   [pageerror] ' + e.message.slice(0, 200)); });
 if (process.env.IMGT_DEBUG) { page.on('console', (m) => console.log('   [console] ' + m.text().slice(0, 160)));
@@ -240,6 +299,157 @@ console.log('· the feed with no convention at all');
   t('the plan states the per-image cost rather than offering a shortcut', /1,000 images with no code/.test(plan), plan);
   const rows = await page.$$eval('#tytbl tbody tr', (rs) => rs.length);
   t('its two image fields are still reported, not skipped', rows === 2, String(rows));
+}
+
+console.log('· Tag the photographs — the unit, the grouping and the batch, on the paint');
+{
+  // the card is on Atelier, the unpatterned feed, which is the one that needs it
+  t('the card is on the page', await page.$('#pertag') !== null);
+  t('and starts folded on a fresh device, under the two overview cards',
+    await page.$eval('#pertag', (e) => e.classList.contains('folded')));
+  await page.click('#pertag > .fhd .fold');
+  await page.waitForTimeout(120);
+  t('it opens on its own head', !(await page.$eval('#pertag', (e) => e.classList.contains('folded'))));
+  const before = await txt('#pt-empty');
+  t('and says nothing is read yet, rather than drawing an empty library',
+    /Read the feed/.test(before), before);
+
+  await page.click('#ptread');
+  await page.waitForFunction(() => window.__imgPage.photos.read, null, { timeout: 25000 });
+  await page.waitForTimeout(200);
+
+  /* ---- the unit: counted here, compared there ---- */
+  const st = await page.evaluate(() => window.__imgPage.photos.stats);
+  t('the page lists 5 distinct photographs — the number this file counted', st.photos === 5, JSON.stringify(st));
+  t('filling the 11 image slots it counted', st.slots === AT_SLOTS, JSON.stringify(st));
+  const head = await txt('#pt-head');
+  t('and the head states BOTH, since a reader who swaps them misreads every figure',
+    /5 distinct photographs/.test(head) && /11 image slots/.test(head), head);
+  t('with the slots-per-photograph that explains the gap', /2\.2 slots each/.test(head), head);
+  t('and says a tag is set on the photograph', /A tag is set on the <?b?>?photograph/.test(head.replace(/<[^>]*>/g, '')), head);
+  t('nothing is named yet', st.named === 0 && st.left === 5, JSON.stringify(st));
+
+  /* ---- the cost, stated before anything is spent ---- */
+  const cost = await txt('#pt-cost');
+  t('the card says what a run would cost before it spends anything', /\$0\./.test(cost), cost);
+  t('and how long the worker’s own throttle makes it take', /minute/.test(cost), cost);
+  t('nothing is spent until it is asked', (await page.evaluate(() => window.__imgPage.photos.spend)).calls === 0);
+
+  /* ---- a repeated photograph wears what it covers ---- */
+  const tiles = await page.$$eval('#pt-rows .strip .g', (gs) => gs.map((g) => ({
+    k: g.getAttribute('data-ph'), nx: (g.querySelector('.nx') || {}).textContent || '' })));
+  t('a photograph that fills several slots says so on its tile',
+    tiles.some((x) => x.nx === '×3'), JSON.stringify(tiles.map((x) => x.nx)));
+  t('and one that fills a single slot wears nothing',
+    tiles.some((x) => x.nx === ''), JSON.stringify(tiles.map((x) => x.nx)));
+
+  /* ---- the vocabulary is on screen, not typed ---- */
+  const opts = await page.$$eval('#pt-rows .strip .g select.phsel', (ss) => ss.length
+    ? Array.from(ss[0].options).map((o) => o.value) : []);
+  t('every tile carries the controlled list, so a tag cannot be typed',
+    opts.length === 14 && opts[0] === '' && opts.indexOf('model-full') > 0, JSON.stringify(opts.slice(0, 4)));
+
+  /* ---- grouping is a view: the same photographs, three ways ---- */
+  const groupsOf = async (by) => { await page.selectOption('#ptgrp', by); await page.waitForTimeout(120);
+    return page.evaluate(() => window.__imgPage.photos.groups); };
+  const gi = await groupsOf('item');
+  t('by item id: one row per product — 6, as counted here', gi.length === 6, JSON.stringify(gi));
+  const gg = await groupsOf('group');
+  t('by item group: one row per style — 3, as counted here', gg.length === 3, JSON.stringify(gg));
+  t('and the three-variant style lists its two photographs once, not six times',
+    gg.filter((g) => g.n === 2).length === 2 && gg.some((g) => g.n === 1), JSON.stringify(gg));
+  const gc = await groupsOf('code');
+  const uniq = async () => page.evaluate(() => {
+    const seenK = {}; let dup = 0, n = 0;
+    document.querySelectorAll('#pt-rows .strip .g').forEach((g) => { const k = g.getAttribute('data-ph');
+      n++; if (seenK[k]) dup++; seenK[k] = 1; });
+    return { n, dup, uniq: Object.keys(seenK).length }; });
+  t('by shot code: every photograph still appears, and none of them twice',
+    (await uniq()).dup === 0 && gc.reduce((a, g) => a + g.n, 0) === 5, JSON.stringify(gc));
+  await page.selectOption('#ptgrp', 'item'); await page.waitForTimeout(120);
+
+  /* ---- a hand tag covers every slot the photograph fills, and reaches the server ---- */
+  const puts0 = seen.photoPuts;
+  const big = tiles.find((x) => x.nx === '×3').k;
+  await page.selectOption('#pt-rows .strip .g[data-ph="' + big + '"] select.phsel', 'packshot');
+  await page.waitForFunction((k) => { const p = window.__imgPage.photos.PHOTOS;
+    return p && p.p && p.p[k] && p.p[k].tag === 'packshot'; }, big, { timeout: 8000 });
+  t('setting a tag by hand reaches the server', seen.photoPuts > puts0, String(seen.photoPuts));
+  const st2 = await page.evaluate(() => window.__imgPage.photos.stats);
+  t('one decision, and 3 of the 11 image slots are named', st2.named === 1 && st2.slotsNamed === 3, JSON.stringify(st2));
+  t('marked as a hand tag, which always wins',
+    (await page.evaluate((k) => window.__imgPage.photos.PHOTOS.p[k].by, big)) === 'manual');
+  const h2 = await txt('#pt-head');
+  t('and the head follows', /1 of 5 named/.test(h2), h2);
+}
+
+console.log('· the model names them in batches, and never labels the picture beside the one it read');
+{
+  const spend0 = await page.evaluate(() => window.__imgPage.photos.spend);
+  page.on('dialog', (d) => d.accept());
+  await page.click('#ptai');
+  await page.waitForFunction(() => { const s = window.__imgPage.photos.spend; return s.calls > 0 && !document.querySelector('#ptai').textContent.includes('Stop'); },
+    null, { timeout: 25000 });
+  await page.waitForTimeout(200);
+  t('the cheap model did the reading', CLAUDE.lastModel === 'claude-haiku-5-5', String(CLAUDE.lastModel));
+  t('and the four unnamed photographs rode ONE call, not four', CLAUDE.calls === 1 && CLAUDE.lastImgs === 4,
+    JSON.stringify({ calls: CLAUDE.calls, imgs: CLAUDE.lastImgs }));
+  const sp = await page.evaluate(() => window.__imgPage.photos.spend);
+  t('the real spend is read off the answer’s own token counts, not the estimate', sp.usd > 0 && sp.usd < 0.01, String(sp.usd));
+  t('and the card prints it', /Spent this session/.test(await txt('#pt-cost')));
+
+  // the stub skipped photograph 2 of the batch and answered OUT OF ORDER
+  const st = await page.evaluate(() => window.__imgPage.photos.stats);
+  t('three of the four it named are named', st.ai === 3, JSON.stringify(st));
+  t('and the one it skipped is still to name', st.left === 1, JSON.stringify(st));
+  t('reported as skipped rather than quietly filled', sp.missed === 1, String(sp.missed));
+  const keys = await page.evaluate(() => window.__imgPage.photos.keys);
+  const unnamed = await page.evaluate(() => { const p = window.__imgPage.photos.PHOTOS.p;
+    return window.__imgPage.photos.keys.filter((k) => !p[k]); });
+  t('and it is the picture the model actually skipped — not its neighbour',
+    unnamed.length === 1 && keys.indexOf(unnamed[0]) === 2, JSON.stringify({ unnamed, keys: keys.length }));
+  const tags = await page.evaluate(() => { const p = window.__imgPage.photos.PHOTOS.p;
+    return window.__imgPage.photos.keys.map((k) => (p[k] ? p[k].tag : null)); });
+  // worked out HERE, from what the stub answered: the library is [hand, b1, b2, b3, b4];
+  // the stub skips b2 and answers b4..b1 in that order, tagging b1 'packshot' and the rest
+  // 'model-full'. A position-based mapping gives a different row.
+  const want = ['packshot', 'packshot', null, 'model-full', 'model-full'];
+  t('every other verdict landed on its own number, through an out-of-order answer',
+    JSON.stringify(tags) === JSON.stringify(want), JSON.stringify(tags));
+
+  // and the filter does not hide a finding: "Not named yet" still carries the one left.
+  // Counted as DISTINCT photographs, since with the item grouping one photograph rightly
+  // appears in every product row that carries it.
+  const distinct = () => page.evaluate(() => new Set(Array.from(
+    document.querySelectorAll('#pt-rows .strip .g')).map((g) => g.getAttribute('data-ph'))).size);
+  const d1 = await distinct();
+  t('the Not-named-yet view shows exactly the one photograph left to name', d1 === 1, String(d1));
+  await page.selectOption('#ptfil', 'all'); await page.waitForTimeout(150);
+  const dAll = await distinct();
+  t('and Every photograph shows all five', dAll === 5, String(dAll));
+  const sum = await txt('#pertag > .fhd .fsum');
+  t('the folded head would keep the finding', /4 of 5/.test(sum) && /1 left/.test(sum), sum);
+}
+
+console.log('· the product search reads the photograph’s own tag, so the two surfaces agree');
+{
+  await page.click('#findp > .fhd .fold').catch(() => {});
+  await page.waitForTimeout(120);
+  await page.fill('#psq', 'AT-1');
+  await page.click('#psgo');
+  await page.waitForFunction(() => document.querySelectorAll('#psout .strip .g').length > 0, null, { timeout: 20000 });
+  const caps = await page.$$eval('#psout .strip .g .cap', (cs) => cs.map((c) => c.textContent.trim()));
+  t('the product’s own images carry the names set on the photographs',
+    caps.length === 2 && caps.every((c) => c === 'Packshot / flat-lay'), JSON.stringify(caps));
+  // AT-4 carries the photograph the model skipped: the search must say so, not borrow one
+  await page.fill('#psq', 'AT-4');
+  await page.click('#psgo');
+  await page.waitForFunction(() => /AT-4/.test(document.querySelector('#psout').textContent), null, { timeout: 20000 });
+  const c4 = await page.$$eval('#psout .strip .g .cap', (cs) => cs.map((c) => c.textContent.trim()));
+  // it reads its shot code (an honest "which group is this in"), or a dash — never a shot
+  // type it was never given, and never the name the picture beside it was given
+  t('and the picture the model left unnamed reads as unnamed, never as its neighbour',
+    c4.length === 2 && (/^code /.test(c4[0]) || c4[0] === '—') && c4[0] !== c4[1], JSON.stringify(c4));
 }
 
 console.log('· the estate: which clients have no shot code to name them with');

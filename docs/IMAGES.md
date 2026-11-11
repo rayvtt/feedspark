@@ -222,6 +222,79 @@ The glob is now a pattern (`**/*_engine.js`) and `tools/check_textmodules.js` fa
 any `docs/*.js` the worker imports escapes it. `.json` is deliberately exempt: it has a real
 parsed default export and `docs/i18n/vi.json` is correctly served with `JSON.stringify`.
 
+## Tag the photographs — the lane that had no interface
+
+Ray, 11 Nov 2026, sending a row of jackets each with its own chip: *"This was my initial thinking
+of using the image tagger to tag. For example, in the first row I want the AI to use maybe the
+easiest model to identify each different type of image tag, but of course make the naming
+convention - product filter can be grouped based on image URL/ itemgroup id / item id"*.
+
+The screenshot's own chips read **"On Model - Half"**, **"product-model-fullbody"**, **"On Model"**
+and **"Full Model"** — four spellings of two shot types, because they were typed rather than
+picked. And the feed behind it is the one the shot-code lane correctly refuses: Superdry's
+filenames are opaque `upload<19-digit>` hashes, so there is no code to name. The engine had
+routed that feed to **per-image** since the type engine shipped, and nothing could walk that
+lane: no interface, no model path. The `#pertag` card is that lane.
+
+### The unit is the photograph
+
+Measured on the live Superdry GB feed, 11 Nov 2026: **26,862 SKUs carry 53,718 image slots filled
+by only 13,315 distinct photographs** — 4.03 slots each, because every size variant of a style
+repeats the same files; 187 of its 13,502 raw URLs differ only by their query. The existing hand
+lane keys an override as `<id>#<slot>`, so it would ask for 53,718 decisions where 13,315 will do.
+
+`T.photoKey(url)` strips the query (`?width=658`, `&v=1` — a render size and a cache-buster move
+independently of the photograph, the same reasoning `fileStem` already applies to shot codes), the
+fragment and the protocol, and lower-cases the rest. `T.photoIndex(rows)` is every distinct
+photograph with the slots and products it fills; the card's head states **both** numbers, because
+"13,315 photographs" and "53,718 images" are both true of this feed and a reader who takes one for
+the other misreads every figure on the card. A tile that covers several slots wears `×N`.
+
+The ladder is unchanged — `T.photoTag(key, ctx)` reads a hand tag on the photograph (`decided`),
+then a model read of it (`shot`), then the shot code it belongs to (`named`), then nothing with
+`need:'image'`. The `shot` lane existed from the start; this is what finally reaches it.
+
+### One naming convention
+
+Every control is a `<select>` over the client's own taxonomy — the model is told it may answer
+with nothing but an id from that list and to **leave a photograph out rather than guess**, and
+`phMap` drops any answer naming a word that is not in it. So the library cannot drift to four
+spellings of two shot types, from either hand.
+
+### Grouping is a view, never the unit
+
+`T.groupRows(rows, by, tokOf)` groups by **item id** (the screenshot's rows), **item_group_id**
+(one row per style, each photograph listed once however many variants share it) or **shot code**
+(where the feed has one, with the rest named as having none rather than dropped). What is read,
+what is stored and what every figure says are the same whichever is chosen.
+
+### The cheapest model that can see, batched and index-keyed
+
+`AI_MODEL` is **`claude-haiku-5-5`**: an image read costs a fiftieth of Opus on input, and naming
+a photograph is a judgement about what is in the frame, not a chain of reasoning. Ten photographs
+ride one call. `T.runEstimate(n, opts)` states what a run would cost and how long the worker's own
+`/api/claude` throttle (120 calls per 10 minutes) makes it take **before** it spends anything —
+for the whole Superdry GB library, ~1,332 calls, about $1.20, about 1h50 — and the card then
+prints the real spend, read off each answer's own `usage` through `T.runCost`.
+
+**The batch is index-keyed**, which is the one thing that could go quietly wrong: each picture is
+followed by a text block naming its number and the answer is `{"tags":[{"i":3,"tag":"…"}]}`.
+`phMap` (between `PHMAP` markers in the page, lifted by name in the harness) drops a verdict whose
+`i` is not in the batch, keeps the first answer on a repeated `i`, and leaves a photograph the
+model did not name **unnamed** — offered again on the next run, never inheriting its neighbour's
+label. That is what turns a skipped picture into one gap instead of a wall of confidently wrong
+labels; the harness plants the position-mapped version and requires it to fail.
+
+### Storage
+
+`imgphotos:<client>` — its **own** KV key, not `imgtags:<client>`, because every page load reads
+the tag store for the shot-code lane and a feed with no code carries thousands of photograph tags.
+`GET|PUT /api/images/photos?client=` merges per key (so two AMs tagging different pictures never
+clobber each other), takes **deltas** rather than the whole map, checks a pushed store whole
+(`sanitizeImagePhotos`), and on reaching its cap keeps the **newest** decisions and says how many
+it dropped. One studio convention runs across a brand's markets, so the tags are the brand's while
+the index they are read against is the feed's.
+
 ## Harness
 
 `node tools/test_images.mjs` — 61 assertions over the real URL shapes of all five brands: the
@@ -237,13 +310,19 @@ its summary.
 the gap that let the empty-body bug reach the live site. Point `IMG_FIXTURES` at a directory
 holding `probe_monsoon_gb.xml` + `probe_superdry_gb.xml`; without them it skips.
 
-`node tools/test_imagetypes.mjs` — 109 assertions over `docs/imagetype_engine.js` on fixtures
+`node tools/test_imagetypes.mjs` — 206 assertions over `docs/imagetype_engine.js` on fixtures
 shaped like the real estate (invented values and brands): the signature bands, the audit's four
 states, the ladder's precedence, the field and client reports, the route choice, the plan, the
 grade's sample-size wording, the estate roll, the per-image lane and its no-double-count rule —
 plus a **refusals** block asserting the lane list is exactly `decided,named,shot` and that both
-refused lanes are still recorded in the engine's header. Wired into `qa_gate.sh`, `presync.sh`
-and `validate.yml`.
+refused lanes are still recorded in the engine's header. Since 11 Nov 2026 it also pins the
+**photograph lane**: the key (a render query, a fragment, the protocol, an escaped ampersand), the
+index against a hand-counted fixture, the ladder's precedence over the shot code, the report's
+decisions-and-slots split, all three groupings over the same photographs, the cost estimate in
+both models — and `phMap`, **lifted by name out of the page**, against a skipped picture, an
+out-of-range `i`, a repeated `i`, a word off the vocabulary and an answer that is not JSON, with a
+**negative control** that plants the position-mapped version and requires it to mislabel. Wired
+into `qa_gate.sh`, `presync.sh` and `validate.yml`.
 
 `tools/check_imagetypes.js` (presync) drives the real page over a local HTTP origin — not
 `file://`, because an opaque origin taints the canvas and would test a different program from the
@@ -252,3 +331,13 @@ one that ships — against a synthetic Northwind (3 codes, 3 fields, one of them
 itself, proves naming a mixed code adds none of its images, measures the unpatterned feed's
 per-image cost, checks the fresh-device fold defaults, the `#hash`, 390px and zero console
 errors — and carries the negative control described above.
+
+Since 11 Nov 2026 it also drives `#pertag` on Atelier's own synthetic feed (6 products, 11 image
+slots, 5 distinct photographs across 3 item groups, one served under two render queries — counted
+in the test, never read from the page): the fresh-device fold, the honest not-read-yet state, the
+head stating both numbers, the `×N` tile, the controlled list on every tile, the three groupings
+against counts the test makes itself, a hand tag reaching the server and covering all three of its
+slots, then a stubbed model answer that **skips picture 2 and answers out of order** — asserting
+the skipped photograph is the one left unnamed, every other verdict landed on its own number, the
+spend was read off the answer's own usage, and the product search reads the same ladder rather
+than captioning one picture two different ways.

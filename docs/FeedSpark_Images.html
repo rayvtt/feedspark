@@ -278,6 +278,18 @@ window.addEventListener('load',restore);
 .strip .g.err .ph{display:none}
 .strip .g.err::before{content:'image did not load';display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;font-size:10.5px;font-weight:800;color:var(--risk);padding:4px;text-align:center}
 .strip .g .sl{position:absolute;top:5px;left:5px;font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:rgba(51,51,51,.7);color:#fff}
+/* the photograph tagger: the tile IS the control, so the vocabulary is on screen */
+.strip .g select.phsel{width:100%;font:inherit;font-size:10px;font-weight:800;border:0;border-top:1px solid var(--line);border-radius:0;padding:4px 5px;background:var(--tile);color:var(--muted);cursor:pointer}
+.strip .g select.phsel.set{color:var(--good)}
+.strip .g .ai-dot{position:absolute;top:5px;right:5px;font-size:9px;font-weight:900;padding:1px 5px;border-radius:100px;background:rgba(237,111,11,.9);color:#fff}
+.strip .g .nx{position:absolute;bottom:26px;right:5px;font-size:9px;font-weight:900;padding:1px 5px;border-radius:100px;background:rgba(51,51,51,.7);color:#fff}
+.pgrow{margin:12px 0 16px;padding-top:12px;border-top:1px dashed var(--line)}
+.pgrow:first-child{border-top:0;padding-top:0;margin-top:4px}
+.pgh{font-weight:900;font-size:13.5px}
+.phcost{font-size:11.5px;font-weight:700;color:var(--muted);margin:6px 0}
+.phcost b{color:var(--ink)}
+.phbar{height:6px;border-radius:100px;background:var(--line);overflow:hidden;margin:6px 0}
+.phbar i{display:block;height:100%;background:var(--orange)}
 /* the tag control — one row, never a wall */
 .tagrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 2px}
 select.tagsel{font:inherit;font-size:13px;font-weight:800;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);max-width:230px}
@@ -413,6 +425,30 @@ table.est td.feed{min-width:110px}
     <div class="empty" id="ty-empty" hidden></div>
   </div>
 
+  <div class="card" id="pertag">
+    <div class="fhd chead">
+      <div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Tag the photographs<span class="fsum"></span></button></h3><div class="ch" id="pt-sub">One tag per photograph, named by the cheapest model that can see it, from the one vocabulary — for the feeds whose filenames carry no shot code, and for correcting the ones that do.</div></div>
+      <span class="spacer"></span>
+      <div class="tools" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <label class="tagby" for="ptgrp">Group by</label>
+        <select class="tagsel" id="ptgrp" aria-label="Group the photographs by" data-no-keep></select>
+        <select class="tagsel" id="ptfil" aria-label="Which photographs to show" data-no-keep>
+          <option value="all">Every photograph</option>
+          <option value="un" selected>Not named yet</option>
+          <option value="ai">Named by the model</option>
+          <option value="hand">Named by hand</option>
+        </select>
+        <button class="btn sm" id="ptread" type="button" title="Stream this feed in the browser so every photograph it carries can be listed">⚡ Read the feed</button>
+        <button class="btn sm" id="ptai" type="button" title="Send the photographs that have no tag to the model, in batches, and name each one">✦ AI tag the photographs</button>
+      </div>
+    </div>
+    <div id="pt-head"></div>
+    <div id="pt-cost"></div>
+    <div id="pt-rows"></div>
+    <div id="pt-more"></div>
+    <div class="empty" id="pt-empty" hidden></div>
+  </div>
+
   <div class="card" id="tyest">
     <div class="fhd chead"><div><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this section"><span class="fch" aria-hidden="true"></span>Named across the estate<span class="fsum"></span></button></h3><div class="ch">Every wired feed — how much of its imagery is named, and which feeds have no shot code to name it with.</div></div></div>
     <table class="est" id="tyesttbl"><thead><tr><th>Feed</th><th class="num">Images</th><th class="num">Named</th><th>Route</th><th>Codes</th></tr></thead><tbody></tbody></table>
@@ -451,6 +487,10 @@ table.est td.feed{min-width:110px}
       <li><b>One tag covers thousands of images.</b> The same handful of codes repeats across the whole catalogue, so naming a code names every image that carries it. That is the difference between tagging eleven things and tagging forty thousand.</li>
       <li><b>AI tags by looking, not by guessing.</b> ✦ AI tag sends a sample of that code's actual images to Claude and asks which shot type it is, with a reason. The verdict lands on the code, not on one photograph, and any tag can be corrected by hand — a manual tag always wins.</li>
       <li><b>When there is no convention, we say so.</b> Some feeds (opaque hashed filenames) have no readable pattern; the page marks them <b>unpatterned</b> and falls back to tagging individual images rather than inventing codes that mean nothing.</li>
+      <li><b>Where there is no code, the unit is the photograph — not the slot.</b> On an unpatterned feed <b>Tag the photographs</b> reads the live feed in this browser and lists each distinct picture it carries: the URL with its query stripped, since a render size (<code>?width=658</code>) and a cache-buster move independently of the photograph. On Superdry's GB feed 53,718 image slots are filled by 13,315 distinct photographs — every size variant of a style repeats the same files — so one tag there covers four slots, and 13,315 decisions name the whole library rather than 53,718.</li>
+      <li><b>The cheapest model that can see does the naming, in batches, and says what it cost.</b> Ten photographs ride one call, each followed by a line naming its number, and the model answers with that number beside each verdict — so a tag can never land on the wrong picture. A verdict naming a picture that is not in the batch is dropped, a repeated number keeps the first answer, and <b>a photograph the model does not name stays unnamed</b> and is offered again rather than inheriting its neighbour's label. The card states the estimated cost and the rate-limited clock before a run, then the real spend read off each answer's own token counts.</li>
+      <li><b>One vocabulary, from either hand.</b> Every tag — the model's and the AM's — is an id from this client's own shot taxonomy; an answer naming anything else is refused, not stored. That is what stops a library reading &ldquo;On Model - Half&rdquo;, &ldquo;On Model&rdquo;, &ldquo;product-model-fullbody&rdquo; and &ldquo;Full Model&rdquo; for two kinds of photograph.</li>
+      <li><b>Grouping is a view, never the unit.</b> The review groups by item id, by item_group_id or by shot code; what is read, what is stored and what every figure says are the same whichever is chosen.</li>
     </ol>
     <div class="note" id="meth-note"></div>
   </div>
@@ -537,7 +577,13 @@ table.est td.feed{min-width:110px}
       .then(function(r){return r.json()})
       .then(function(d){ if(c!==CLIENT||m!==MKT)return; DATA=d&&d.ok?d:null; TAGS=(d&&d.tags)||null; AUDIT=(d&&d.audit)||null;
         if(CLIENT)ESTTAGS[CLIENT]=TAGS||{v:1,tok:{},img:{}};
-        render(); tyEstateTags().then(function(got){ if(got)renderTyEstate(); }); })
+        // the photograph tags are the BRAND's (one studio convention runs across its
+        // markets, the same rule the shot-code tags follow) while the index they are read
+        // against is this FEED's, so the index is dropped and the tags are not
+        PHIDX=null; PHTOK=null; PHSHOW=PH_PAGE;
+        render();
+        loadPhotos(c).then(function(){ if(c===CLIENT&&m===MKT)renderPertag(); });
+        tyEstateTags().then(function(got){ if(got)renderTyEstate(); }); })
       .catch(function(){ if(c===CLIENT&&m===MKT){ DATA=null; render(); } });
   }
   function setState(t,spin){ $('#mstate').innerHTML=(spin?'<span class="spin"></span>':'')+esc(t||''); }
@@ -546,7 +592,7 @@ table.est td.feed{min-width:110px}
   /* ================================================================
    * Render
    * ================================================================ */
-  function render(){ renderKpis(); renderDetail(); renderTypes(); renderEstate(); renderTyEstate(); renderTax(); }
+  function render(){ renderKpis(); renderDetail(); renderTypes(); renderPertag(); renderEstate(); renderTyEstate(); renderTax(); }
 
   function capOf(){ return DATA&&DATA.snap?DATA.snap:null; }
   // every image the capture accounts for that carries a tag today
@@ -951,7 +997,12 @@ table.est td.feed{min-width:110px}
   }
 
   /* ---------- ✦ AI tagging: the sample is what the model actually looks at ---------- */
-  var AI_MODEL='claude-opus-5';
+  /* THE EASIEST MODEL THAT CAN SEE (Ray, 11 Nov 2026: "use maybe the easiest model to
+     identify each different type of image tag"). Haiku reads an image for a fiftieth of
+     what Opus charges on input, and naming a photograph is a judgement about what is in
+     the frame, not a chain of reasoning — so the cheap model is the right model here, and
+     the page states what a run costs before it spends anything. */
+  var AI_MODEL='claude-haiku-5-5';
   function aiSystem(){
     var t=taxonomy();
     return 'You are a product-imagery analyst for a retail feed agency. You will be shown several images that all share one "shot code" from a single retailer\'s product feed — they are supposed to be the SAME KIND of photograph across different products.\n\n'
@@ -1012,10 +1063,11 @@ table.est td.feed{min-width:110px}
       var col=IM.imageCollector({client:client,market:mkt}),parser=null,n=0;
       // alongside the capture, keep a slim per-product record so the product search can
       // answer without a second stream
-      var rows=[],hdr=null,ci=-1,ct=-1,cl=-1,cim=-1,addl=[];
-      var resolve=function(h){ hdr=h; ci=ct=cl=cim=-1; addl=[];
+      var rows=[],hdr=null,ci=-1,ct=-1,cl=-1,cim=-1,cg=-1,addl=[];
+      var resolve=function(h){ hdr=h; ci=ct=cl=cim=cg=-1; addl=[];
         for(var i=0;i<h.length;i++){ var k=IM.normKey(h[i]),mm;
           if(k==='id'&&ci<0)ci=i; else if(k==='title'&&ct<0)ct=i; else if(k==='link'&&cl<0)cl=i;
+          else if(k==='item_group_id'&&cg<0)cg=i;
           else if(k==='image_link'&&cim<0)cim=i;
           else if((mm=/^additional_image_link(?:\((\d+)\))?$/.exec(k)))addl.push({i:i,slot:mm[1]?+mm[1]:1}); }
         addl.sort(function(a,b){return a.slot-b.slot}); };
@@ -1027,7 +1079,7 @@ table.est td.feed{min-width:110px}
           var us=[],ss=[],v=cell(r,cim);
           if(v){ us.push(v); ss.push(0); }
           addl.forEach(function(a){ var x=cell(r,a.i); if(x){ us.push(x); ss.push(a.slot); } });
-          if(us.length)rows.push({id:cell(r,ci),ti:cell(r,ct).slice(0,160),link:cell(r,cl),urls:us,slots:ss});
+          if(us.length)rows.push({id:cell(r,ci),ti:cell(r,ct).slice(0,160),link:cell(r,cl),grp:cell(r,cg),urls:us,slots:ss});
         }
         if(++n%2000===0&&onProg)onProg(n); };
       fetch('/api/feed/proxy?client='+encodeURIComponent(client)+'&market='+encodeURIComponent(mkt)).then(function(resp){
@@ -1067,6 +1119,284 @@ table.est td.feed{min-width:110px}
       .then(function(){ BUSY=false; $('#scan1').disabled=false; });
   }
 
+  /* ================================================================
+   * TAG THE PHOTOGRAPHS (Ray, 11 Nov 2026, sending a row of Superdry jackets each with
+   * its own chip — "I want the AI to use maybe the easiest model to identify each
+   * different type of image tag, but of course make the naming convention — product
+   * filter can be grouped based on image URL / itemgroup id / item id")
+   * ----------------------------------------------------------------
+   * THREE THINGS, and the order matters.
+   *
+   * (1) THE UNIT IS THE PHOTOGRAPH, not the product-slot. The shot-code lane above names
+   * thousands of images with one decision and is the right lane wherever the filenames
+   * carry a code; Superdry's do not (opaque upload<19-digit> hashes), which is exactly the
+   * feed in Ray's screenshot. Measured on its live GB feed the day this shipped: 26,862
+   * SKUs carry 53,718 image slots filled by 13,315 DISTINCT photographs — every size
+   * variant of a style repeats the same files — so tagging slots would be four decisions
+   * where one does. The engine's photoKey strips the query (?width=658, &v=1: a render
+   * size and a cache-buster move independently of the picture) and the protocol.
+   *
+   * (2) ONE NAMING CONVENTION. The chips in Ray's screenshot read "On Model - Half",
+   * "product-model-fullbody", "On Model" and "Full Model" — four spellings of two shot
+   * types, because they were typed rather than picked. Every control here is a SELECT over
+   * the client's own taxonomy (the Shot taxonomy card below), the model is told it may
+   * answer with nothing but an id from that list, and an answer naming anything else is
+   * DROPPED rather than stored. So the vocabulary cannot drift, from either hand.
+   *
+   * (3) GROUPING IS A VIEW. Ray named three ways to group the review and all three are
+   * over the same photographs: item id (his screenshot's rows), item_group_id (one row per
+   * style) and shot code where the feed has one. The grouping never changes what is read,
+   * what is stored or what a figure says — only what a person scrolls.
+   *
+   * THE BATCH IS INDEX-KEYED, which is the one thing that could go quietly wrong. Ten
+   * images in one call costs a tenth of the per-call overhead, but the model must say
+   * WHICH image each verdict is about: every picture is followed by a text block naming
+   * its number, and the answer is {"tags":[{"i":3,"tag":"…"}]}. A verdict whose i is not
+   * in the batch is dropped, a repeated i takes the first, and an image the model did not
+   * name STAYS UNNAMED and is offered again — it never inherits its neighbour's tag, which
+   * is how a batch turns into a wall of confidently wrong labels.
+   * ================================================================ */
+  var PHOTOS=null;              // the brand's photograph tags: {v,t,n,p:{key:{tag,by,t,note,conf}}}
+  var PHIDX=null;               // the photograph index for the feed on screen
+  var PHGRP='item', PHFIL='un', PHSHOW=24, PH_PAGE=24, PH_BATCH=10;
+  var PHBUSY=false, PHSTOP=false, PHSPEND={calls:0,inTok:0,outTok:0,usd:0,named:0,missed:0};
+  var PHPEND={};                // key -> true while its batch is in flight
+
+  function TYE(){ return window.FeedImageTypes||null; }
+  function phKey(u){ var E=TYE(); return E&&E.photoKey?E.photoKey(u):String(u||''); }
+  function phRule(k){ return PHOTOS&&PHOTOS.p?PHOTOS.p[k]:null; }
+  /* the ENGINE's ladder, for one photograph: its own tag, else a model read of it, else the
+     shot code it belongs to. ONE resolver, so the tile, the filter and the head can never
+     disagree about whether a picture is named — a photograph already named through its code
+     must not read "not named" on its own tile and "named" in the count above it. */
+  function phRes(k){
+    var E=TYE(); if(!E||!E.photoTag)return null;
+    if(!PHTOK)PHTOK=phToks();
+    return E.photoTag(k,{photos:(PHOTOS&&PHOTOS.p)||{},tags:TAGS,audits:AUDIT||{},tok:PHTOK[k]});
+  }
+  function phRows(){ var c=ROWS[CLIENT+'|'+MKT]; return (c&&c.rows)||null; }
+
+  function loadPhotos(client){
+    if(!client)return Promise.resolve(null);
+    return fetch('/api/images/photos?client='+encodeURIComponent(client)).then(function(r){return r.json()})
+      .then(function(d){ if(d&&d.ok)PHOTOS=d.photos||{v:1,p:{}}; return PHOTOS; })
+      .catch(function(){ PHOTOS=PHOTOS||{v:1,p:{}}; return PHOTOS; });
+  }
+  /* Saved in DELTAS, not as a whole map: a run names thousands of photographs and
+     re-sending every one of them on every flush would cost megabytes a batch. */
+  function savePhotos(patch,clear){
+    PHOTOS=PHOTOS||{v:1,p:{}}; PHOTOS.p=PHOTOS.p||{};
+    Object.keys(patch||{}).forEach(function(k){ PHOTOS.p[k]=patch[k]; });
+    (clear||[]).forEach(function(k){ delete PHOTOS.p[k]; });
+    if(!CLIENT)return Promise.resolve();
+    return fetch('/api/images/photos?client='+encodeURIComponent(CLIENT),{method:'PUT',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({photos:{p:patch||{}},clear:clear||[]})})
+      .then(function(r){return r.json()})
+      .then(function(d){ if(d&&d.dropped)setState(d.dropped+' of the oldest photograph tags were dropped — the store is full.'); })
+      .catch(function(){ setState('Photograph tag saved on screen but not to the server — this needs the live worker.'); });
+  }
+
+  function phBuild(){
+    var E=TYE(),rows=phRows();
+    PHIDX=(E&&E.photoIndex&&rows)?E.photoIndex(rows):null;
+  }
+  /* the shot code of a photograph, where the feed has one — so the "Shot code" grouping
+     and the tile's own caption read the same token the cards above do */
+  function phToks(){
+    var IM=window.FeedImages,rows=phRows(),out={};
+    if(!IM||!IM.shotTokens||!rows)return out;
+    var head=capOf()&&capOf().grouping==='head'&&IM.headOf;
+    rows.forEach(function(r){
+      var t=IM.shotTokens(r.urls)||[];
+      r.urls.forEach(function(u,i){ var tk=t[i]; if(tk==null)return;
+        if(head)tk=IM.headOf(tk);
+        var k=phKey(u); if(out[k]==null)out[k]=tk; });
+    });
+    return out;
+  }
+  var PHTOK=null;
+
+  /* NO TWIN: how much of the library is named is the ENGINE's reading (photoReport), the
+     same one the harness runs — a second count on the page is how the head and the fold
+     line come to disagree. The index is passed in because the page already holds it. */
+  function phStats(){
+    var E=TYE(),rows=phRows();
+    if(!PHIDX||!E||!rows)return null;
+    if(!PHTOK)PHTOK=phToks();
+    return E.photoReport(rows,{photos:(PHOTOS&&PHOTOS.p)||{},tags:TAGS,audits:AUDIT||{},tokOf:PHTOK},PHIDX);
+  }
+
+  function renderPertag(){
+    var E=TYE(),head=$('#pt-head'),cost=$('#pt-cost'),rowsEl=$('#pt-rows'),more=$('#pt-more'),em=$('#pt-empty');
+    if(!head)return;
+    // the grouping picker is the engine's list, so a grouping can never exist in one place
+    // and not the other
+    var gs=(E&&E.PHOTO_GROUPINGS)||[];
+    if($('#ptgrp')&&!$('#ptgrp').options.length){
+      $('#ptgrp').innerHTML=gs.map(function(g){ return '<option value="'+esc(g.id)+'" title="'+esc(g.hint||'')+'">'+esc(g.label)+'</option>'; }).join('');
+      $('#ptgrp').value=PHGRP;
+    }
+    if(!CLIENT||!MKT){ head.innerHTML=''; cost.innerHTML=''; rowsEl.innerHTML=''; more.innerHTML='';
+      em.hidden=false; em.textContent='Pick a client and market first.'; fsum('pertag',''); return; }
+    if(!E){ head.innerHTML=''; cost.innerHTML=''; rowsEl.innerHTML=''; more.innerHTML='';
+      em.hidden=false; em.textContent='The image-type engine did not load — hard-refresh the page.'; return; }
+    if(!phRows()){
+      em.hidden=false;
+      em.innerHTML='Nothing is read yet. <b>⚡ Read the feed</b> streams '+esc(CLIENT)+' '+esc(mktLbl(MKT))
+        +' in this browser and lists every photograph it carries — nothing is sent anywhere and nothing is stored until a tag is set.';
+      head.innerHTML=''; cost.innerHTML=''; rowsEl.innerHTML=''; more.innerHTML=''; fsum('pertag','not read yet'); return; }
+    em.hidden=true;
+    phBuild(); if(!PHTOK)PHTOK=phToks();
+    var st=phStats(); if(!st){ head.innerHTML=''; return; }
+
+    // THE HEAD STATES THE UNIT, because "13,315 photographs" and "53,718 images" are both
+    // true of this feed and a reader who takes one for the other misreads every figure here
+    var perSlot=st.photos?Math.round(st.slots/st.photos*100)/100:0;
+    head.innerHTML='<div class="ch"><b>'+fmt(st.photos)+'</b> distinct photograph'+(st.photos===1?'':'s')
+      +' fill <b>'+fmt(st.slots)+'</b> image slot'+(st.slots===1?'':'s')+' on this feed — '+perSlot+' slot'+(perSlot===1?'':'s')
+      +' each, because a style\'s size variants repeat the same files. A tag is set on the <b>photograph</b>, so one decision covers every product and slot it fills.</div>'
+      +'<div class="phbar"><i style="width:'+Math.min(100,st.pct)+'%"></i></div>'
+      +'<div class="phcost"><b>'+fmt(st.named)+'</b> of '+fmt(st.photos)+' named ('+st.pct+'%) — covering '+fmt(st.slotsNamed)+' of '+fmt(st.slots)+' image slots'
+      +(st.byLane.shot?' · '+fmt(st.byLane.shot)+' read on the photograph itself':'')
+      +(st.byLane.named?' · '+fmt(st.byLane.named)+' through their shot code':'')
+      +(st.byLane.decided?' · '+fmt(st.byLane.decided)+' by hand':'')
+      +(st.left?' · <b>'+fmt(st.left)+'</b> still to name':' · every photograph named')+'</div>';
+    fsum('pertag',fmt(st.named)+' of '+fmt(st.photos)+' photographs named'+(st.left?' · '+fmt(st.left)+' left':''));
+
+    // WHAT A RUN WOULD COST, before it spends anything, and what it DID cost once it has —
+    // the spend is read off each answer's own usage, never from this estimate
+    var estN=st.left;
+    var e=(E.runEstimate&&estN)?E.runEstimate(estN,{batch:PH_BATCH,model:AI_MODEL}):null;
+    cost.innerHTML=(e?'<div class="phcost">✦ Naming the remaining <b>'+fmt(e.photos)+'</b> would be about <b>'+fmt(e.calls)
+        +'</b> call'+(e.calls===1?'':'s')+' of '+PH_BATCH+' — roughly <b>$'+e.usd.toFixed(2)+'</b>, and about <b>'+e.minutes
+        +' minute'+(e.minutes===1?'':'s')+'</b> at the '+E.CALL_LIMIT+'-calls-per-'+E.CALL_WINDOW_MIN+'-minutes rate the worker allows. An estimate — the figure below is what was actually spent.</div>':'')
+      +(PHSPEND.calls?'<div class="phcost">Spent this session: <b>'+fmt(PHSPEND.calls)+'</b> call'+(PHSPEND.calls===1?'':'s')
+        +' · '+fmt(PHSPEND.inTok)+' in / '+fmt(PHSPEND.outTok)+' out · <b>$'+PHSPEND.usd.toFixed(4)+'</b> · '+fmt(PHSPEND.named)+' named'
+        +(PHSPEND.missed?' · '+fmt(PHSPEND.missed)+' the model left unnamed (offered again)':'')+'</div>':'');
+
+    // the groups, filtered to what the reader asked for
+    var groups=E.groupRows?E.groupRows(phRows(),PHGRP,PHTOK):[];
+    var keep=groups.map(function(g){
+      var ph=(g.photos||[]).filter(function(x){ var v=phRes(x.key);
+        if(PHFIL==='un')return !(v&&v.tag);
+        if(PHFIL==='ai')return !!(v&&v.tag&&v.lane!=='decided');
+        if(PHFIL==='hand')return !!(v&&v.lane==='decided');
+        return true; });
+      return ph.length?{g:g,ph:ph}:null; }).filter(Boolean);
+    var shown=keep.slice(0,PHSHOW);
+    var opts=function(sel){ return '<option value="">— not named —</option>'+taxonomy().map(function(x){
+      return '<option value="'+esc(x.id)+'"'+(sel===x.id?' selected':'')+'>'+esc(x.label)+'</option>'; }).join(''); };
+    rowsEl.innerHTML=shown.map(function(it){
+      return '<div class="pgrow"><div class="pgh">'+esc(it.g.label||'')+'</div>'
+        +(it.g.sub?'<div class="tagby">'+esc(it.g.sub)+'</div>':'')
+        +'<div class="strip wide">'+it.ph.map(function(x){
+            var v=phRes(x.key),tk=PHTOK[x.key],n=PHIDX.map[x.key]?PHIDX.map[x.key].n:1;
+            var mark=v&&v.lane==='decided'?'✎':(v&&v.lane==='shot'?'✦':(v&&v.lane==='named'?'⌗':''));
+            return '<div class="g" data-ph="'+esc(x.key)+'" title="'+esc(x.url)+'">'
+              +'<span class="sl">'+(x.slot===0?'main':x.slot)+'</span>'
+              +(mark?'<span class="ai-dot" title="'+esc(v.why+(v.note?(' — '+v.note):'')+(v.conf?(' · '+Math.round(v.conf*100)+'% sure'):''))+'">'+mark+'</span>':'')
+              +(PHPEND[x.key]?'<span class="ai-dot" title="Being read by the model now">…</span>':'')
+              +(n>1?'<span class="nx" title="This photograph fills '+n+' image slots on this feed — one tag covers all of them.">×'+n+'</span>':'')
+              +'<img class="ph" loading="lazy" alt="" src="'+esc(x.url)+'" onerror="this.closest(\'.g\').classList.add(\'err\')">'
+              +'<select class="phsel'+(v&&v.tag?' set':'')+'" data-phsel="'+esc(x.key)+'" aria-label="Shot type for this photograph">'+opts(v&&v.tag)+'</select>'
+              +'</div>'; }).join('')+'</div></div>';
+    }).join('');
+    if(!keep.length)rowsEl.innerHTML='<div class="ch">No photograph on this feed matches that filter.'
+      +(PHFIL==='un'?' Every one is named.':'')+'</div>';
+    more.innerHTML=keep.length>PHSHOW
+      ?'<button class="btn sm" id="ptmore" type="button">▸ Show '+Math.min(PH_PAGE,keep.length-PHSHOW)+' more of '+fmt(keep.length)+'</button>'
+      :(keep.length>PH_PAGE?'<div class="tagby">All '+fmt(keep.length)+' shown.</div>':'');
+  }
+
+  /* ---- the model names each photograph, in batches, index-keyed ---- */
+  function phSystem(){
+    var t=taxonomy();
+    return 'You are a product-imagery analyst for a retail feed agency. You will be shown several product photographs from one retailer\'s feed. Each photograph is followed by a line naming its number.\n\n'
+      +'For EACH photograph, decide which ONE of these shot types it is:\n'
+      +t.map(function(x){ return '- '+x.id+' — '+x.label+': '+(x.hint||''); }).join('\n')
+      +'\n\nReply with STRICT JSON and nothing else: {"tags":[{"i":<the photograph\'s number>,"tag":"<one id from the list>","conf":<0-1>}]}\n'
+      +'Use the exact number each photograph was given. Give every photograph its own entry. Never invent an id that is not in the list — if none of them fits a photograph, leave that photograph out of the array rather than guessing.';
+  }
+  function phCall(batch){
+    var content=[];
+    batch.forEach(function(x,i){
+      content.push({type:'image',source:{type:'url',url:x.url}});
+      content.push({type:'text',text:'Photograph '+(i+1)});
+    });
+    content.push({type:'text',text:'Name each of the '+batch.length+' photographs above, by its number.'});
+    return fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({model:AI_MODEL,max_tokens:Math.min(1200,120+batch.length*60),system:phSystem(),messages:[{role:'user',content:content}]})})
+      .then(function(r){return r.json()});
+  }
+  /* PHMAP:START — the answer, mapped onto the pictures it was about.
+   * Pure and lifted by name in tools/test_imagetypes.mjs, because this is the one place a
+   * batch can go quietly wrong: ten pictures in one call, and a verdict that lands one
+   * tile across is a confidently wrong label nobody can see is wrong. */
+  function phMap(batch,text,tax){
+    var ok={},patch={},named=0,seen={},now=Date.now();
+    (tax||[]).forEach(function(x){ ok[x.id]=1; });
+    var m=/\{[\s\S]*\}/.exec(text||''),v=null;
+    try{ v=m?JSON.parse(m[0]):null; }catch(err){}
+    var arr=(v&&Array.isArray(v.tags))?v.tags:[];
+    arr.forEach(function(x){
+      var i=Math.round(+(x&&x.i));                      // 1-based, the number the picture was given
+      if(!(i>=1&&i<=batch.length))return;               // a verdict about a picture not in this batch
+      if(seen[i])return; seen[i]=1;                     // a repeated number: the first answer stands
+      if(!x.tag||!ok[x.tag])return;                     // a word that is not in the vocabulary
+      patch[batch[i-1].key]={tag:x.tag,by:'ai',t:now,conf:Math.max(0,Math.min(1,+x.conf||0))};
+      named++;
+    });
+    // A PICTURE THE MODEL DID NOT NAME STAYS UNNAMED. It gets no tag, so the next run
+    // offers it again — a neighbour's label is never borrowed to fill the gap.
+    return { patch:patch, named:named, missed:batch.length-named };
+  }
+  /* PHMAP:END */
+  function phApply(batch,d){
+    var E=TYE();
+    if(d&&d.usage&&E&&E.runCost){
+      PHSPEND.calls++; PHSPEND.inTok+=(+d.usage.input_tokens||0); PHSPEND.outTok+=(+d.usage.output_tokens||0);
+      PHSPEND.usd+=E.runCost(d.usage,d.model||AI_MODEL);
+    } else if(d&&!d.error){ PHSPEND.calls++; }
+    var r=phMap(batch,(d&&d.text)||'',taxonomy());
+    PHSPEND.named+=r.named; PHSPEND.missed+=r.missed;
+    return r.named?savePhotos(r.patch):Promise.resolve();
+  }
+  function phRun(){
+    if(PHBUSY){ PHSTOP=true; return; }
+    if(!phRows()){ setState('Read the feed first — ⚡ Read the feed.'); return; }
+    phBuild(); if(!PHIDX)return;
+    var todo=PHIDX.keys.filter(function(k){ var v=phRes(k); return !(v&&v.tag); })
+      .map(function(k){ return {key:k,url:PHIDX.map[k].url}; });
+    if(!todo.length){ setState('Every photograph on this feed already carries a tag.'); return; }
+    var E=TYE(),e=E&&E.runEstimate?E.runEstimate(todo.length,{batch:PH_BATCH,model:AI_MODEL}):null;
+    if(e&&!confirm('Name '+fmt(todo.length)+' photographs?\n\nAbout '+fmt(e.calls)+' calls of '+PH_BATCH
+      +', roughly $'+e.usd.toFixed(2)+', and about '+e.minutes+' minute'+(e.minutes===1?'':'s')
+      +' at the rate the worker allows.\n\n⏹ Stop finishes the batch in hand and keeps every tag already named.'))return;
+    PHBUSY=true; PHSTOP=false; $('#ptai').textContent='⏹ Stop';
+    var i=0,done=0;
+    (function next(){
+      if(PHSTOP||i>=todo.length){
+        PHBUSY=false; $('#ptai').textContent='✦ AI tag the photographs';
+        Object.keys(PHPEND).forEach(function(k){ delete PHPEND[k]; });
+        setState((PHSTOP?'Stopped — ':'Done — ')+fmt(PHSPEND.named)+' photograph'+(PHSPEND.named===1?'':'s')+' named'
+          +(PHSPEND.missed?', '+fmt(PHSPEND.missed)+' the model left unnamed (they are offered again)':'')
+          +' · $'+PHSPEND.usd.toFixed(4)+' spent.');
+        renderPertag(); return; }
+      var batch=todo.slice(i,i+PH_BATCH); i+=batch.length;
+      batch.forEach(function(x){ PHPEND[x.key]=true; });
+      done++;
+      setState('Reading photographs '+fmt(i-batch.length+1)+'–'+fmt(i)+' of '+fmt(todo.length)+'…',true);
+      renderPertag();
+      return phCall(batch)
+        .then(function(d){
+          if(d&&d.error){ setState('AI tagging unavailable: '+(d.message||d.error)+' — name them from the dropdowns.'); PHSTOP=true; }
+          return phApply(batch,d); })
+        .catch(function(err){ setState('A batch failed: '+((err&&err.message)||err)+' — those photographs stay unnamed.'); })
+        .then(function(){ batch.forEach(function(x){ delete PHPEND[x.key]; }); renderPertag(); return next(); });
+    })();
+  }
+
   /* ---------- product search ---------- */
   function ensureRows(client,mkt){
     var k=client+'|'+mkt,c=ROWS[k];
@@ -1093,11 +1423,13 @@ table.est td.feed{min-width:110px}
       return '<div style="margin:10px 0 14px"><div style="font-weight:900;font-size:13.5px">'+esc(r.ti||r.id)+'</div>'
         +'<div class="tagby" style="margin-bottom:6px">'+esc(r.id)+' · '+r.urls.length+' image'+(r.urls.length===1?'':'s')+'</div>'
         +'<div class="strip">'+r.urls.map(function(u,i){
-          var tk=toks[i],rule=tk?ruleFor(tk):null;
+          var tk=toks[i],rule=tk?ruleFor(tk):null,ph=phRule(phKey(u));
+          var lbl=ph?taxLabel(ph.tag):(rule?taxLabel(rule.tag):(tk!=null?('code '+tk):'—'));
           return '<div class="g" data-hit="'+hi+'" data-hi="'+i+'" title="'+esc(u)+'">'
             +'<span class="sl">'+(r.slots[i]===0?'main':r.slots[i])+'</span>'
+            +(ph&&ph.by==='ai'?'<span class="ai-dot" title="named by the model, on this photograph">✦</span>':'')
             +'<img class="ph" loading="lazy" alt="" src="'+esc(u)+'" onerror="this.closest(\'.g\').classList.add(\'err\')">'
-            +'<div class="cap">'+esc(rule?taxLabel(rule.tag):(tk?('code '+tk):'—'))+'</div></div>'; }).join('')+'</div></div>';
+            +'<div class="cap">'+esc(lbl)+'</div></div>'; }).join('')+'</div></div>';
     }).join('');
   }
 
@@ -1120,15 +1452,39 @@ table.est td.feed{min-width:110px}
       +'<span class="tagby">'+fmt(t.n)+' images carry this shot code</span>';
     $('#lb').classList.add('on');
   }
+  /* a photograph's own lightbox: what it is named, and — the thing the tile cannot show —
+     every product and slot that one tag covers */
+  function openPhLb(key){
+    if(!PHIDX||!PHIDX.map[key])return;
+    var e=PHIDX.map[key],r=phRule(key),tk=PHTOK?PHTOK[key]:null;
+    var slots=Object.keys(e.slots||{}).map(function(x){return +x}).sort(function(a,b){return a-b});
+    $('#lb-title').textContent='One photograph';
+    $('#lb-sub').textContent=CLIENT+' '+mktLbl(MKT)+' · fills '+e.n+' image slot'+(e.n===1?'':'s')
+      +(slots.length?(' · '+slots.map(function(x){return x===0?'main':'additional '+x}).join(', ')):'')
+      +(tk!=null?(' · shot code '+(tk==='·'?'(primary)':tk)):'');
+    $('#lb-img').src=e.url;
+    $('#lb-meta').innerHTML='<div class="tagnote" style="margin:0">'
+      +'<div><b>Named as:</b> '+esc(r?taxLabel(r.tag):'not named yet')
+      +(r?(' <span class="tagby">'+(r.by==='ai'?'✦ by the model':'✎ by hand')+(r.conf?(' · '+Math.round(r.conf*100)+'% sure'):'')+'</span>'):'')+'</div>'
+      +(r&&r.note?'<div style="margin-top:6px">'+esc(r.note)+'</div>':'')
+      +'<div style="margin-top:8px"><b>On these products:</b> '+esc(e.ids.slice(0,8).join(', ')||'—')
+      +(e.n>e.ids.length?(' and '+(e.n-e.ids.length)+' more slot'+((e.n-e.ids.length)===1?'':'s')):'')+'</div>'
+      +'<div style="margin-top:8px;word-break:break-all;font-size:11.5px">'+esc(e.url)+'</div></div>';
+    $('#lb-foot').innerHTML='<a href="'+esc(e.url)+'" target="_blank" rel="noopener">Open the image ↗</a>'
+      +'<span class="tagby">One tag here covers all '+e.n+' slot'+(e.n===1?'':'s')+'</span>';
+    $('#lb').classList.add('on');
+  }
   function openHitLb(hi,ii){
     var r=HITS[hi]; if(!r)return;
     var IM=window.FeedImages,toks=IM&&IM.shotTokens?IM.shotTokens(r.urls):[];
     if(capOf()&&capOf().grouping==='head'&&IM&&IM.headOf)toks=toks.map(function(t){return IM.headOf(t)});
-    var tk=toks[ii],rule=tk?ruleFor(tk):null;
+    var tk=toks[ii],rule=tk?ruleFor(tk):null,ph=phRule(phKey(r.urls[ii]));
     $('#lb-title').textContent=r.ti||r.id;
     $('#lb-sub').textContent=CLIENT+' '+mktLbl(MKT)+' · '+(r.slots[ii]===0?'main image':'additional image '+r.slots[ii])+(tk?(' · shot code '+(tk==='·'?'(primary)':tk)):'');
     $('#lb-img').src=r.urls[ii];
-    $('#lb-meta').innerHTML='<div class="tagnote" style="margin:0"><div><b>Tagged as:</b> '+esc(rule?taxLabel(rule.tag):'not tagged yet')+'</div>'
+    $('#lb-meta').innerHTML='<div class="tagnote" style="margin:0"><div><b>Tagged as:</b> '
+      +esc(ph?taxLabel(ph.tag):(rule?taxLabel(rule.tag):'not tagged yet'))
+      +(ph?(' <span class="tagby">'+(ph.by==='ai'?'— named on this photograph by the model':'— named on this photograph by hand')+'</span>'):'')+'</div>'
       +'<div style="margin-top:8px"><b>Product ID:</b> '+esc(r.id||'—')+'</div>'
       +'<div style="margin-top:8px;word-break:break-all;font-size:11.5px">'+esc(r.urls[ii])+'</div></div>';
     $('#lb-foot').innerHTML=(r.link?'<a href="'+esc(r.link)+'" target="_blank" rel="noopener">Open the product page ↗</a>':'')
@@ -1142,6 +1498,20 @@ table.est td.feed{min-width:110px}
   $('#scan1').addEventListener('click',function(){ if(CLIENT&&MKT)scanFeed(CLIENT,MKT).then(function(){load();}); });
   $('#aiall').addEventListener('click',function(){ if($('#aiall').textContent.indexOf('Stop')>=0){ ABORT=true; return; } aiTagAll(); });
   $('#taxtgl').addEventListener('click',function(){ TAXEDIT=!TAXEDIT; renderTax(); });
+  $('#ptread').addEventListener('click',function(){
+    if(!CLIENT||!MKT)return;
+    var c=CLIENT,m=MKT; $('#ptread').disabled=true;
+    setState(c+' '+mktLbl(m)+' — streaming the feed to list its photographs…',true);
+    ensureRows(c,m).then(function(){
+      if(c!==CLIENT||m!==MKT)return;
+      PHIDX=null; PHTOK=null; phBuild();
+      var st=phStats();
+      setState(st?(fmt(st.photos)+' distinct photographs across '+fmt(st.slots)+' image slots.'):'Nothing read.');
+      renderPertag();
+    }).catch(function(err){ setState('Could not read the feed: '+((err&&err.message)||err)); })
+      .then(function(){ $('#ptread').disabled=false; });
+  });
+  $('#ptai').addEventListener('click',phRun);
   $('#psgo').addEventListener('click',function(){ PSQ=$('#psq').value; runSearch(); });
   $('#psq').addEventListener('keydown',function(e){ if(e.key==='Enter'){ PSQ=this.value; runSearch(); } });
   $('#lb-x').addEventListener('click',closeLb);
@@ -1149,6 +1519,16 @@ table.est td.feed{min-width:110px}
   document.addEventListener('keydown',function(e){ if(e.key==='Escape')closeLb(); });
 
   document.addEventListener('change',function(e){
+    var ps=e.target.closest&&e.target.closest('select[data-phsel]');
+    if(ps){ var pk=ps.getAttribute('data-phsel'),pv=ps.value;
+      var slots=(PHIDX&&PHIDX.map[pk])?PHIDX.map[pk].n:1;
+      if(!pv){ savePhotos(null,[pk]); setState('Tag removed from that photograph.'); renderPertag(); return; }
+      var pp={}; pp[pk]={tag:pv,by:'manual',t:Date.now()};
+      // a hand tag always wins, and it covers every slot the photograph fills
+      savePhotos(pp); setState('Photograph → '+taxLabel(pv)+(slots>1?(' — '+slots+' image slots named'):''));
+      renderPertag(); return; }
+    if(e.target.id==='ptgrp'){ PHGRP=e.target.value; PHSHOW=PH_PAGE; renderPertag(); return; }
+    if(e.target.id==='ptfil'){ PHFIL=e.target.value; PHSHOW=PH_PAGE; renderPertag(); return; }
     var ts=e.target.closest&&e.target.closest('select[data-tagsel]');
     if(ts){ var tok=ts.getAttribute('data-tagsel'),v=ts.value;
       if(!v){ saveTags({tok:{}},{tok:[tok]}); return; }
@@ -1186,6 +1566,9 @@ table.est td.feed{min-width:110px}
     if(ab){ aiTag(ab.getAttribute('data-ai')); return; }
     var wb=e.target.closest&&e.target.closest('button[data-wide]');
     if(wb){ var wk=wb.getAttribute('data-wide'); WIDE[wk]=!WIDE[wk]; render(); return; }
+    if(e.target.id==='ptmore'){ PHSHOW+=PH_PAGE; renderPertag(); return; }
+    var pg=e.target.closest&&e.target.closest('.strip .g[data-ph]');
+    if(pg&&!(e.target.closest&&e.target.closest('select'))){ openPhLb(pg.getAttribute('data-ph')); return; }
     var g=e.target.closest&&e.target.closest('.strip .g[data-ti]');
     if(g){ openLb(+g.getAttribute('data-ti'),+g.getAttribute('data-si')); return; }
     var hg=e.target.closest&&e.target.closest('.strip .g[data-hit]');
@@ -1205,7 +1588,7 @@ table.est td.feed{min-width:110px}
      named as — and folds the rest; after that the device keeps whatever a person left
      open. A folded head never hides a finding: each one carries the line its own
      renderer writes (fsum), so a mixed code or an unnamed field is still on screen. */
-  var FOLD_KEY='fcc-img-fold', FOLD_OPEN={detail:1,types:1,tyest:0,estate:0,findp:0,taxcard:0,meth:0}, FOLD={};
+  var FOLD_KEY='fcc-img-fold', FOLD_OPEN={detail:1,types:1,pertag:0,tyest:0,estate:0,findp:0,taxcard:0,meth:0}, FOLD={};
   try{ FOLD=JSON.parse(localStorage.getItem(FOLD_KEY)||'{}')||{}; }catch(e){ FOLD={}; }
   function foldCards(){ return Array.prototype.slice.call(document.querySelectorAll('main .card')).filter(function(c){ return !!c.querySelector(':scope > .fhd .fold'); }); }
   function foldIs(c){ return Object.prototype.hasOwnProperty.call(FOLD,c.id)?!!FOLD[c.id]:!!FOLD_OPEN[c.id]; }
@@ -1250,6 +1633,9 @@ table.est td.feed{min-width:110px}
   fsum('findp','search by product ID or title');
   loadEstate(false);
   window.__imgPage={ get state(){ return {FEEDS:FEEDS,CLIENT:CLIENT,MKT:MKT,DATA:DATA,TAGS:TAGS}; }, render:render, load:load, loadEstate:loadEstate, aiTag:aiTag, auditRun:auditRun,
+    phRun:phRun, phMap:phMap, renderPertag:renderPertag,
+    get photos(){ return {PHOTOS:PHOTOS,PHGRP:PHGRP,PHFIL:PHFIL,read:!!phRows(),stats:phStats(),spend:PHSPEND,
+      keys:PHIDX?PHIDX.keys.slice():null,groups:(TYE()&&phRows())?TYE().groupRows(phRows(),PHGRP,PHTOK||{}).map(function(g){return {key:g.key,n:g.photos.length};}):null}; },
     get types(){ var T=TY(),c=capOf(); return T&&c?{head:T.clientReport(c,TAGS,AUDIT||{}),fields:T.fieldReport(c,TAGS,AUDIT||{}),plan:T.namingPlan(c,TAGS,AUDIT||{}),grade:T.gradeLanes(c,TAGS)}:null; } };
 })();
 </script>
