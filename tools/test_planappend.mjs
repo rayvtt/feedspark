@@ -134,7 +134,8 @@ ok(/<span id="plan-note">/.test(liftFrom(P, 'renderIntake', 'FeedSpark_Workflow.
   'Intake\'s head line carries the slot the note is written into');
 ok(/function bfWarn\(on\)\{ _bfWarn=!!on; if\(typeof renderBpTog==='function'\)renderBpTog\(\); \}/.test(P),
   'an unsaved brief is a flag the pipeline\'s head line reads, not a band');
-ok(/_bfWarn\?\(' \\u00b7 '\+wsWarn\('not saved to the pipeline yet'\)\)/.test(liftFrom(P, 'renderBpTog', 'FeedSpark_Workflow.html')),
+// the Brief pipeline section left the page (Ray, 11 Nov 2026) — renderBpTog hands over to the LEDGER's line
+ok(/_bfWarn\?\(' \\u00b7 '\+wsWarn\('not saved to the pipeline yet'\)\)/.test(liftFrom(P, 'blLine', 'FeedSpark_Workflow.html')),
   'and that line says so while the save is still out');
 const adopt = liftFrom(P, 'adoptIntoPlan', 'FeedSpark_Workflow.html');
 ok(/planWriteFailed\(client,ae\)/.test(adopt), 'a refused append raises it, against the client it was for');
