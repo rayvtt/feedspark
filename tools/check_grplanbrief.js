@@ -16,6 +16,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const req = createRequire(path.join(process.env.NODE_PATH || '/usr/lib/node_modules', 'x'));
+const { settle, served, repainted, dialogs, instrumentSrc, bridge, bridgeSrc } = require('./lib/pwsettle.js');
 let chromium;
 try { ({ chromium } = req('playwright')); } catch (e) { console.log('· playwright unavailable — skipped'); process.exit(0); }
 
@@ -65,17 +66,25 @@ const QUALITY = {
   const ctx = await browser.newContext({ viewport: { width: 1360, height: 950 } });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errs.push(e.message));
+  const DLG = dialogs(page);   // ONE handler, a queue of replies — a stale `once` is what crashed check_grtext
   let landed = null;
   await page.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
   await page.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
   await ctx.route((u) => /\/workflow\?brief=/.test(String(u)), (r) => { landed = r.request().url(); r.fulfill({ body: '<html><body>workflow</body></html>', contentType: 'text/html' }); });
+  // THE FIXTURE LIVES IN NODE, not in file:// web storage, which Chromium drops at random
+  // (tools/lib/pwsettle.js records the measurement). Seeding is now a local assignment.
+  const FX = await bridge(ctx, { grplan: {}, briefs: {} });
+  await ctx.addInitScript(bridgeSrc());
+  // counts the two reads and every write of #det-panel, so a wait can be about the board
+  // having been re-rendered WITH the data rather than about the clock
+  await page.addInitScript(instrumentSrc('det-panel'));
   await page.addInitScript(({ ATTRS, QUALITY, COV }) => {
     if (location.protocol !== 'file:') return;
     const NOW = Date.now(), cov = {}, attrs = {};
     ATTRS.forEach((k) => { const c = k in COV ? COV[k] : 100; cov[k] = c; attrs[k] = c == null ? { present: false } : { present: true, filled: c * 10, cov: c }; });
     const feeds = { 'Reiss|gb': { client: 'Reiss', mkt: 'gb', status: 'ok', t: NOW, rows: 1000, score: 80, ai: { n: 0, of: 6 }, cov, reqMissing: [] } };
-    window.__store = JSON.parse(localStorage.getItem('__store') || '{}');
-    window.__briefs = JSON.parse(localStorage.getItem('__briefs') || '{}');
+    const count = (k) => window.__count(k);
+    const fx = () => window.__fxReady;          // the fixture, held in Node
     const real = window.fetch.bind(window);
     window.fetch = (url, opts) => {
       const u = String(url), j = (o) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(o) });
@@ -84,15 +93,30 @@ const QUALITY = {
       if (u.includes('/api/golden/quality')) return j({ quality: QUALITY });
       if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
       if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
-      if (u.includes('/api/briefs')) return j(JSON.parse(JSON.stringify(window.__briefs)));
-      if (u.includes('/api/state?ns=grplan')) return j({ grplan: JSON.parse(JSON.stringify(window.__store)) });
+      // the two reads the action-plan board re-renders on, counted so a wait can be about
+      // THEM rather than about the clock (tools/lib/pwsettle.js)
+      if (u.includes('/api/briefs')) return fx().then((f) => { count('briefs'); return j(JSON.parse(JSON.stringify(f.briefs || {}))); });
+      if (u.includes('/api/state?ns=grplan')) return fx().then((f) => { count('plan'); return j({ grplan: JSON.parse(JSON.stringify(f.grplan || {})) }); });
       if (u.endsWith('/api/state') && opts && opts.method === 'PUT') {
-        const b = JSON.parse(opts.body); if (b.grplan) { window.__store = b.grplan; localStorage.setItem('__store', JSON.stringify(b.grplan)); return j({ grplan: b.grplan }); }
+        const b = JSON.parse(opts.body);
+        // the save goes back to NODE, so it is still there after the next reload
+        if (b.grplan) return window.__fxSave('grplan', b.grplan).then(() => j({ grplan: b.grplan }));
       }
       return j({});
     };
   }, { ATTRS, QUALITY, COV });
-  const open = async () => { await page.goto('about:blank'); await page.goto(PAGE); await page.waitForSelector('#ap-tier', { timeout: 15000 }); await page.waitForTimeout(800); };
+  /* THE BOARD IS READ WHEN IT HAS STOPPED CHANGING, not after a guessed 800ms. planSection
+   * kicks off /api/briefs and /api/state?ns=grplan on its first render and re-renders as
+   * each lands, so the old sleep was a bet on the machine: on a loaded one the read arrived
+   * after the assertion and every card still read "→ Brief in Workflow". */
+  const open = async () => {
+    await page.goto('about:blank'); await page.goto(PAGE);
+    await page.waitForSelector('#ap-tier', { timeout: 15000 });
+    await served(page, 'briefs', 'plan');
+    await repainted(page);              // the panel was written again AFTER the last read
+    await settle(page, '#det-panel');   // ...and has stopped changing
+  };
+  const quiet = () => settle(page, '#det-panel', { quiet: 120 });
   const read = () => page.evaluate(() => {
     const t = document.getElementById('ap-tier');
     return { cards: Array.from(t.querySelectorAll('.ap-tk[data-apid]')).map((c) => ({ id: c.getAttribute('data-apid'), t: (c.querySelector('.ap-t') || {}).innerText || '',
@@ -100,8 +124,8 @@ const QUALITY = {
       line: ((t.querySelector('.ap-wfl') || {}).innerText || '').replace(/\s+/g, ' '),
       closed: Array.from(t.querySelectorAll('.ap-closed .ap-rrow')).map((r) => r.innerText.replace(/\s+/g, ' ')) };
   });
-  const it = () => page.evaluate(() => ((window.__store['Reiss|gb'] || {}).it) || {});
-  const seed = (store, briefs) => page.evaluate(([s, b]) => { localStorage.setItem('__store', JSON.stringify(s)); localStorage.setItem('__briefs', JSON.stringify(b)); localStorage.removeItem('gr-plan-b'); }, [store, briefs]);
+  const it = () => (((FX.get().grplan || {})['Reiss|gb'] || {}).it) || {};
+  const seed = async (store, briefs) => { FX.set({ grplan: store, briefs }); await page.evaluate(() => { try { localStorage.removeItem('gr-plan-b'); } catch (e) {} }); };
 
   await page.goto(PAGE); await seed({}, {});
   await open();
@@ -116,7 +140,7 @@ const QUALITY = {
   const auditUrl = page.url();
   const [tab] = await Promise.all([ctx.waitForEvent('page', { timeout: 8000 }).catch(() => null), page.click('#ap-tier .ap-tk[data-apid="' + first.id + '"] [data-apbr]')]);
   if (tab) await tab.waitForLoadState().catch(() => {});
-  await page.waitForTimeout(300);
+  await quiet();
   ok('→ Brief opens Workflow in a NEW tab', !!tab && /\/workflow\?brief=/.test(tab.url()), tab && tab.url());
   ok('…and leaves the audit tab where it was', page.url() === auditUrl, page.url());
   ok('it opens the Workflow composer through /workflow?brief=', !!landed, landed);
@@ -127,7 +151,7 @@ const QUALITY = {
   try { const b = new URL(landed).searchParams.get('brief').replace(/-/g, '+').replace(/_/g, '/'); pay = JSON.parse(Buffer.from(b, 'base64').toString('utf8')); } catch (e) {}
   ok('…the brief names the client, the plan task family, and carries the task\'s own key', pay && pay.client === 'Reiss' && /^Golden Record Plan - .+ - Reiss GB - \d{4}$/.test(pay.task) && pay.gp === 'Reiss|gb|' + first.id, pay);
   ok('…its scope says what to do, why, and where it came from', pay && /^Action: /.test(pay.scope) && /Source: Golden Record action plan/.test(pay.scope), pay && pay.scope);
-  const stored = JSON.parse(await page.evaluate(() => localStorage.getItem('__store')) || '{}');
+  const stored = JSON.parse(JSON.stringify(FX.get().grplan || {}));
   const br = ((stored['Reiss|gb'] || {}).it || {})[first.id];
   ok('…and the briefing was saved to the team plan', br && br.br && br.br.task === (pay && pay.task), br);
 
@@ -172,9 +196,9 @@ const QUALITY = {
   ok('…and the board line counts it', /1 closed since briefed/.test(r.line), r.line);
 
   console.log('-- ↺ Back to the audit\'s plan keeps the briefing record');
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();          // ↺ asks before it drops the market's edits
   await page.click('#ap-reset');
-  await page.waitForTimeout(250);
+  await quiet();
   const kept = await it();
   ok('the briefed tasks keep their stamp; nothing else stays', Object.keys(kept).every((id) => Object.keys(kept[id]).join() === 'br') && kept[first.id] && kept['a:size_type'], kept);
 
@@ -190,14 +214,14 @@ const QUALITY = {
   const ownOf = () => page.evaluate(() => { const o = {}; document.querySelectorAll('#ap-tier .ap-tk[data-apid]').forEach((c) => { o[c.getAttribute('data-apid')] = ((c.querySelector('.ap-own') || {}).innerText || '').trim(); }); return o; });
   const isBtn = await page.evaluate(() => { const b = document.querySelector('#ap-tier .ap-tk[data-apid="a:material"] .ap-own'); return b && b.tagName; });
   ok('on the board the pill is a button', isBtn === 'BUTTON', isBtn);
-  await page.click('#ap-tier .ap-tk[data-apid="a:material"] [data-apown]'); await page.waitForTimeout(200);
+  await page.click('#ap-tier .ap-tk[data-apid="a:material"] [data-apown]'); await quiet();
   let ow = await ownOf(); let sv = (await it())['a:material'] || {};
   ok('one click turns a SparkAI task into FeedSpark, saved for the team', ow['a:material'] === 'FeedSpark' && sv.own === 'fs', { ow: ow['a:material'], sv });
-  await page.click('#ap-tier .ap-tk[data-apid="a:material"] [data-apown]'); await page.waitForTimeout(200);
+  await page.click('#ap-tier .ap-tk[data-apid="a:material"] [data-apown]'); await quiet();
   ow = await ownOf(); sv = (await it())['a:material'] || {};
   ok('a second click puts the audit\'s own SparkAI back, storing no edit', /SparkAI/.test(ow['a:material']) && sv.own === undefined, { ow: ow['a:material'], sv });
   const fsId = Object.keys(ow).find((id) => ow[id] === 'FeedSpark');
-  if (fsId) { await page.click('#ap-tier .ap-tk[data-apid="' + fsId + '"] [data-apown]'); await page.waitForTimeout(200); ow = await ownOf(); }
+  if (fsId) { await page.click('#ap-tier .ap-tk[data-apid="' + fsId + '"] [data-apown]'); await quiet(); ow = await ownOf(); }
   ok('a FeedSpark task can be made ✦ SparkAI', fsId && /SparkAI/.test(ow[fsId]) && ((await it())[fsId] || {}).own === 'sp', { fsId, now: fsId && ow[fsId] });
   ok('the client\'s own task offers no swap', await page.evaluate(() => !document.querySelector('#ap-tier .ap-tk[data-apid="a:gtin"] [data-apown]')));
   await page.click('#ap-tier .ap-tk[data-apid="a:gtin"] [data-aped]');
@@ -214,6 +238,11 @@ const QUALITY = {
   const dm = await page.evaluate(() => { document.body.classList.add('demo'); const w = document.querySelector('#ap-tier .ap-wf'); const v = w && getComputedStyle(w).display; document.body.classList.remove('demo'); return v; });
   ok('demo mode hides the Workflow chips on a screen share', dm === 'none', dm);
 
+  // a reply queued for a prompt that never opened means a click did not do what this
+  // harness thinks it does — a real finding, and the thing that used to surface as
+  // "dialog.accept: Cannot accept dialog which is already handled" in a later block
+  ok('every dialog this run expected actually opened', DLG.pending() === 0, DLG.pending());
+  ok('and no prompt appeared that nobody planned for', DLG.unexpected().length === 0, DLG.unexpected());
   ok('no page errors', errs.length === 0, errs);
   await browser.close();
   console.log(fail ? '\n✗ ' + fail + ' check(s) failed' : '\n✓ Golden action plan → Workflow: briefed through the composer, stamped, and read back on the next audit');

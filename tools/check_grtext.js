@@ -15,6 +15,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const req = createRequire(path.join(process.env.NODE_PATH || '/usr/lib/node_modules', 'x'));
+const { settle, served, repainted, dialogs, instrumentSrc, bridge, bridgeSrc } = require('./lib/pwsettle.js');
 let chromium;
 try { ({ chromium } = req('playwright')); } catch (e) { console.log('· playwright unavailable — skipped'); process.exit(0); }
 
@@ -49,8 +50,14 @@ const QUALITY = {
   const errs = [];
   const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
   page.on('pageerror', (e) => errs.push(e.message));
+  const DLG = dialogs(page);   // a `once` that never fires stays registered; this cannot
   await page.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
   await page.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
+  // both stores live in NODE: this harness reloads six times, and file:// web storage —
+  // which it used to read them back through — is dropped at random by Chromium
+  const FX = await bridge(page.context(), { grtext: {}, grtextall: {} });
+  await page.context().addInitScript(bridgeSrc());
+  await page.addInitScript(instrumentSrc('det-panel'));
   await page.addInitScript(({ ATTRS, QUALITY, COV }) => {
     const NOW = Date.now(), cov = {}, attrs = {};
     ATTRS.forEach((k) => {
@@ -63,8 +70,8 @@ const QUALITY = {
       'Superdry|gb': { client: 'Superdry', mkt: 'gb', status: 'ok', t: NOW, rows: 900, score: 97, ai: { n: 0, of: 6 }, cov: peerCov, reqMissing: [] },
       'Monsoon|gb': { client: 'Monsoon', mkt: 'gb', status: 'ok', t: NOW, rows: 800, score: 85, ai: { n: 0, of: 6 }, cov: peerCov, reqMissing: [] },
     };
-    window.__store = JSON.parse(sessionStorage.getItem('__tstore') || '{}'); window.__puts = [];
-    window.__tpl = JSON.parse(sessionStorage.getItem('__tplstore') || '{}');
+    window.__store = (window.__fx && window.__fx.grtext) || {}; window.__puts = [];
+    window.__tpl = (window.__fx && window.__fx.grtextall) || {};
     const real = window.fetch.bind(window);
     window.fetch = (url, opts) => {
       const u = String(url), j = (o) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(o) });
@@ -73,19 +80,40 @@ const QUALITY = {
       if (u.includes('/api/golden/quality')) return j({ quality: QUALITY });
       if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
       if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
-      if (u.includes('/api/state?ns=grtextall')) return j({ grtextall: JSON.parse(JSON.stringify(window.__tpl)) });
-      if (u.includes('/api/state?ns=grtext')) { window.__gets = (window.__gets || 0) + 1; return j({ grtext: JSON.parse(JSON.stringify(window.__store)) }); }
+      if (u.includes('/api/state?ns=grtextall')) return window.__fxReady.then((fx) => {
+        window.__tpl = fx.grtextall || {}; window.__count('tpl');
+        return j({ grtextall: JSON.parse(JSON.stringify(window.__tpl)) }); });
+      if (u.includes('/api/state?ns=grtext')) return window.__fxReady.then((fx) => {
+        window.__gets = (window.__gets || 0) + 1; window.__count('text');
+        window.__store = fx.grtext || {};        // held in NODE, so every reload keeps it
+        return j({ grtext: JSON.parse(JSON.stringify(window.__store)) }); });
       if (u.endsWith('/api/state') && opts && opts.method === 'PUT') {
         const b = JSON.parse(opts.body);
-        if (b.grtextall) { window.__tpl = b.grtextall; sessionStorage.setItem('__tplstore', JSON.stringify(b.grtextall)); return j({ grtextall: b.grtextall }); }
-        if (b.grtext) { window.__store = b.grtext; window.__puts.push(b.grtext); sessionStorage.setItem('__tstore', JSON.stringify(b.grtext)); return j({ grtext: b.grtext }); }
+        if (b.grtextall) { window.__tpl = b.grtextall; window.__count('put');
+          return window.__fxSave('grtextall', b.grtextall).then(() => j({ grtextall: b.grtextall })); }
+        if (b.grtext) { window.__store = b.grtext; window.__puts.push(b.grtext); window.__count('put');
+          return window.__fxSave('grtext', b.grtext).then(() => j({ grtext: b.grtext })); }
       }
       return j({});
     };
   }, { ATTRS, QUALITY, COV });
+  /* THE REPORT IS READ WHEN IT HAS STOPPED CHANGING, never after a guessed sleep: the
+   * scorecard kicks off its own reads on the first render and re-renders as each lands. */
+  const loaded = async () => {
+    await page.waitForSelector('#det-edit', { timeout: 15000 });
+    await served(page, 'text'); await repainted(page); await settle(page, '#det-panel');
+  };
+  /* and the EDITOR is read when IT has stopped changing. It lives in an iframe, so the
+   * panel settling says nothing about it: settle both, the frame only while it is open. */
+  const quietEd = async () => {
+    await settle(page, '#det-panel', { quiet: 120 });
+    const h = await page.$('#rped-f');
+    if (!h) return;
+    const fr = await h.contentFrame();
+    if (fr) await settle(fr, 'body', { quiet: 120 });
+  };
   await page.goto(PAGE);
-  await page.waitForSelector('#det-edit', { timeout: 15000 });
-  await page.waitForTimeout(700);
+  await loaded();
   const store = () => page.evaluate(() => ((window.__store['Reiss|gb'] || {}).e) || []);
   const frame = async () => { const h = await page.waitForSelector('#rped-f'); return h.contentFrame(); };
   const openEd = async () => {
@@ -93,15 +121,25 @@ const QUALITY = {
     await page.waitForSelector('#rped-f', { timeout: 15000 });
     const f = await frame();
     await f.waitForSelector('[data-ek]', { timeout: 15000, state: 'attached' });
-    await page.waitForTimeout(200);
+    await quietEd();
     return f;
   };
   // type into a unit the way a person does: focus, select its text, type
-  const typeInto = async (f, sel, text) => {
+  const putN = () => page.evaluate(() => (window.__served && window.__served.put) || 0);
+  const afterPut = async (prev, what) => {
+    try { await page.waitForFunction((n) => ((window.__served && window.__served.put) || 0) > n, prev, { timeout: 20000 }); return true; }
+    catch (e) { ok('the edit reached the team store' + (what ? ' (' + what + ')' : ''), false, 'no PUT within 20s'); return false; }
+  };
+  /* type the way a person does — focus, select the unit's text, type — then wait for the
+     editor's own debounced save to have REACHED the store, never for a duration */
+  const typeInto = async (f, sel, text, expectSave) => {
+    const prev = await putN();
     const el = await f.$(sel);
     await el.click();
     await f.evaluate((s) => { const e = document.querySelector(s); const r = document.createRange(); r.selectNodeContents(e); const g = getSelection(); g.removeAllRanges(); g.addRange(r); }, sel);
     await page.keyboard.type(text);
+    if (expectSave !== false) await afterPut(prev, sel);
+    await quietEd();
   };
 
   console.log('-- the editor');
@@ -137,7 +175,7 @@ const QUALITY = {
   await f.evaluate(() => { document.querySelector('#print-plan h3').setAttribute('data-t', '1'); document.querySelector('#print-plan .ap-t').setAttribute('data-t', '2'); });
   await typeInto(f, '[data-t="1"]', 'Your plan for the next quarter');
   await typeInto(f, '[data-t="2"]', 'Send GTINs for the spring range first');
-  await page.waitForTimeout(1300);
+  await quietEd();
   let ed = await store();
   ok('both edits reach the team store under Reiss|gb, each saying what it replaced', ed.length === 2 && ed.some((x) => x.o === st0.plan.trim() && x.t === 'Your plan for the next quarter') && ed.some((x) => x.o === st0.task.trim() && x.t === 'Send GTINs for the spring range first'), ed);
   const msg = await page.textContent('#rped-msg');
@@ -146,16 +184,20 @@ const QUALITY = {
   ok('the edited lines are marked in the editor', marked === 2, marked);
 
   if (st0.svg) {
-    page.once('dialog', (d) => d.accept('88'));
+    let pv = await putN();
+    DLG.expect('88');
     await f.click('text[data-ek]');
-    await page.waitForTimeout(1200);
+    await afterPut(pv, 'a word in a chart');   // the chart edit saves on the same debounce
+    await quietEd();
     const sv = await store();
     ok('a word inside a chart is edited on click and saved like any other', sv.some((x) => x.t === '88'), sv.map((x) => x.t));
     // and put back to the audit's word the same way, which drops the edit
     const orig = sv.find((x) => x.t === '88');
-    page.once('dialog', (d) => d.accept(orig ? orig.o : ''));
+    pv = await putN();
+    DLG.expect(orig ? orig.o : '');
     await f.click('text[data-ek].ek-on');
-    await page.waitForTimeout(1200);
+    await afterPut(pv, 'the audit\'s word typed back');
+    await quietEd();
     const sv2 = await store();
     ok('…and typing the original back drops the edit', !sv2.some((x) => x.t === '88') && sv2.length === 2, sv2.map((x) => x.t));
   }
@@ -187,10 +229,17 @@ const QUALITY = {
   ok('the PDF reads the edited heading and task', cap.includes('Your plan for the next quarter') && cap.includes('Send GTINs for the spring range first'));
 
   console.log('-- a reload keeps it; a stale edit is named');
-  await page.evaluate(() => { const m = window.__store; m['Reiss|gb'].e.push({ o: 'A sentence the audit no longer writes', n: 0, t: 'x' }); sessionStorage.setItem('__tstore', JSON.stringify(m)); localStorage.removeItem('gr-text-b'); });
+  // plant a stored edit the audit no longer writes, in NODE so the reload below reads it
+  {
+    const m = JSON.parse(JSON.stringify(FX.get().grtext || {}));
+    (m['Reiss|gb'] = m['Reiss|gb'] || { e: [] }).e.push({ o: 'A sentence the audit no longer writes', n: 0, t: 'x' });
+    FX.patch('grtext', m);
+  }
+  await page.evaluate(() => { try { localStorage.removeItem('gr-text-b'); } catch (e) {} });
   await page.reload();
+  await loaded();
   await page.waitForSelector('#det-edit', { timeout: 15000 });
-  await page.waitForTimeout(700);
+  await quietEd();
   f = await openEd();
   const st1 = await f.evaluate(() => ({ plan: document.querySelector('#print-plan h3').textContent, on: document.querySelectorAll('.ek-on').length }));
   const msg1 = await page.textContent('#rped-msg');
@@ -206,9 +255,9 @@ const QUALITY = {
 
   console.log('-- ↺ back to the audit');
   f = await openEd();
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();
   await page.click('#rped-reset');
-  await page.waitForTimeout(600);
+  await quietEd();
   f = await frame();
   await f.waitForSelector('[data-ek]', { timeout: 15000, state: 'attached' });
   const st2 = await f.evaluate(() => ({ plan: document.querySelector('#print-plan h3').textContent, on: document.querySelectorAll('.ek-on').length }));
@@ -234,7 +283,7 @@ const QUALITY = {
   const help = await page.textContent('#rped-help');
   ok('the scope switch puts the editor in template mode and says what that means', /every brand/i.test(help) && (await page.getAttribute('#rped-all', 'aria-pressed')) === 'true', help);
   await typeInto(f, '#print-plan .pm-sub', 'Our plan for you, month by month');
-  await page.waitForTimeout(1300);
+  await quietEd();
   let tp = await page.evaluate(() => Object.values(window.__tpl));
   ok('a template edit reaches the house-wide store, saying what it replaces', tp.length === 1 && tp[0].o === lead0 && tp[0].t === 'Our plan for you, month by month', tp);
   ok('…and nothing lands in this report\'s own edits', !(await store()).length);
@@ -243,7 +292,7 @@ const QUALITY = {
   await page.click('#rped-one');
   await f.evaluate(() => document.querySelector('#print-plan h3').setAttribute('data-t', '3'));
   await typeInto(f, '[data-t="3"]', 'Reiss only heading');
-  await page.waitForTimeout(1300);
+  await quietEd();
   ed = await store();
   ok('in "This report" mode the edit stays with Reiss GB', ed.length === 1 && ed[0].t === 'Reiss only heading', ed);
   await page.click('#rped-x');
@@ -253,8 +302,9 @@ const QUALITY = {
   await page.evaluate(() => { localStorage.removeItem('gr-textall-b'); localStorage.removeItem('gr-text-b'); });
   await page.goto(PAGE.replace('Reiss%7Cgb', 'Superdry%7Cgb'));
   await page.reload();
+  await loaded();
   await page.waitForSelector('#det-edit', { timeout: 15000 });
-  await page.waitForTimeout(700);
+  await quietEd();
   html = await grabHtml();
   ok('Superdry\'s ⬇ HTML reads the template line too', html.includes('Our plan for you, month by month') && !html.includes(lead0), null);
   ok('…and never Reiss\'s own edit', !html.includes('Reiss only heading'));
@@ -270,9 +320,9 @@ const QUALITY = {
   f = await openEd();
   const sd = await f.evaluate(() => ({ lead: document.querySelector('#print-plan .pm-sub').textContent, blue: document.querySelectorAll('.ek-tpl').length }));
   ok('the Superdry editor shows the template line, marked as the template\'s', sd.lead === 'Our plan for you, month by month' && sd.blue >= 1, sd);
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();
   await page.click('#rped-treset');
-  await page.waitForTimeout(700);
+  await quietEd();
   tp = await page.evaluate(() => Object.keys(window.__tpl));
   ok('↺ Reset template empties the house-wide store', tp.length === 0, tp);
   await page.click('#rped-x');
@@ -280,8 +330,8 @@ const QUALITY = {
   console.log('-- a template made from one brand\'s edits never carries that brand, a figure or a lone word (Ray, 15 Oct 2026)');
   const goBrand = async (b) => {
     await page.evaluate(() => { localStorage.removeItem('gr-textall-b'); localStorage.removeItem('gr-text-b'); });
-    await page.goto(PAGE.replace('Reiss%7Cgb', b + '%7Cgb')); await page.reload();
-    await page.waitForSelector('#det-edit', { timeout: 15000 }); await page.waitForTimeout(700);
+    await page.goto(PAGE.replace('Reiss%7Cgb', b + '%7Cgb')); await page.reload(); await loaded();
+    await page.waitForSelector('#det-edit', { timeout: 15000 }); await quietEd();
   };
   const plain = (h) => h.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   await goBrand('Reiss');
@@ -297,7 +347,8 @@ const QUALITY = {
   const OLD = { a1: { o: 'Required', t: 'Monsoon label', at: 1 }, a2: { o: rv.fig, t: '77.7', at: 1 },
     a3: { o: 'Action plan — Monsoon GB', t: 'Monsoon GB — our plan', at: 1 }, a4: { o: rv.lead, t: 'Monsoon wrote this lead', at: 1 },
     a5: { o: 'Golden Record audit · Google Shopping', t: 'Feed health review · Google Shopping', at: 1 } };
-  await page.evaluate((m) => { window.__tpl = m; sessionStorage.setItem('__tplstore', JSON.stringify(m)); }, OLD);
+  FX.patch('grtextall', OLD);
+  await page.evaluate((m) => { window.__tpl = m; }, OLD);
   await goBrand('Reiss');
   html = plain(await grabHtml());
   ok('a stored line naming another brand is never applied (Reiss\'s file names no Monsoon)', !/Monsoon/.test(html), (html.match(/.{30}Monsoon.{30}/) || [])[0]);
@@ -309,9 +360,9 @@ const QUALITY = {
   const tidyOn = await page.evaluate(() => !document.getElementById('rped-tidy').hidden);
   const msgT = await page.textContent('#rped-msg');
   ok('the editor names the lines set aside and offers to tidy them', tidyOn && /4 template lines set aside/.test(msgT), msgT);
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();
   await page.click('#rped-tidy');
-  await page.waitForTimeout(1500);
+  await quietEd();
   tp = await page.evaluate(() => Object.values(window.__tpl).map((x) => x.t));
   let mon = await page.evaluate(() => ((window.__store['Monsoon|gb'] || {}).e || []).map((x) => x.t));
   ok('tidy leaves only the line that serves every brand in the template', tp.length === 1 && tp[0] === 'Feed health review · Google Shopping', tp);
@@ -319,9 +370,9 @@ const QUALITY = {
   console.log('-- promoting now generalises the brand and keeps the rest home');
   f = await frame();
   await f.waitForSelector('[data-ek]', { timeout: 15000, state: 'attached' });
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();
   await page.click('#rped-promote');
-  await page.waitForTimeout(1500);
+  await quietEd();
   tp = await page.evaluate(() => Object.values(window.__tpl));
   mon = await page.evaluate(() => ((window.__store['Monsoon|gb'] || {}).e || []).map((x) => x.t));
   ok('the brand-named heading goes in as {brand} {market}', tp.some((x) => x.o === 'Action plan — {brand} {market}' && x.t === '{brand} {market} — our plan' && x.b === 'Monsoon'), tp);
@@ -330,12 +381,14 @@ const QUALITY = {
   await goBrand('Superdry');
   html = plain(await grabHtml());
   ok('Superdry\'s file reads the heading as its own — "Superdry GB — our plan" — and never Monsoon', html.includes('Superdry GB — our plan') && !/Monsoon/.test(html), (html.match(/.{20}our plan.{10}/) || [])[0]);
-  page.once('dialog', (d) => d.accept());
+  DLG.expect();
   f = await openEd();
   await page.click('#rped-treset');
-  await page.waitForTimeout(700);
+  await quietEd();
   await page.click('#rped-x');
 
+  ok('every dialog this run expected actually opened', DLG.pending() === 0, DLG.pending());
+  ok('and no prompt appeared that nobody planned for', DLG.unexpected().length === 0, DLG.unexpected());
   ok('no page errors', errs.length === 0, errs);
   await browser.close();
   console.log(fail ? '\n✗ ' + fail + ' check(s) failed' : '\n✓ Golden client report: edited in place, saved for the team, carried by ⬇ HTML and ⬇ PDF');
