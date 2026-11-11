@@ -174,9 +174,9 @@ await S.p.waitForTimeout(2500);
 /* Since 15 Oct 2026 this is said on the PIPELINE'S OWN HEAD LINE, not in a fixed band across
  * the board (Ray: "warning like this never linger !") — a folded head still carries it, and it
  * goes the instant the save lands. */
-ok(await S.p.evaluate(() => { const e = document.getElementById('wss-bp');
+ok(await S.p.evaluate(() => { const e = document.getElementById('wss-bl');   // the ledger's line since the pipeline section left (11 Nov 2026)
   return !!e && /not saved to the pipeline yet/i.test(e.textContent || ''); }),
-  'the pipeline\'s head line says it is not saved yet');
+  'the ledger\'s head line says it is not saved yet');
 ok(await S.p.evaluate(() => ![...document.querySelectorAll('body > div')].some(d =>
   getComputedStyle(d).position === 'fixed' && /not saved to the pipeline/i.test(d.textContent || ''))),
   'and nothing is left lying over the board to say it');
