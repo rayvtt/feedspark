@@ -760,6 +760,7 @@ async function route(request, env, ctx) {
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
         '/api/images/scanpush': 'image-scan-live', '/api/images/tags': 'image-tags-save', '/api/images/audit': 'image-code-audit',
+        '/api/images/photos': 'image-photo-tags',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
@@ -2442,6 +2443,41 @@ async function route(request, env, ctx) {
       const merged = Object.assign({}, cur, incoming);
       await env.EDITS.put(K, JSON.stringify(merged));
       return json({ ok: true, client, market: mkt, audit: merged });
+    }
+    // THE PHOTOGRAPH'S OWN TAG (Ray, 11 Nov 2026: "use maybe the easiest model to identify
+    // each different type of image tag … product filter can be grouped based on image URL /
+    // itemgroup id / item id"). Kept in its OWN key, not on imgtags: every page load reads
+    // the tag store for the shot-code lane, and a feed with no code carries thousands of
+    // photograph tags — putting them together would make the cheap read expensive for every
+    // brand. Keyed on the photograph (the URL with its query stripped), so one decision
+    // covers every product and slot that photograph fills, and merged per key so two AMs
+    // tagging different pictures never clobber each other.
+    if (path === '/api/images/photos' && (request.method === 'GET' || request.method === 'PUT')) {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const K = 'imgphotos:' + client;
+      if (request.method === 'GET') {
+        const rec = (await env.EDITS.get(K, 'json')) || null;
+        return json({ ok: true, client, photos: rec });
+      }
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const incoming = sanitizeImagePhotos(body && body.photos);
+      const clear = Array.isArray(body && body.clear) ? body.clear.slice(0, 2000) : [];
+      if (!incoming && !clear.length) return json({ ok: false, error: 'bad photos' }, 400);
+      const cur = (await env.EDITS.get(K, 'json')) || { v: 1, p: {} };
+      const p = Object.assign({}, cur.p || {}, (incoming && incoming.p) || {});
+      clear.forEach((k) => { delete p[String(k)]; });
+      const keys = Object.keys(p);
+      // the cap is a store cap, not a silent trim of what somebody just decided: the
+      // NEWEST decisions are kept, and the answer says how many were dropped
+      let dropped = 0;
+      if (keys.length > IMG_PHOTO_CAP) {
+        keys.sort((a, b) => (+(p[b] && p[b].t) || 0) - (+(p[a] && p[a].t) || 0));
+        keys.slice(IMG_PHOTO_CAP).forEach((k) => { delete p[k]; dropped++; });
+      }
+      const merged = { v: 1, t: Date.now(), n: Object.keys(p).length, p };
+      await env.EDITS.put(K, JSON.stringify(merged));
+      return json({ ok: true, client, photos: merged, dropped: dropped || undefined });
     }
     // the page's ⚡ live scan: the browser streamed /api/feed/proxy through the Feed Lab
     // parser + the image collector (the agent's exact code, served at /images/engine.js)
@@ -5707,6 +5743,29 @@ function sanitizeImageTags(raw) {
     id: str(t && t.id, 40), label: str(t && t.label, 60), hint: str(t && t.hint, 160) })).filter((t) => t.id && t.label) : null;
   return Object.assign({ v: 1, t: Date.now(), tok: map(raw.tok, 400, 60), img: map(raw.img, 2000, 100) },
     tax ? { tax } : {});
+}
+
+/* ---- the PHOTOGRAPH tag store (Ray, 11 Nov 2026) -----------------------------------
+ * One entry per photograph, keyed on its URL with the query stripped (the page's photoKey,
+ * the engine's own reader). Measured on the live Superdry GB feed the day this shipped:
+ * 53,718 image slots are filled by 13,315 distinct photographs, so a tag per slot would be
+ * four decisions where one will do. Same rule shape as a shot-code tag, so the ladder reads
+ * both the same way; the cap is well clear of the biggest feed in the estate. */
+const IMG_PHOTO_CAP = 60000;
+function sanitizeImagePhotos(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const src = raw.p && typeof raw.p === 'object' ? raw.p : raw;
+  const out = {};
+  Object.entries(src).slice(0, 4000).forEach(([k, r]) => {
+    if (!r || typeof r !== 'object' || !r.tag) return;
+    const key = str(k, 300); if (!key) return;
+    out[key] = { tag: str(r.tag, 40), by: str(r.by, 12) || 'manual',
+      t: Math.max(0, Math.round(+r.t || 0)) || Date.now(),
+      note: str(r.note, 300) || undefined,
+      conf: Math.max(0, Math.min(1, +r.conf || 0)) || undefined };
+  });
+  return Object.keys(out).length ? { v: 1, p: out } : null;
 }
 
 /* ---- the shot-code AUDIT store (Ray, 15 Oct 2026: "can I rely on you to identify the

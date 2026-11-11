@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const T = (await import(join(ROOT, 'docs/imagetype_engine.js'))).default;
 
-let pass = 0; const fails = [];
+let pass = 0; const fails = []; let phMapReal = null;
 const ok = (name, cond, extra) => { if (cond) pass++; else fails.push(name + (extra ? ' — ' + extra : '')); };
 const eq = (name, a, b) => ok(name, a === b, 'got ' + JSON.stringify(a) + ', wanted ' + JSON.stringify(b));
 
@@ -255,6 +255,253 @@ const CAP = {
   eq('the feeds with no free grouping are counted', roll.noRoute, 1);
   eq('and so are the ones nobody has scanned', roll.unscanned, 1);
   ok('an unscanned feed never contributes a named image', roll.feeds.find((f) => f.client === 'Harbour').named === 0);
+}
+
+/* ================================================================ the photograph lane
+ * (Ray, 11 Nov 2026: "use maybe the easiest model to identify each different type of image
+ * tag … product filter can be grouped based on image URL / itemgroup id / item id")
+ *
+ * The fixture is the SHAPE the estate's unpatterned feeds really have — five size variants
+ * of two styles, every variant repeating its style's two photographs, one of them served
+ * twice under a different render query — with invented brands and invented filenames. It
+ * pins the three things that could go quietly wrong: the unit (a photograph, not a slot),
+ * the grouping (a view, never the unit), and the batch mapping (a verdict can never land on
+ * the picture beside the one it was about).
+ */
+{
+  const u = (n, q) => 'https://cdn.example/upload' + n + '.jpg' + (q || '');
+  // style A: 3 variants, each carrying the same 2 photographs (the second under a query)
+  // style B: 2 variants, each carrying the same 2 photographs
+  const rows = [
+    { id: 'A-S', ti: 'Everest Jacket S', grp: 'A', urls: [u(1), u(2, '?width=658')], slots: [0, 1] },
+    { id: 'A-M', ti: 'Everest Jacket M', grp: 'A', urls: [u(1), u(2, '?width=900')], slots: [0, 1] },
+    { id: 'A-L', ti: 'Everest Jacket L', grp: 'A', urls: [u(1), u(2)], slots: [0, 1] },
+    { id: 'B-S', ti: 'Harbour Coat S', grp: 'B', urls: [u(3), u(4)], slots: [0, 1] },
+    { id: 'B-M', ti: 'Harbour Coat M', grp: 'B', urls: [u(3), u(4)], slots: [0, 1] },
+  ];
+
+  /* ---- the key: a render query is not a different photograph ---- */
+  eq('the query comes off the key', T.photoKey(u(2, '?width=658')), 'cdn.example/upload2.jpg');
+  eq('so two render sizes of one picture are one photograph', T.photoKey(u(2, '?width=658')), T.photoKey(u(2, '?width=900')));
+  eq('a fragment comes off too', T.photoKey(u(2, '#x')), 'cdn.example/upload2.jpg');
+  eq('the protocol comes off, so http and https are one photograph',
+    T.photoKey('http://cdn.example/upload2.jpg'), T.photoKey('https://cdn.example/upload2.jpg'));
+  eq('an HTML-escaped ampersand is read as the separator it is',
+    T.photoKey('https://cdn.example/u.jpg?a=1&amp;b=2'), 'cdn.example/u.jpg');
+  eq('nothing in, nothing out', T.photoKey(null), '');
+
+  /* ---- the unit: photographs, not slots ---- */
+  const idx = T.photoIndex(rows);
+  eq('ten image slots', idx.slots, 10);
+  eq('but only four distinct photographs', idx.photos, 4);
+  eq('style A’s packshot fills three slots', idx.map['cdn.example/upload1.jpg'].n, 3);
+  eq('and so does its second shot, across three render sizes', idx.map['cdn.example/upload2.jpg'].n, 3);
+  eq('the index keeps which products carry it', idx.map['cdn.example/upload1.jpg'].ids.join(','), 'A-S,A-M,A-L');
+  ok('and which slots it sits in', idx.map['cdn.example/upload2.jpg'].slots['1'] === 1);
+  ok('a photograph keeps one real URL to fetch', /^https:/.test(idx.map['cdn.example/upload2.jpg'].url));
+  eq('an empty read is an empty index, not a crash', T.photoIndex([]).photos, 0);
+  eq('and so is no read at all', T.photoIndex(null).photos, 0);
+
+  /* ---- the ladder, for one photograph ---- */
+  const photos = { 'cdn.example/upload1.jpg': { tag: 'packshot', by: 'ai', t: 1, conf: 0.9 },
+                   'cdn.example/upload3.jpg': { tag: 'model-full', by: 'manual', t: 2 } };
+  eq('a model read of the photograph is the shot lane', T.photoTag('cdn.example/upload1.jpg', { photos }).lane, 'shot');
+  eq('a hand tag on the photograph is decided', T.photoTag('cdn.example/upload3.jpg', { photos }).lane, 'decided');
+  eq('and it is certain, as a decision is', T.photoTag('cdn.example/upload3.jpg', { photos }).conf, 1);
+  eq('a photograph nobody has named says which read would settle it',
+    T.photoTag('cdn.example/upload4.jpg', { photos }).need, 'image');
+  eq('and names no type', T.photoTag('cdn.example/upload4.jpg', { photos }).tag, null);
+  // the code lane still answers underneath: a photograph with no tag of its own inherits
+  // its shot code's verdict exactly as the field report already reads it
+  const viaCode = T.photoTag('cdn.example/upload4.jpg',
+    { photos, tok: 'zm', tags: { tok: { zm: { tag: 'detail', by: 'ai', t: 1 } } }, audits: { zm: { state: 'consistent' } } });
+  eq('a photograph with no tag of its own falls back to its shot code', viaCode.tag, 'detail');
+  eq('and the verdict says so', viaCode.lane, 'named');
+  // and the photograph's own tag BEATS the code's, because it is about this picture
+  const beats = T.photoTag('cdn.example/upload1.jpg',
+    { photos, tok: 'zm', tags: { tok: { zm: { tag: 'detail', by: 'ai', t: 1 } } }, audits: { zm: { state: 'consistent' } } });
+  eq('the photograph’s own reading wins over its code’s', beats.tag, 'packshot');
+
+  /* ---- the report counts decisions, and the slots they cover ---- */
+  const rep = T.photoReport(rows, { photos });
+  eq('two of the four photographs are named', rep.named, 2);
+  eq('which is half the library', rep.pct, 50);
+  eq('but covers five of the ten slots', rep.slotsNamed, 5);
+  eq('two decisions are still to make', rep.left, 2);
+  eq('and the report says what kind of read would make them', rep.need.image, 2);
+  eq('slots per photograph is stated, since both numbers are true of this feed', rep.perPhoto, 2.5);
+  // the report hands back the verdicts it already computed, so a caller drawing the same
+  // photographs reads them rather than resolving every one of them a second and third time
+  eq('the report hands back one verdict per photograph', Object.keys(rep.verdicts).length, 4);
+  eq('and each is the same verdict photoTag gives for that photograph',
+    rep.verdicts['cdn.example/upload1.jpg'].lane, T.photoTag('cdn.example/upload1.jpg', { photos }).lane);
+
+  /* ---- grouping is a view, never the unit ---- */
+  eq('the engine offers exactly the ways Ray named, and no more',
+    T.PHOTO_GROUPINGS.map((g) => g.id).join(','), 'item,group,photo,code');
+  const byPhoto = T.groupRows(rows, 'photo');
+  eq('by image URL: one row per photograph, each decision shown exactly once', byPhoto.length, 4);
+  ok('every row carries one picture', byPhoto.every((g) => g.photos.length === 1));
+  ok('and says what that one decision covers', /3 image slots/.test(byPhoto[0].sub), byPhoto[0].sub);
+  const byItem = T.groupRows(rows, 'item');
+  eq('by item id: one row per product', byItem.length, 5);
+  eq('each carrying its own two images', byItem[0].photos.length, 2);
+  const byGrp = T.groupRows(rows, 'group');
+  eq('by item group: one row per style', byGrp.length, 2);
+  eq('style A lists its two photographs once, not six times', byGrp[0].photos.length, 2);
+  ok('and says how many variants it stands for', /3 variants/.test(byGrp[0].sub));
+  const byCode = T.groupRows(rows, 'code', { 'cdn.example/upload1.jpg': 'zm', 'cdn.example/upload3.jpg': 'zm' });
+  const zm = byCode.find((g) => g.key === 'zm');
+  eq('by shot code: the two photographs carrying that code', zm.photos.length, 2);
+  ok('and the rest are named as having none, never dropped', byCode.some((g) => g.key === '(no shot code)'));
+  eq('every grouping is over the same photographs', [
+    new Set(byItem.flatMap((g) => g.photos.map((p) => p.key))).size,
+    new Set(byGrp.flatMap((g) => g.photos.map((p) => p.key))).size,
+    new Set(byPhoto.flatMap((g) => g.photos.map((p) => p.key))).size,
+    new Set(byCode.flatMap((g) => g.photos.map((p) => p.key))).size,
+  ].join(','), '4,4,4,4');
+  ok('a style with no item group is named, not filed under a blank',
+    T.groupRows([{ id: 'X', urls: [u(9)], slots: [0] }], 'group')[0].key === '(no item group)');
+
+  /* ---- what a run costs: stated before it spends, and in the cheap model ---- */
+  const e = T.runEstimate(1000, { batch: 10 });
+  eq('a thousand photographs in batches of ten is a hundred calls', e.calls, 100);
+  eq('on the cheapest model that can see', e.model, 'claude-haiku-5-5');
+  ok('which is pennies, not tens of dollars', e.usd < 0.2, 'got $' + e.usd);
+  ok('while the heavy model is two orders dearer',
+    T.runEstimate(1000, { batch: 1, model: 'claude-opus-5' }).usd > e.usd * 50);
+  ok('batching is what makes the clock bearable',
+    T.runEstimate(1000, { batch: 1 }).minutes > e.minutes * 8);
+  eq('the clock comes from the worker’s own throttle, not a guess', T.CALL_LIMIT, 120);
+  eq('over its own window', T.CALL_WINDOW_MIN, 10);
+  ok('the real spend is read off an answer’s own token counts, never the estimate',
+    Math.abs(T.runCost({ input_tokens: 1e6, output_tokens: 1e6 }, 'claude-haiku-5-5') - 0.6) < 1e-9);
+  eq('an answer with no usage costs nothing it cannot prove', T.runCost(null, 'claude-haiku-5-5'), 0);
+}
+
+/* ======================================= the batch mapping, LIFTED FROM THE PAGE
+ * The one thing about a batched read that can go wrong without anyone seeing it: ten
+ * pictures ride one call, and a verdict that lands one tile across is a confidently wrong
+ * label. phMap lives in docs/FeedSpark_Images.html between PHMAP markers and is lifted by
+ * name here, so the page's own code is what is tested rather than a copy of it. */
+{
+  const page = readFileSync(join(ROOT, 'docs/FeedSpark_Images.html'), 'utf8');
+  const m = /\/\* PHMAP:START[\s\S]*?\n(  function phMap\([\s\S]*?\n  \})\n/.exec(page);
+  ok('phMap is liftable from the page', !!m);
+  const phMap = m ? new Function(m[1] + '; return phMap;')() : null;
+  phMapReal = phMap;
+
+  const tax = [{ id: 'packshot' }, { id: 'model-full' }, { id: 'detail' }];
+  const batch = [1, 2, 3, 4].map((n) => ({ key: 'k' + n, url: 'https://cdn.example/' + n + '.jpg' }));
+  const say = (o) => JSON.stringify(o);
+
+  if (phMap) {
+    /* ---- the straightforward answer ---- */
+    const a = phMap(batch, say({ tags: [{ i: 1, tag: 'packshot', conf: 0.9 }, { i: 2, tag: 'model-full', conf: 0.8 },
+      { i: 3, tag: 'detail' }, { i: 4, tag: 'packshot' }] }), tax);
+    eq('four verdicts name four pictures', a.named, 4);
+    eq('and none is left over', a.missed, 0);
+    eq('verdict 2 lands on picture 2', a.patch.k2.tag, 'model-full');
+    eq('and carries the model as its lane', a.patch.k2.by, 'ai');
+    eq('with the confidence it gave', a.patch.k1.conf, 0.9);
+
+    /* ---- THE RULE: an unnamed picture never inherits its neighbour's tag ---- */
+    const b = phMap(batch, say({ tags: [{ i: 1, tag: 'packshot' }, { i: 4, tag: 'detail' }] }), tax);
+    eq('two verdicts name two pictures', b.named, 2);
+    eq('and the two the model skipped are reported as skipped', b.missed, 2);
+    eq('picture 1 is named', b.patch.k1.tag, 'packshot');
+    ok('picture 2 is NOT named', b.patch.k2 === undefined);
+    ok('picture 3 is NOT named', b.patch.k3 === undefined);
+    eq('picture 4 is named, from its own number and not its position in the answer', b.patch.k4.tag, 'detail');
+
+    /* ---- a verdict out of range, a repeat, and a word off the list ---- */
+    const c = phMap(batch, say({ tags: [{ i: 9, tag: 'detail' }, { i: 0, tag: 'detail' }, { i: 2, tag: 'packshot' }] }), tax);
+    eq('a verdict about a picture not in the batch is dropped', c.named, 1);
+    ok('and lands on nothing', c.patch.k9 === undefined && c.patch.k1 === undefined);
+    eq('the one real verdict still lands', c.patch.k2.tag, 'packshot');
+    const d = phMap(batch, say({ tags: [{ i: 1, tag: 'packshot' }, { i: 1, tag: 'detail' }] }), tax);
+    eq('a repeated number keeps the first answer', d.patch.k1.tag, 'packshot');
+    eq('and counts once', d.named, 1);
+    const e2 = phMap(batch, say({ tags: [{ i: 1, tag: 'On Model - Half' }, { i: 2, tag: 'product-model-fullbody' }] }), tax);
+    eq('a word that is not in the vocabulary is refused, not stored', e2.named, 0);
+    ok('so the library cannot drift to four spellings of two shot types', Object.keys(e2.patch).length === 0);
+
+    /* ---- answers that are not answers ---- */
+    eq('no text names nothing', phMap(batch, '', tax).named, 0);
+    eq('prose names nothing', phMap(batch, 'I think these are all packshots.', tax).named, 0);
+    eq('broken JSON names nothing', phMap(batch, '{"tags":[{"i":1,', tax).named, 0);
+    eq('and every picture is reported as still to name', phMap(batch, 'nonsense', tax).missed, 4);
+    eq('an answer wrapped in prose is still read', phMap(batch,
+      'Here you go:\n{"tags":[{"i":3,"tag":"detail"}]}\nHope that helps.', tax).patch.k3.tag, 'detail');
+    eq('an empty vocabulary refuses everything', phMap(batch, say({ tags: [{ i: 1, tag: 'packshot' }] }), []).named, 0);
+  }
+
+  /* ---- and the page spends on the cheap model, with the vocabulary enforced both ways ---- */
+  ok('the page names photographs with the cheapest model that can see', /AI_MODEL='claude-haiku-5-5'/.test(page));
+  ok('the model is told it may answer only with an id from the list', /Never invent an id that is not in the list/.test(page));
+  ok('and told to leave a picture out rather than guess', /leave that photograph out of the array rather than guessing/.test(page));
+  ok('every picture is numbered in the request', /Photograph '\+\(i\+1\)/.test(page));
+  ok('a run says what it would cost before it spends anything', /confirm\('Name '\+fmt\(todo\.length\)/.test(page));
+  ok('and the real spend is read off the answer’s own usage', /PHSPEND\.usd\+=E\.runCost\(d\.usage/.test(page));
+  ok('the tag is keyed on the photograph, never on a product-slot', /data-phsel=/.test(page) && !/data-phsel="'\+esc\(r\.id\)/.test(page));
+  ok('the grouping picker is the engine’s own list', /E&&E\.PHOTO_GROUPINGS/.test(page));
+  ok('the photograph store is its own key, so the cheap tag read stays cheap', /\/api\/images\/photos/.test(page));
+  ok('tags are saved as deltas, not as the whole map', /photos:\{p:patch\|\|\{\}\}/.test(page));
+  ok('a hand tag is marked as one', /by:'manual'/.test(page));
+  ok('the card folds like every other section', /pertag:0/.test(page));
+  /* ONE reader and ONE resolver, so the head, the fold line, the tile and the filter can
+   * never disagree about whether a picture is named — which is exactly what a second count
+   * on the page would produce the first time a photograph was named through its shot code */
+  ok('the head\u2019s counts come from the engine\u2019s own reader', /E\.photoReport\(rows,/.test(page));
+  ok('and the page keeps no second count of its own', !/named\+\+; slots\+=PHIDX/.test(page));
+  ok('the tile, the filter and the run all read one resolver', (page.match(/phRes\(/g) || []).length >= 4);
+  ok('which is the engine\u2019s ladder, not a local rule', /E\.photoTag\(k,\{photos:/.test(page));
+  ok('so a photograph already named through its code is never paid for twice',
+    /var todo=PHIDX\.keys\.filter\(function\(k\)\{ var v=phRes\(k\); return !\(v&&v\.tag\); \}\)/.test(page));
+  ok('and the tile names which lane named it', /v\.lane==='decided'\?'\u270e'/.test(page));
+  ok('the verdicts are read ONCE per render, not once per surface', /PHRES=\{\};/.test(page));
+  ok('seeded off the report\u2019s own verdicts rather than resolved again', /PHRES=st\.verdicts/.test(page));
+  ok('and the index is built once for a set of rows, not once per render', /PHIDXFOR===rows/.test(page));
+  ok('a hand tag set while a run is in flight is never overwritten by the model',
+    /if\(own&&own\.by!=='ai'\)\{ delete r\.patch\[k\]/.test(page));
+  ok('the head reads the engine\u2019s own slots-per-photograph', /var perSlot=st\.perPhoto;/.test(page));
+  ok('and its head states the unit, since slots and photographs are both true of a feed',
+    /distinct photograph/.test(page) && /image slot/.test(page));
+
+  /* ---- the worker keeps it in its own key, checks it whole, and never trims silently ---- */
+  const w = readFileSync(join(ROOT, 'cloudflare/feedspark-deck/src/worker.js'), 'utf8');
+  ok('the route exists on both methods', /path === '\/api\/images\/photos' && \(request\.method === 'GET' \|\| request\.method === 'PUT'\)/.test(w));
+  ok('in its own KV key', /'imgphotos:' \+ client/.test(w));
+  ok('apart from the shot-code tags every page load reads', /'imgtags:' \+ client/.test(w));
+  ok('merged per key, so two AMs never clobber each other', /Object\.assign\(\{\}, cur\.p \|\| \{\}/.test(w));
+  ok('a pushed store is checked whole', /function sanitizeImagePhotos/.test(w));
+  ok('the cap keeps the NEWEST decisions and says how many it dropped', /dropped\+\+/.test(w) && /dropped: dropped \|\| undefined/.test(w));
+  ok('and the action is logged like every other mutation', /'\/api\/images\/photos': 'image-photo-tags'/.test(w));
+}
+
+/* ================= NEGATIVE CONTROL: the batch bug, planted on purpose
+ * The mapping assertions above only mean something if they FAIL on the obvious wrong
+ * implementation — reading the answer by its POSITION in the array rather than by the
+ * number each picture was given, which is what makes a model that skips one picture label
+ * every picture after it with its neighbour's tag. */
+{
+  const page = readFileSync(join(ROOT, 'docs/FeedSpark_Images.html'), 'utf8');
+  const m = /\/\* PHMAP:START[\s\S]*?\n(  function phMap\([\s\S]*?\n  \})\n/.exec(page);
+  const bent = m && m[1]
+    .replace('var i=Math.round(+(x&&x.i));', 'var i=ai+1;')                       // position, not the number
+    .replace('arr.forEach(function(x){', 'arr.forEach(function(x,ai){');
+  const bad = bent ? new Function(bent + '; return phMap;')() : null;
+  const tax = [{ id: 'packshot' }, { id: 'model-full' }, { id: 'detail' }];
+  const batch = [1, 2, 3, 4].map((n) => ({ key: 'k' + n, url: 'https://cdn.example/' + n + '.jpg' }));
+  const skipped = JSON.stringify({ tags: [{ i: 1, tag: 'packshot' }, { i: 4, tag: 'detail' }] });
+  ok('the planted bug is really planted', !!bad && bent !== m[1]);
+  if (bad) {
+    const r = bad(batch, skipped, tax);
+    ok('and it DOES mislabel: picture 2 takes picture 4’s tag', r.patch.k2 && r.patch.k2.tag === 'detail');
+    ok('while picture 4, the one the model actually named, is left unnamed', r.patch.k4 === undefined);
+    ok('so the page’s own mapping is the thing being relied on, not this one',
+      phMapReal && phMapReal(batch, skipped, tax).patch.k2 === undefined);
+  }
 }
 
 /* ================================================================ the refusals
