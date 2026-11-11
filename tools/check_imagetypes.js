@@ -103,7 +103,7 @@ const AT_FEED = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.
 let NEG = false;
 /* the model's answer, index-keyed — and it deliberately SKIPS photograph 2, which is the
  * case that turns a position-mapped batch into a wall of wrong labels */
-const CLAUDE = { calls: 0, skip: 2, lastModel: null, lastImgs: 0 };
+const CLAUDE = { calls: 0, skip: 2, lastModel: null, lastImgs: 0, throttleOnce: false, throttled: 0 };
 const PHOTOS = {};           // client -> {v,p:{}}  (the stub store)
 const seen = { img: 0, auditPut: null, tagGets: [], photoPuts: 0, feedReads: 0 };
 const send = (res, code, type, body) => { res.writeHead(code, { 'content-type': type, 'access-control-allow-origin': '*' }); res.end(body); };
@@ -167,6 +167,9 @@ const srv = http.createServer((req, res) => {
   if (p === '/api/claude') {
     let b = ''; req.on('data', (d) => { b += d; });
     return req.on('end', () => { let v = {}; try { v = JSON.parse(b); } catch (e) {}
+      if (CLAUDE.throttleOnce) { CLAUDE.throttleOnce = false; CLAUDE.throttled++;
+        return send(res, 429, 'application/json', JSON.stringify({
+          error: 'rate limited — 120 calls per 10 minutes on /api/claude', retryS: 5 })); }
       CLAUDE.calls++; CLAUDE.lastModel = v.model || null;
       const content = ((v.messages || [])[0] || {}).content || [];
       const n = content.filter((c) => c && c.type === 'image').length;
@@ -432,6 +435,33 @@ console.log('· the model names them in batches, and never labels the picture be
   t('and Every photograph shows all five', dAll === 5, String(dAll));
   const sum = await txt('#pertag > .fhd .fsum');
   t('the folded head would keep the finding', /4 of 5/.test(sum) && /1 left/.test(sum), sum);
+}
+
+console.log('· the rate limit is a wait, not an end — the same batch is retried, never skipped');
+{
+  // put one photograph back on the list, then refuse the first call with the worker's own
+  // 429 shape: the run must pause and come back to THAT batch rather than dropping it
+  const keys = await page.evaluate(() => window.__imgPage.photos.keys);
+  await page.evaluate((k) => window.fetch('/api/images/photos?client=Atelier', { method: 'PUT',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ photos: { p: {} }, clear: [k] }) })
+    .then(() => window.__imgPage.load()), keys[0]);
+  await page.waitForFunction((k) => { const p = window.__imgPage.photos.PHOTOS; return p && p.p && !p.p[k]; },
+    keys[0], { timeout: 10000 });
+  await page.selectOption('#ptfil', 'un'); await page.waitForTimeout(150);
+  const before = CLAUDE.calls;
+  CLAUDE.throttleOnce = true;
+  await page.click('#ptai');
+  await page.waitForFunction(() => /Paused on the rate limit/.test(document.querySelector('#mstate').textContent),
+    null, { timeout: 10000 });
+  t('the run says it is paused on the rate limit, with the clock', true);
+  t('and nothing was consumed by the refusal', CLAUDE.calls === before, String(CLAUDE.calls - before));
+  await page.waitForFunction(() => !/Paused/.test(document.querySelector('#mstate').textContent)
+    && !document.querySelector('#ptai').textContent.includes('Stop'), null, { timeout: 30000 });
+  t('it carried on by itself and did make the call', CLAUDE.calls === before + 1, String(CLAUDE.calls - before));
+  t('and the photograph the refusal would have skipped is named',
+    await page.evaluate((k) => !!window.__imgPage.photos.PHOTOS.p[k], keys[0]));
+  t('the refusal was really served', CLAUDE.throttled === 1, String(CLAUDE.throttled));
+  await page.selectOption('#ptfil', 'all'); await page.waitForTimeout(150);
 }
 
 console.log('· the product search reads the photograph’s own tag, so the two surfaces agree');

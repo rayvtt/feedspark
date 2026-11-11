@@ -1158,7 +1158,7 @@ table.est td.feed{min-width:110px}
    * ================================================================ */
   var PHOTOS=null;              // the brand's photograph tags: {v,t,n,p:{key:{tag,by,t,note,conf}}}
   var PHIDX=null;               // the photograph index for the feed on screen
-  var PHGRP='item', PHFIL='un', PHSHOW=24, PH_PAGE=24, PH_BATCH=10;
+  var PHGRP='item', PHFIL='un', PHSHOW=24, PH_PAGE=24, PH_BATCH=10, PH_WAITS=24;
   var PHBUSY=false, PHSTOP=false, PHSPEND={calls:0,inTok:0,outTok:0,usd:0,named:0,missed:0};
   var PHPEND={};                // key -> true while its batch is in flight
 
@@ -1374,7 +1374,22 @@ table.est td.feed{min-width:110px}
       +', roughly $'+e.usd.toFixed(2)+', and about '+e.minutes+' minute'+(e.minutes===1?'':'s')
       +' at the rate the worker allows.\n\n⏹ Stop finishes the batch in hand and keeps every tag already named.'))return;
     PHBUSY=true; PHSTOP=false; $('#ptai').textContent='⏹ Stop';
-    var i=0,done=0;
+    var i=0,waits=0;
+    /* THE THROTTLE IS A WAIT, NOT AN END. The worker allows 120 calls per 10 minutes on
+       /api/claude, and a library this size is more calls than that — so a 429 pauses the
+       run with the clock on screen and RETRIES THE SAME BATCH rather than abandoning a run
+       the AM asked for and leaving them to click again every ten minutes. Everything else
+       that comes back wrong still stops it, and ⏹ Stop is honoured during the wait. */
+    var hold=function(sec,again){
+      var left=Math.max(5,Math.min(660,Math.round(sec||600)));
+      (function tick(){
+        if(PHSTOP||!PHBUSY)return again();
+        if(left<=0)return again();
+        setState('Paused on the rate limit — '+Math.floor(left/60)+'m '+(left%60)+'s, then it carries on by itself. '
+          +fmt(PHSPEND.named)+' named so far.',true);
+        left-=5; setTimeout(tick,5000);
+      })();
+    };
     (function next(){
       if(PHSTOP||i>=todo.length){
         PHBUSY=false; $('#ptai').textContent='✦ AI tag the photographs';
@@ -1383,17 +1398,26 @@ table.est td.feed{min-width:110px}
           +(PHSPEND.missed?', '+fmt(PHSPEND.missed)+' the model left unnamed (they are offered again)':'')
           +' · $'+PHSPEND.usd.toFixed(4)+' spent.');
         renderPertag(); return; }
-      var batch=todo.slice(i,i+PH_BATCH); i+=batch.length;
+      var batch=todo.slice(i,i+PH_BATCH);
       batch.forEach(function(x){ PHPEND[x.key]=true; });
-      done++;
-      setState('Reading photographs '+fmt(i-batch.length+1)+'–'+fmt(i)+' of '+fmt(todo.length)+'…',true);
+      setState('Reading photographs '+fmt(i+1)+'–'+fmt(i+batch.length)+' of '+fmt(todo.length)+'…',true);
       renderPertag();
+      var clear=function(){ batch.forEach(function(x){ delete PHPEND[x.key]; }); renderPertag(); };
       return phCall(batch)
         .then(function(d){
-          if(d&&d.error){ setState('AI tagging unavailable: '+(d.message||d.error)+' — name them from the dropdowns.'); PHSTOP=true; }
-          return phApply(batch,d); })
-        .catch(function(err){ setState('A batch failed: '+((err&&err.message)||err)+' — those photographs stay unnamed.'); })
-        .then(function(){ batch.forEach(function(x){ delete PHPEND[x.key]; }); renderPertag(); return next(); });
+          var err=(d&&(d.error||''))+'';
+          if(/rate limited/i.test(err)){
+            clear();
+            if(++waits>PH_WAITS){ setState('Still rate limited after '+PH_WAITS+' waits — stopping. '+fmt(PHSPEND.named)+' named; press ✦ again later.'); PHSTOP=true; return next(); }
+            return hold(d&&d.retryS,next);            // the SAME batch is retried, never skipped
+          }
+          if(err){ setState('AI tagging unavailable: '+(d.message||err)+' — name them from the dropdowns.'); PHSTOP=true; }
+          i+=batch.length;
+          return phApply(batch,d).then(function(){ clear(); return next(); }); })
+        .catch(function(e){
+          i+=batch.length;
+          setState('A batch failed: '+((e&&e.message)||e)+' — those photographs stay unnamed.');
+          clear(); return next(); });
     })();
   }
 

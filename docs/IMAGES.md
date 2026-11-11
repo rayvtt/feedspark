@@ -279,6 +279,12 @@ ride one call. `T.runEstimate(n, opts)` states what a run would cost and how lon
 for the whole Superdry GB library, ~1,332 calls, about $1.20, about 1h50 — and the card then
 prints the real spend, read off each answer's own `usage` through `T.runCost`.
 
+**The throttle is a wait, not an end.** A library that size is more calls than the window
+allows, so a 429 pauses the run with the clock on screen and retries **the same batch** rather
+than abandoning a run the AM asked for and leaving them to click again every ten minutes; ⏹ Stop
+is honoured during the wait, anything else that comes back wrong still stops the run, and after
+`PH_WAITS` holds it stops and says so rather than waiting for ever.
+
 **The batch is index-keyed**, which is the one thing that could go quietly wrong: each picture is
 followed by a text block naming its number and the answer is `{"tags":[{"i":3,"tag":"…"}]}`.
 `phMap` (between `PHMAP` markers in the page, lifted by name in the harness) drops a verdict whose
@@ -342,4 +348,6 @@ against counts the test makes itself, a hand tag reaching the server and coverin
 slots, then a stubbed model answer that **skips picture 2 and answers out of order** — asserting
 the skipped photograph is the one left unnamed, every other verdict landed on its own number, the
 spend was read off the answer's own usage, and the product search reads the same ladder rather
-than captioning one picture two different ways.
+than captioning one picture two different ways. One case has its own block: the stub refuses a
+call with the worker's **own 429 shape**, and the run must pause with the clock, consume nothing,
+carry on by itself and name the photograph that refusal would otherwise have skipped.
