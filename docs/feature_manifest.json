@@ -17298,6 +17298,23 @@
    "file": "tools/check_stockeven.js",
    "pattern": "console.log('· the page as redesigned — Stock health first, the cut cards gone');",
    "pr": 0
+  },
+  {
+   "name": "Golden: g:sale_price is not part of the Golden Record (engine)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "{ key: 'sale_price',",
+   "forbidden": true
+  },
+  {
+   "name": "Golden: g:sale_price is not part of the Golden Record (page twin)",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "{ k: 'sale_price', t: 'rec'",
+   "forbidden": true
+  },
+  {
+   "name": "Golden: a stored reading's sale_price is never a history / portfolio move",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "const NOT_GOLDEN = new Set(['sale_price']);"
   }
  ]
 }

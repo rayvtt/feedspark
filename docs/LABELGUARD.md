@@ -822,6 +822,17 @@ prep for client demo").
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 
+### 9.8b g:sale_price is not part of the Golden Record (11 Nov 2026)
+
+Ray: *"g:sale_price should never be considered for golden score. Just remove it from everything."*
+A sale price is a promotion the client runs or doesn't — its coverage is the size of the sale, not a
+gap in the product's data. It left `ATTR_SPEC` (engine) and `SPEC` (the page twin), so it is no longer
+scored, listed on the scorecard, alerted on, exported in the CSV or offered as an action. Readings
+stored before still carry the key: `goldenScore` only reads the spec, and `histMoved` skips
+`NOT_GOLDEN`, so neither the score history nor the portfolio changes report shows it as a move.
+The Playbook's tier map dropped it too. Feed Lab's AI-readiness and the Meta audit still read the
+field where they need it (price checks), which is not the Golden Score.
+
 ### 9.9 GPC category scope — an attribute scores only where Google asks for it (23 Sep 2026)
 
 Ray, on Hobbycraft's scorecard (material 47.9%, pattern 43.9%): *"for standard GPC material,

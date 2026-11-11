@@ -1389,7 +1389,7 @@ window.addEventListener('load',restore);
     // keywords (Ray, 30 Sep 2026) — FeedSpark's keyword injection, not a Google field: `h` badges it as
     // a FeedSpark standard, `d` = derived, read per product (an unmeasured read is not scored)
     { k: 'keywords', t: 'rec', d: 1, h: 1, kw: 1, n: 'keyword strings in g:product_type 2–10 — an id or placeholder is not a keyword' },
-    { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
+    // g:sale_price is not part of the Golden Record (Ray, 11 Nov 2026) — the engine's ATTR_SPEC, row for row
     // DEPTH (Ray, 7 Oct 2026): `of` = the presence attribute a measured depth twin replaces in the
     // score, `tg` = the count that earns full credit — the engine's ATTR_SPEC, row for row
     { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
@@ -2575,6 +2575,7 @@ window.addEventListener('load',restore);
     var keys = {};
     [a, b].forEach(function (x) { Object.keys(x.cov || {}).forEach(function (k) { keys[k] = 1; }); Object.keys(x.sc || {}).forEach(function (k) { keys[k] = 1; }); });
     Object.keys(keys).forEach(function (k) {
+      if (k === 'sale_price') return;   // not part of the Golden Record (Ray, 11 Nov 2026) — never a move
       var x = st(a, k), y = st(b, k);
       if (x === y) return;
       if (typeof x === 'number' && typeof y === 'number' && Math.abs(y - x) < 0.05) return;
@@ -5747,7 +5748,7 @@ window.addEventListener('load',restore);
      client's to supply (FeedSpark never invents a GTIN or a price), the optimisation is FeedSpark's; and a plan with nothing to do
      says so rather than padding a lane. Lanes are Workflow's pipeline: Now (this week) · Next (30 days) · Then (this quarter). */
   var PLAN_CLIENT = { id: 1, title: 1, description: 1, link: 1, image_link: 1, availability: 1, price: 1, brand: 1, gtin: 1, mpn: 1,
-    condition: 1, item_group_id: 1, sale_price: 1, lifestyle_image_link: 1, additional_image_link: 1, img_depth: 1 };
+    condition: 1, item_group_id: 1, lifestyle_image_link: 1, additional_image_link: 1, img_depth: 1 };
   function planBuild(attrs, prof, qd, ai, cl, mt) {
     var base = goldenScore(attrs, prof), out = { now: [], next: [], then: [], base: base, proj: base };
     if (base == null) return out;

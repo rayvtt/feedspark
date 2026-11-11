@@ -592,7 +592,7 @@ section('12 · projection');
 const AP = liveAudit('gb', 3000, 1000, extraRule);
 AP.golden = (() => {
   const cov = {}; LG.ATTR_SPEC.forEach((s) => { if (!s.derived && s.req !== 'ai') cov[s.key] = 100; });
-  Object.assign(cov, { gtin: null, mpn: null, sale_price: null, product_highlight: 50 });   // keywords never measured: the key is absent
+  Object.assign(cov, { gtin: null, mpn: null, additional_image_link: null, product_highlight: 50 });   // keywords never measured: the key is absent
   const at = LG.attrsFromCov(cov, null, 3000);
   return { attrs: at, cov, sc: null, score: LG.goldenScore(at, AP.prof).score, gs: LG.goldenScore(at, AP.prof) };
 })();
@@ -940,7 +940,7 @@ const r2 = (x) => Math.round(x * 100) / 100;
   ok(t2.blockers.length && t2.blockers.every((b) => b.tag === 'client to supply'), 'fixture: Tier 2 leaves only client data under 99%');
   ok(/once this work lands \(Tier 2 · AI-ready takes it further\)/.test(E.proposalText(PQt, { guard: false }).body), '[19] Tier 1 with a Tier-2 gap: "Tier 2 · AI-ready takes it further", never "only you hold"');
   ok(/once this work lands \(95 needs data only you hold — listed below\)/.test(E.proposalText(PQall, { guard: false }).body), '[19] Tier 2, client data alone left: "data only you hold — listed below"');
-  ok(/WHAT WE NEED FROM YOU\n· sale price — filled on 0% of products today\n· GTIN \/ MPN — filled on 0% of products today/.test(E.proposalText(PQall, { guard: false }).body), '[19] …and "listed below" is true: every client-to-supply gap is listed');
+  ok(/WHAT WE NEED FROM YOU\n(· [^\n]*\n)?· GTIN \/ MPN — filled on 0% of products today/.test(E.proposalText(PQall, { guard: false }).body), '[19] …and "listed below" is true: every client-to-supply gap is listed');
   const PQcm = E.packageQuote(Object.assign({ markets: [{ mkt: 'gb', audit: AP }] }, base10, { roadmap: Object.assign({}, live, { 'highlights|*': { status: 'building' } }) }), LG);
   ok(PQcm.perMarket[0].projected.blockers.some((b) => b.key === 'product_highlight' && b.tag === 'coming'), '[19] a FeedSpark line that is coming is tagged "coming", not "client to supply"');
   ok(/\(the rest follows the work still to be confirmed below\)/.test(E.proposalText(PQcm, { guard: false }).body), '[19] …and the email says so');
