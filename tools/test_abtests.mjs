@@ -474,7 +474,7 @@ ok('abSortKey is the numeric form abSortTests sorts on (a live date, in ms)',
   ok('the served/cached payload is built from the sorted array, not the raw parse',
      /const sorted = abSortTests\(p\.tests\)/.test(wsrc2) && /tests: sorted, summary: abSummary\(sorted\)/.test(wsrc2));
   ok('AB_SHAPE was bumped so a payload cached before this fix cannot serve the old sheet order for its remaining TTL',
-     /const AB_SHAPE = 4/.test(wsrc2));
+     /const AB_SHAPE = ([4-9]|\d\d)/.test(wsrc2));
   // Sorting cannot recover a test that was never READ — a fixed A1:Z400 window covers roughly
   // an archive's first 30 tests (~13 rows each) and nothing below that line, so a brand tested
   // since early 2025 (Schuh: rows running past 850) had its Aug 2026 batches truncated OUT of
@@ -483,6 +483,18 @@ ok('abSortKey is the numeric form abSortTests sorts on (a live date, in ms)',
   ok('the archive fetch is no longer capped at 400 rows', !/encodeURIComponent\(tab \+ '!A1:Z400'\)/.test(wsrc2));
   ok('…it reads the whole tab, matching every other whole-tab read in this file',
      /encodeURIComponent\(tab \+ '!A1:ZZ5000'\)/.test(wsrc2));
+}
+
+// ---- the two groups ride the payload, for the Workflow results lab's control/test lanes -------
+{
+  const v = [['Country', 'Test Method', 'Test Type', 'Batch URL', 'Live Date', 'Report Date', 'Graph', 'Report'],
+    ['UK', 'A/B Test', 'Title Test', 'x', '18/03/2026', '01/04/2026', '',
+     'The control group (without item type descriptor) is stronger performance. Impressions 8% lower in the test group.'],
+    ['UK', 'Single Group', 'Keyword', 'y', '01/05/2026', '20/05/2026', '', 'Impressions up 12% after launch.']];
+  const p = parseAbTests(v);
+  ok('an A/B run carries both groups, named by what sets them apart',
+     p.tests[0].groups && p.tests[0].groups.control === 'Without Item Type Descriptor' && p.tests[0].groups.test === 'With Item Type Descriptor');
+  ok('a single-group run carries no groups — there is no control to name', p.tests[1].groups === null);
 }
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');

@@ -257,8 +257,12 @@ export function parseAbTests(values, opts) {
   const out = tests.map((t) => {
     const metrics = extractMetrics(t.report);
     // only an A/B method has an opponent; a single-group or holdout run never gets a winner
-    const winner = /^a\/?b\b/i.test(String(t.method || '')) ? abWinner(t.report, metrics) : null;
-    return { ...t, metrics, verdict: abVerdict(metrics, t.report), winner, title: isTitleTest(t),
+    const ab = /^a\/?b\b/i.test(String(t.method || ''));
+    const winner = ab ? abWinner(t.report, metrics) : null;
+    // the two groups, named by what sets them apart ("Without Item Type Descriptor") — what the
+    // Workflow results lab draws its control and test lanes under; null on a one-group run
+    const groups = ab ? abGroups(t.report) : null;
+    return { ...t, metrics, verdict: abVerdict(metrics, t.report), winner, groups, title: isTitleTest(t),
       report: String(t.report || '').slice(0, o.reportChars || 3000) };
   });
   return { ok: true, tests: out };

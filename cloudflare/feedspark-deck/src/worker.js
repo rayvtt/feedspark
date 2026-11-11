@@ -29,7 +29,7 @@ import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming, scopeViewBy, s
 import { brandsOnSheet, brandToken, rowBrands, splitPlanCache, appendToken, rowCovered, noteRow } from "./planbrand.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, abSortTests, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
-const AB_SHAPE = 4;   // bump when parseAbTests grows a field the page reads, the served order
+const AB_SHAPE = 5;   // bump when parseAbTests grows a field the page reads, the served order
                        // changes, or the FETCH ITSELF reads more of the sheet (2 = winner/title,
                        // 3 = newest-first, 4 = A1:Z400 -> A1:ZZ5000 — a payload cached under the
                        // old range is missing rows, not just mis-ordered, and no re-sort of it
