@@ -329,6 +329,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: every Workflow section is a box that folds"
   NODE_PATH=$(npm root -g) node tools/check_wffold.js || {
     echo "✗ Workflow fold tripwire failed — each section must be one card with a tile head, a fresh device must open the board and fold the tail, every folded head must still carry what its own render found, and the choice must survive a reload"; exit 1; }
+  echo "── validating: the test register fits, and the results lab shows control against test"
+  NODE_PATH=$(npm root -g) node tools/check_tstlab.js || {
+    echo "✗ test-lab tripwire failed — the register's Test column must survive a long result, and the results lab must draw one card and one dot per figure with both groups named"; exit 1; }
   echo "── validating: a warning never lingers across the board"
   NODE_PATH=$(npm root -g) node tools/check_nolinger.js || {
     echo "✗ lingering-warning tripwire failed — a refused plan write or brief save belongs on its section's own head line, with each brand's own reason, sent once when the sheet will only refuse it again, and never as a fixed band across the work"; exit 1; }

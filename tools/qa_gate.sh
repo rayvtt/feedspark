@@ -371,6 +371,12 @@ else
   echo "   ✗ Workflow boot harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_wfboot.js"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/check_tstlab.js >/dev/null 2>&1; then
+  echo "   ✓ the test register fits, and the results lab shows control against test"
+else
+  echo "   ✗ test-lab harness FAILED — see NODE_PATH=\$(npm root -g) node tools/check_tstlab.js"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/check_wffold.js >/dev/null 2>&1; then
   echo "   ✓ every Workflow section is a box that folds, and no fold hides what its head found"
 else
