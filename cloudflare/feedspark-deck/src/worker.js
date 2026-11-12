@@ -151,6 +151,13 @@ import RESTOCK_ENGINE_SRC from "../../../docs/restock_engine.js";
 // through /api/feed/proxy and is read in the page (docs/breakdown_engine.js, served verbatim at /breakdown/engine.js).
 import BREAKDOWN_PAGE from "../../../docs/FeedSpark_Breakdown.html";
 import BREAKDOWN_ENGINE_SRC from "../../../docs/breakdown_engine.js";
+// /titles — TITLE LAB (Ray, 12 Nov 2026: "a new module just for the title. The audit will compare the master feed to the
+// output feed, showing the state of the title and how the title mask looks"): every shopping title against the master
+// title for the same product, read for the eight attributes a title is built from, the mask they form, and whether each
+// agrees with its own field. Nothing stored: the feed (/api/feed/proxy) and the master (/api/catalog/master[/file]) are
+// joined in the page by the Catalogue's engine and read by docs/titlelab_engine.js, served verbatim at /titles/engine.js.
+import TITLES_PAGE from "../../../docs/FeedSpark_Titles.html";
+import TITLES_ENGINE_SRC from "../../../docs/titlelab_engine.js";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -394,6 +401,7 @@ const PAGES = {
   '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
   '/restock':     { html: RESTOCK_PAGE, slug: 'restock' },
   '/breakdown':   { html: BREAKDOWN_PAGE, slug: 'breakdown' },
+  '/titles':      { html: TITLES_PAGE, slug: 'titles' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/social':      { html: SOCIAL_PAGE, slug: 'social' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
@@ -1815,6 +1823,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/aivis/engine.js' && request.method === 'GET') {
       return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/titles/engine.js' && request.method === 'GET') {
+      return new Response(TITLES_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/breakdown/engine.js' && request.method === 'GET') {
       return new Response(BREAKDOWN_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });

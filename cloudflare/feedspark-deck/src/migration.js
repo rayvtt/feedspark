@@ -40,6 +40,7 @@ export const MIG_SEED = [
   { p: '/aivis', n: 'AI visibility', w: 3, m: '2026-12' },
   { p: '/restock', n: 'Restock', w: 3, m: '2026-12' },
   { p: '/breakdown', n: 'Field breakdown', w: 3, m: '2026-12' },
+  { p: '/titles', n: 'Title Lab', w: 3, m: '2026-12' },
   { p: '/social', n: 'Social DPA', w: 3, m: '2026-12' },
   { p: '/aiquote', n: 'AI Quote', w: 3, m: '2026-12' },
   { p: '/kwcal', n: 'Keyword calendar', w: 3, m: '2026-12' },
