@@ -17069,6 +17069,12 @@
   {"name": "Retired module stays retired: slug: 'feedlab'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'feedlab'", "forbidden": true, "pr": 0},
   {"name": "Retired module stays retired: slug: 'deck-builder'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'deck-builder'", "forbidden": true, "pr": 0},
   {"name": "Retired modules: old links 301 to the Command Center", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {", "pr": 0},
-  {"name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')", "pr": 0}
+  {"name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')", "pr": 0},
+  {"name": "Title Lab: the item type is looked for up the tree, gender and age words set aside", "file": "docs/titlelab_engine.js", "pattern": "var lw = words(lv[d]).filter(function (w) { return !SYN_REV.gender[w] && !SYN_REV.age_group[w]; });"},
+  {"name": "Title Lab: a taught word is read first, before any field", "file": "docs/titlelab_engine.js", "pattern": "put(ta, ti, tn, 'taught', false);"},
+  {"name": "Title Lab: an accepted pair is not a gap", "file": "docs/titlelab_engine.js", "pattern": "Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';"},
+  {"name": "Title Lab: corrections are the team's — two shared-state namespaces", "file": "cloudflare/feedspark-deck/src/sharedstate.js", "pattern": "titleteachall: null,"},
+  {"name": "Title Lab: a correction re-reads every title and is pushed to the team", "file": "docs/FeedSpark_Titles.html", "pattern": "body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all })"},
+  {"name": "Title Lab: a card's thumbnail opens every image the feed carries", "file": "docs/FeedSpark_Titles.html", "pattern": "function imagesOf(r) {"}
  ]
 }

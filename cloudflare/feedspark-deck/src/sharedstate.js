@@ -98,6 +98,12 @@ export const STATE_NS = {
   // wording; both downloads lay them over the document.  "<client>|<mkt>" -> {e:[{o,n,t}], at}
   grtext:      'key',
   grtextall:   null,     // Golden ✎ Edit report — the ALL-BRANDS template: hash -> {o, t, at}
+  // TITLE LAB — WHAT THE TEAM HAS TAUGHT IT (Ray, 12 Nov 2026: "is there a way for the whole dashboard to auto-learn, so that
+  // when I start switching or adding comments and saving feedback, it applies across the brands and the feed?"). A correction
+  // is the TEAM's, never one screen's: a word read as an attribute ({w, a}) or a title/field pair accepted as not a gap
+  // ({ok, a, t, f}). titleteach = one brand's ("<Brand>|<rule id>"), titleteachall = every brand's (house-wide).
+  titleteach:    'key',
+  titleteachall: null,
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }

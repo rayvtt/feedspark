@@ -97,6 +97,31 @@ console.log('· the packed record, the summary, the story');
   t('a feed with no before says nothing is compared', /nothing is compared with a before/.test(T.story(T.summary([T.lite(T.read(D, V), T.masksNew())], T.masksNew()), {})[0]));
 }
 
+// ---- auto-learn: the screenshot Ray sent, and what a person can teach ----------------------------------------------
+console.log('· the item type is found up the tree; what a person teaches holds everywhere it fits');
+{
+  const SH = side('s1', 'Geox Black Casey MJ Girls Youth Shoes', 'Geox Black Casey Girls Youth Shoes, Size: 13',
+    { brand: ['Geox', 'Geox'], type: ['Kids > Girls > Shoes > Geox', 'Girls > Girls Youth'], color: ['Black', 'Black'], size: ['13', 'UK 13 (EU 32)'], age_group: ['kids'], gender: ['Female', 'female'], material: ['Leather'] });
+  const V0 = T.vocabNew(); T.vocabSeal(V0);
+  const r = T.read(SH, V0);
+  t('“Youth” is the age group, never the item type (Ray’s screenshot)', r.a.found.age_group && r.a.found.age_group.v === 'Youth' && r.a.found.type.v === 'Shoes', r.a.found);
+  t('a tree whose leaf is the brand names the item one level up — and it agrees with the product type', r.chk.type === 'agree' && r.a.sig === 'brand>color>name>gender>age_group>type>size', [r.chk.type, r.a.sig]);
+  t('a level that only says who it is for (Girls Youth) is no item type', T.parts('type', 'Girls > Girls Youth').length === 0 && T.parts('type', 'Kids > Girls > Shoes > Geox').some((w) => w.join(' ') === 'shoe'));
+  const V1 = T.vocabNew(); T.vocabSeal(V1); T.vocabTeach(V1, [{ w: 'Casey', a: 'pattern' }]);
+  const r1 = T.read(SH, V1);
+  t('a taught word is read as that attribute, marked as taught', r1.a.found.pattern && r1.a.found.pattern.via === 'taught' && r1.chk.pattern === 'title_only' && r1.a.spans.some((x) => x.k === 'pattern' && x.via === 'taught'));
+  T.vocabTeach(V1, [{ w: 'Casey', a: 'pattern' }, { ok: 1, a: 'pattern', t: 'casey', f: '' }]);
+  t('an accepted pair is not a gap', T.read(SH, V1).chk.pattern === 'agree');
+  T.vocabTeach(V1, [{ w: 'Shoes', a: 'name' }]);
+  t('a word taught as the product name is nobody’s attribute', !T.read(SH, V1).a.found.type && T.read(SH, V1).chk.type === 'field_only');
+  T.vocabTeach(V1, [{ w: 'Casey', a: 'pattern' }, { w: 'casey', a: 'name' }]);
+  t('a later rule wins (the brand’s own over every brand’s), case and plural blind', !T.read(SH, V1).a.found.pattern);
+  T.vocabTeach(V1, [{ w: 'Girls Youth', a: 'age_group' }]);
+  t('a taught phrase is taken whole', T.read(SH, V1).a.found.age_group.v === 'Girls Youth');
+  t('a rule naming no attribute, or no word, is dropped', T.teachNew([{ w: 'x', a: 'colourway' }, { w: '', a: 'color' }, null, { ok: 1, a: 'nope', t: 'a', f: 'b' }]).n === 0);
+  t('the two shared-state namespaces exist: one brand’s rules, every brand’s', /titleteach:\s+'key',/.test(read('cloudflare/feedspark-deck/src/sharedstate.js')) && /titleteachall:\s+null,/.test(read('cloudflare/feedspark-deck/src/sharedstate.js')));
+}
+
 // ---- the whole synthetic set through the real parser + the Catalogue's join ----------------------------------------------
 console.log('· the Northwind set, joined as the page joins it');
 {
@@ -132,9 +157,9 @@ console.log('· route, registries, nav, gates, docs');
   t('on the migration board, its twin and the assessment', MIG_SEED.some((m) => m.p === '/titles') && /\{p:'\/titles',n:'Title Lab'/.test(TX) && /\{id:'titles',p:'\/titles'/.test(TX));
   const pages = fs.readdirSync(new URL('../docs', import.meta.url)).filter((f) => /\.html$/.test(f) && read('docs/' + f).indexOf('id="tb-modules"') >= 0);
   t('the nav link is on every nav-bearing page, lit only on its own', pages.length >= 28 && pages.every((f) => { const s = read('docs/' + f), on = /<a href="\/titles" class="tbm on"/.test(s); return /<a href="\/titles" class="tbm/.test(s) && on === (f === 'FeedSpark_Titles.html'); }));
-  t('the page loads the three engines and reads the Catalogue’s lanes — nothing of its own is stored', ['/feedlab/engine.js', '/catalog/engine.js', '/titles/engine.js', '/api/catalog/roster', '/api/catalog/master/file', '/api/feed/proxy'].every((u) => PG.indexOf(u) >= 0) && !/method:\s*'(PUT|POST)'/.test(PG));
+  t('the page loads the three engines and reads the Catalogue’s lanes — the only thing it writes is what the team taught it', ['/feedlab/engine.js', '/catalog/engine.js', '/titles/engine.js', '/api/catalog/roster', '/api/catalog/master/file', '/api/feed/proxy'].every((u) => PG.indexOf(u) >= 0) && (PG.match(/method: 'PUT'/g) || []).length === 1 && /fetch\('\/api\/state', \{ method: 'PUT'/.test(PG));
   t('built on the shared stylesheet', PG.indexOf('<link rel="stylesheet" href="/design/fcc.css">') >= 0);
-  t('every section folds: six tiles, aria-expanded, Open/Fold all, per device', (PG.match(/<section class="sec[^"]*" id="sec-/g) || []).length === 6 && (PG.match(/class="sec-h" type="button" aria-expanded/g) || []).length === 6 && /id="foldall"/.test(PG) && /fcc-tl-fold/.test(PG));
+  t('every section folds: seven tiles, aria-expanded, Open/Fold all, per device', (PG.match(/<section class="sec[^"]*" id="sec-/g) || []).length === 7 && (PG.match(/class="sec-h" type="button" aria-expanded/g) || []).length === 7 && /id="foldall"/.test(PG) && /fcc-tl-fold/.test(PG));
   t('a brief opens Workflow in a new tab', /function wfTab\(u\) \{ var w = window\.open\(u, '_blank'\)/.test(PG) && /wfTab\('\/workflow\?brief='/.test(PG) && !/location\.href = '\/workflow/.test(PG));
   const QA = read('tools/qa_gate.sh'), PS = read('tools/presync.sh'), VY = read('.github/workflows/validate.yml'), CM = read('tools/check_mobile.js'), CD = read('tools/check_darkmode.js'), MF = read('docs/feature_manifest.json'), CL = read('CLAUDE.md');
   t('the harness runs in qa_gate, presync and validate; the tripwire in presync', /node tools\/test_titles\.mjs/.test(QA) && /node tools\/test_titles\.mjs/.test(PS) && /node tools\/check_titles\.js/.test(PS) && /run: node tools\/test_titles\.mjs/.test(VY));
