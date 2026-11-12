@@ -42,6 +42,9 @@ const AIVIS_STUB = require('./aivis_stub.js').stubLines();
 // /breakdown streams a feed and pivots it — tools/breakdown_stub.js hands over the synthetic Northwind feed (behind a guard on
 // the page's file name) so the panes, the pivot and the fields catalogue render
 const BREAKDOWN_STUB = require('./breakdown_stub.js').stubLines();
+// /titles streams a feed and joins its master — tools/titles_stub.js hands over a synthetic Northwind feed + master (behind a guard on
+// the page's file name) so the summary, the cards, the masks, the checks and the list render
+const TITLES_STUB = require('./titles_stub.js').stubLines();
 // /social reads a feed, Google Ads and four engines — tools/social_stub.js hands over the engines and an empty roster
 // (behind a guard on the page's file name), so the page opens on the demo products it draws itself
 const SOCIAL_STUB = require('./social_stub.js').stubLines();
@@ -85,6 +88,7 @@ const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,s
 ${CATALOG_STUB}
 ${AIVIS_STUB}
 ${BREAKDOWN_STUB}
+${TITLES_STUB}
 ${SOCIAL_STUB}
 ${PRICER_STUB}
 ${ROAS_STUB}

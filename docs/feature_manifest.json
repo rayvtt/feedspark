@@ -17026,228 +17026,49 @@
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "this one through ticket"
     },
-    {
-      "name": "A/B archive: the [attribute] in a test type is read off the report",
-      "file": "cloudflare/feedspark-deck/src/abtests.js",
-      "pattern": "typeName: abTypeName(t.type, attr)"
-    },
-    {
-      "name": "Keyword calendar: Results lab hides brands per device",
-      "file": "docs/FeedSpark_KWCal.html",
-      "pattern": "localStorage.setItem('fcc-lab-hide'"
-    },
-    {
-      "name": "Keyword calendar: Results lab card carries the completed date",
-      "file": "docs/FeedSpark_KWCal.html",
-      "pattern": "function labDone(r)"
-    },
-    {
-      "name": "Workflow: the Brief pipeline section is gone (Ray, 11 Nov 2026)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "id=\"ws-bp\"",
-      "forbidden": true
-    },
-    {
-      "name": "Workflow: Team workload section is gone (Ray, 11 Nov 2026)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "id=\"ws-wk\"",
-      "forbidden": true
-    },
-    {
-      "name": "Workflow: the test register left for the Keyword calendar (Ray, 11 Nov 2026)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "id=\"ws-tests\"",
-      "forbidden": true
-    },
-    {
-      "name": "Keyword calendar: the test register folds per device",
-      "file": "docs/FeedSpark_KWCal.html",
-      "pattern": "fcc-kw-tests-open"
-    },
-    {
-      "name": "Workflow: an unsaved brief is said on the ledger's head line",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "function blLine(){"
-    },
-    {
-      "name": "Retired module: no link to /feedlab in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/feedlab",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /deck-builder in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/deck-builder",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /restock in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/restock",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /roas in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/roas",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /feedlab in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/feedlab",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /deck-builder in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/deck-builder",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /restock in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/restock",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /roas in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/roas",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /feedlab in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Stock.html",
-      "pattern": "href=\"/feedlab",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /deck-builder in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Stock.html",
-      "pattern": "href=\"/deck-builder",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /restock in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Stock.html",
-      "pattern": "href=\"/restock",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /roas in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Stock.html",
-      "pattern": "href=\"/roas",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /feedlab in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "href=\"/feedlab",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /deck-builder in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "href=\"/deck-builder",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /restock in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "href=\"/restock",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module: no link to /roas in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
-      "file": "docs/FeedSpark_Catalog.html",
-      "pattern": "href=\"/roas",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: '/feedlab':     { html: FEEDLAB",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/feedlab':     { html: FEEDLAB",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: '/roas':        { html: ROAS_PAGE",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/roas':        { html: ROAS_PAGE",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: '/restock':     { html: RESTOCK_PAGE",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/restock':     { html: RESTOCK_PAGE",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: '/deck-builder':{ html: DECKBUILDER",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/deck-builder':{ html: DECKBUILDER",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: slug: 'restock'",
-      "file": "cloudflare/feedspark-deck/src/access.js",
-      "pattern": "slug: 'restock'",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: slug: 'roas'",
-      "file": "cloudflare/feedspark-deck/src/access.js",
-      "pattern": "slug: 'roas'",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: slug: 'feedlab'",
-      "file": "cloudflare/feedspark-deck/src/access.js",
-      "pattern": "slug: 'feedlab'",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired module stays retired: slug: 'deck-builder'",
-      "file": "cloudflare/feedspark-deck/src/access.js",
-      "pattern": "slug: 'deck-builder'",
-      "forbidden": true,
-      "pr": 0
-    },
-    {
-      "name": "Retired modules: old links 301 to the Command Center",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {",
-      "pr": 0
-    },
-    {
-      "name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')",
-      "pr": 0
-    }
-  ]
+  {"name": "A/B archive: the [attribute] in a test type is read off the report", "file": "cloudflare/feedspark-deck/src/abtests.js", "pattern": "typeName: abTypeName(t.type, attr)"},
+  {"name": "Keyword calendar: Results lab hides brands per device", "file": "docs/FeedSpark_KWCal.html", "pattern": "localStorage.setItem('fcc-lab-hide'"},
+  {"name": "Keyword calendar: Results lab card carries the completed date", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labDone(r)"},
+  {"name": "Workflow: the Brief pipeline section is gone (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-bp\"", "forbidden": true},
+  {"name": "Workflow: Team workload section is gone (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-wk\"", "forbidden": true},
+  {"name": "Workflow: the test register left for the Keyword calendar (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-tests\"", "forbidden": true},
+  {"name": "Keyword calendar: the test register folds per device", "file": "docs/FeedSpark_KWCal.html", "pattern": "fcc-kw-tests-open"},
+  {"name": "Workflow: an unsaved brief is said on the ledger's head line", "file": "docs/FeedSpark_Workflow.html", "pattern": "function blLine(){"},
+  {"name": "Title Lab: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/titles':      { html: TITLES_PAGE, slug: 'titles' },"},
+  {"name": "Title Lab: the engine is served verbatim", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/titles/engine.js' && request.method === 'GET')"},
+  {"name": "Title Lab: a grantable module", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "{ slug: 'titles', label: 'Title Lab', path: '/titles' },"},
+  {"name": "Title Lab: the eight attributes in Ray's order", "file": "docs/titlelab_engine.js", "pattern": "var KEYS = ATTRS.map(function (a) { return a.k; });"},
+  {"name": "Title Lab: title against field — a value the field lacks is title_only", "file": "docs/titlelab_engine.js", "pattern": "if (!has) return 'title_only';"},
+  {"name": "Title Lab: new name words are a rewording, never a re-ordering", "file": "docs/titlelab_engine.js", "pattern": "function order(mask) { return mask.filter(function (k) { return k !== 'name'; }).join('>'); }"},
+  {"name": "Title Lab: before falls back to the original-title stamp and says so", "file": "docs/titlelab_engine.js", "pattern": "if (!before && p.otitle) { before = squash(p.otitle); src = 'stamp'; bh = 'c:fs_data_original_title'; }"},
+  {"name": "Title Lab: the page reads the Catalogue's master lane", "file": "docs/FeedSpark_Titles.html", "pattern": "fetchBytes('/api/catalog/master/file' + mq(), g,"},
+  {"name": "Title Lab: every section folds, per device", "file": "docs/FeedSpark_Titles.html", "pattern": "var FOLD_K = 'fcc-tl-fold', OPEN0 = { sum: 1, sbs: 1 }, FOLD = null;"},
+  {"name": "Title Lab: a brief opens Workflow in a new tab", "file": "docs/FeedSpark_Titles.html", "pattern": "wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Title Fix - '"},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/feedlab':     { html: FEEDLAB", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/feedlab':     { html: FEEDLAB", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/roas':        { html: ROAS_PAGE", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/roas':        { html: ROAS_PAGE", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/restock':     { html: RESTOCK_PAGE", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/deck-builder':{ html: DECKBUILDER", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/deck-builder':{ html: DECKBUILDER", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'restock'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'restock'", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'roas'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'roas'", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'feedlab'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'feedlab'", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'deck-builder'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'deck-builder'", "forbidden": true, "pr": 0},
+  {"name": "Retired modules: old links 301 to the Command Center", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {", "pr": 0},
+  {"name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')", "pr": 0}
+ ]
 }

@@ -149,6 +149,9 @@ echo "── validating: AI visibility (reading engine, every surface adapter vs
 node tools/test_aivis.mjs >/dev/null
 echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
+echo "── validating: Title Lab (the eight attributes, the mask, title against field, before → after, the join, wiring)"
+node tools/test_titles.mjs >/dev/null
+echo "   ✓ every title read for its attributes and mask, checked against its fields, and joined to its master title"
 echo "── validating: Field breakdown (the column store, every reading, filters, the cross-tab, wiring)"
 node tools/test_breakdown.mjs >/dev/null
 echo "   ✓ any field of any feed: blanks as values, all slots, tiers, bands, styles, filters, the pivot"
@@ -496,6 +499,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
   NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
     echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: Title Lab, driven (the join, the summary, side by side, the mask, the checks, the brief tab, folds, the phone)"
+  NODE_PATH=$(npm root -g) node tools/check_titles.js || {
+    echo "✗ Title Lab tripwire failed — a summary figure, a card, a mask, a check count, the brief tab, a fold or the phone layout regressed"; exit 1; }
   echo "── validating: Field breakdown, driven (any field, the cross-filter, the pivot, styles, CSV, views, folds, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_breakdown.js || {
     echo "✗ breakdown tripwire failed — a pane count, the cross-filter, the pivot, a reading, a view, a fold or the phone layout regressed"; exit 1; }

@@ -559,6 +559,13 @@ else
   echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6g/7: Title Lab (the eight attributes, the mask, title against field, before → after, the join, wiring)"
+if node tools/test_titles.mjs >/dev/null 2>&1; then
+  echo "   ✓ Title Lab harness green"
+else
+  echo "   ✗ Title Lab harness FAILED — see node tools/test_titles.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h6f/7: Field breakdown (the column store, every reading, filters, the cross-tab, wiring)"
 if node tools/test_breakdown.mjs >/dev/null 2>&1; then
   echo "   ✓ Field breakdown harness green"

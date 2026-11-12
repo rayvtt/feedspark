@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+var SK='fcc-scroll:'+location.pathname;
+function restore(){try{var y=sessionStorage.getItem(SK);if(y!=null)window.scrollTo(0,parseInt(y,10)||0);}catch(e){}}
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){
+  if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+    var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+    b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();};
+    if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}}
+  var cc=document.getElementById('nav-collapse');
+  if(cc&&!cc.__w){cc.__w=1;cc.onclick=function(){var c=d.classList.toggle('nav-collapsed');try{localStorage.setItem('fcc-nav-collapsed',c?'1':'0');}catch(e){}};}
+  restore();
+}
+var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+window.addEventListener('load',restore);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Title Lab</title>
+<meta name="description" content="Title Lab — every shopping title against the master feed: the mask, the attributes it names and whether each agrees with its field">
+<link rel="stylesheet" href="/design/fcc.css">
+<style>
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1360px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  /* ---- hero: the Command Center's banner language (aurora wash, travelling edge, one stagger) ---- */
+  .hero{position:relative;overflow:hidden;isolation:isolate;padding:30px 0 20px}
+  .hero::before{content:'';position:absolute;inset:-40% -20% auto -20%;height:180%;z-index:-1;pointer-events:none;
+    background:radial-gradient(38% 46% at 18% 22%,rgba(245,166,35,.20),transparent 70%),radial-gradient(34% 42% at 82% 8%,rgba(37,99,235,.12),transparent 72%),radial-gradient(30% 38% at 62% 88%,rgba(26,54,93,.07),transparent 70%);
+    animation:heroAurora 26s ease-in-out infinite alternate}
+  @keyframes heroAurora{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-2.5%,1.5%,0) scale(1.08)}100%{transform:translate3d(2%,-1%,0) scale(1.04)}}
+  .hero::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;z-index:1;pointer-events:none;
+    background:linear-gradient(90deg,transparent 0 18%,var(--orange) 34%,var(--orange-deep) 50%,var(--orange) 66%,transparent 82% 100%);background-size:220% 100%;opacity:.85;animation:heroEdge 7.5s linear infinite}
+  @keyframes heroEdge{from{background-position:120% 0}to{background-position:-120% 0}}
+  .hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status{animation:heroRise .62s cubic-bezier(.22,.68,.32,1) both}
+  .hero h1{animation-delay:.07s}.hero .sub{animation-delay:.13s}.hero .ctl{animation-delay:.19s}.hero .status{animation-delay:.25s}
+  @keyframes heroRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:40px;font-weight:900;margin:8px 0 6px;letter-spacing:-.025em}
+  h1 small{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:0;vertical-align:middle;margin-left:8px}
+  .hero p.sub{color:var(--ink-2);font-size:14px;max-width:880px;margin:0 0 14px}
+  /* ---- controls: ONE field height, ONE pill height ---- */
+  .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fld{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  select.fld{padding-right:28px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+  .btn{font:inherit;font-size:13px;font-weight:800;height:36px;padding:0 13px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none}
+  .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .btn.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn:disabled{opacity:.55;cursor:default}
+  .seg{display:inline-flex;height:36px;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+  .seg button{font:inherit;font-size:12.5px;font-weight:800;border:none;background:transparent;color:var(--muted);padding:0 12px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button.on{background:var(--paper);color:var(--orange-deep);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+  .seg button .k{font-size:10.5px;font-weight:800;opacity:.75;margin-left:4px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{font:inherit;font-size:12px;font-weight:800;height:28px;padding:0 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .chip:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .chip.on{background:rgba(245,166,35,.16);border-color:var(--orange);color:var(--orange-ink)}
+  .chip .k{font-size:10.5px;color:var(--muted);font-weight:800}
+  .chip.on .k{color:inherit;opacity:.8}
+  .chip.none{border-style:dashed;color:var(--muted)}
+  .status{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status .pip{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);animation:heroPulse 2.4s ease-out infinite}
+  .status .pip.off{background:var(--muted);animation:none}.status .pip.warn{background:var(--orange-deep)}.status .pip.bad{background:var(--risk)}
+  @keyframes heroPulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+  .status .ml{margin-left:auto}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+  .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:28px}.ctl{gap:8px}.hero{padding:24px 0 18px}}
+  @media(prefers-reduced-motion:reduce){.hero::before,.hero::after,.hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status,.status .pip{animation:none!important}.hero .eyebrow,.hero h1,.hero .sub,.hero .ctl,.hero .status{opacity:1;transform:none}}
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .rk-body{fill:var(--ink-2);transition:fill .2s}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}
+  .rk-flame{fill:var(--orange);transform-box:fill-box;transform-origin:center top;animation:rkflame .42s ease-in-out infinite alternate}
+  .nav-toggle:hover{transform:translateY(-3px)}.nav-toggle:hover .rk-body{fill:var(--orange-ink)}
+  @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
+  @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+  /* ---- Title Lab's own components on top of /design/fcc.css ---- */
+  body{font-size:14px}
+  /* the eight attributes — one hue each, always beside its NAME (a chip, a tooltip), never colour alone */
+  :root{--a-brand:#1A365D;--a-type:#C2410C;--a-pattern:#7C3AED;--a-material:#15803D;--a-color:#2563EB;--a-size:#57606A;--a-age_group:#0E7490;--a-gender:#BE185D}
+  :root[data-theme=dark]{--a-brand:#8FB0E3;--a-type:#F0A44E;--a-pattern:#B79CF5;--a-material:#48D07E;--a-color:#6FA1F2;--a-size:#A7B0BC;--a-age_group:#4CC3DA;--a-gender:#F27FB0}
+  /* every section is ONE card whose head is a tile: title · one quiet line · a round chevron */
+  .secbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:14px 0 0}
+  .sec{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin:14px 0;min-width:0}
+  .sec-h{display:flex;align-items:center;gap:14px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;padding:16px 18px;cursor:pointer;border-radius:16px}
+  .sec-h:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+  .sec-h .tt{flex:none;font-family:var(--font-head);font-size:17px;font-weight:900;letter-spacing:-.01em}
+  .sec-h .ln{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sec-h .ln b{color:var(--ink-2);font-weight:900}
+  .sec-h .ln .warn{color:var(--orange-deep);font-weight:900}
+  .sec-h .cv{flex:none;width:30px;height:30px;border-radius:50%;background:var(--wash);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2);transition:transform .18s,background .15s}
+  .sec-h:hover .cv{background:rgba(245,166,35,.16);color:var(--orange-deep)}
+  .sec.open .sec-h .cv{transform:rotate(180deg)}
+  .sec-b{padding:0 18px 18px}
+  .sec:not(.open) .sec-b{display:none}
+  @media(max-width:760px){.sec-h{padding:13px 14px;gap:10px;flex-wrap:wrap}.sec-h .ln{flex-basis:100%;order:3;white-space:normal}.sec-h .tt{flex:1;font-size:16px}.sec-b{padding:0 14px 14px}}
+  @media print{.sec:not(.open) .sec-b{display:block}.secbar,.sec-h .cv{display:none}}
+  /* KPI band */
+  .kpis{grid-template-columns:repeat(6,minmax(0,1fr));margin:0 0 12px}
+  .kpi{box-shadow:none;background:var(--wash)}
+  .kpi .n{font-size:24px}
+  .kpi .n .ar{font-size:15px;color:var(--muted);margin:0 3px}
+  .kpi .l{min-height:2.6em}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .n{font-size:20px}}
+  .story{margin:0;padding:12px 14px;background:var(--wash);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--ink-2)}
+  .story li{margin:3px 0 3px 16px}
+  .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+  .tools .sp{flex:1}
+  .q{font:inherit;font-size:13px;font-weight:700;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);min-width:220px;flex:1}
+  .q:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange)}
+  .cnt{font-size:12.5px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .note{font-size:12px;color:var(--muted);font-weight:700;margin:10px 0 0}
+  /* a title with its attributes marked where they sit */
+  .ttl{font-size:15px;font-weight:700;line-height:1.75;color:var(--ink);overflow-wrap:anywhere}
+  .ttl mark{background:color-mix(in srgb,var(--c) 14%,transparent);color:inherit;border-bottom:2px solid var(--c);border-radius:4px 4px 0 0;padding:1px 3px;cursor:help}
+  .ttl.plain{color:var(--ink-2)}
+  mark.a-brand,.mk.a-brand{--c:var(--a-brand)}mark.a-type,.mk.a-type{--c:var(--a-type)}mark.a-pattern,.mk.a-pattern{--c:var(--a-pattern)}mark.a-material,.mk.a-material{--c:var(--a-material)}
+  mark.a-color,.mk.a-color{--c:var(--a-color)}mark.a-size,.mk.a-size{--c:var(--a-size)}mark.a-age_group,.mk.a-age_group{--c:var(--a-age_group)}mark.a-gender,.mk.a-gender{--c:var(--a-gender)}
+  /* the mask: a row of named chips in the order the title says them */
+  .mask{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .mk{font-size:11px;font-weight:900;letter-spacing:.02em;padding:2px 8px;border-radius:100px;white-space:nowrap;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c)}
+  .mk.a-name{--c:var(--muted);border-style:dashed;background:transparent;font-weight:800}
+  .mk.new{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 30%,transparent)}
+  .mask .plus{color:var(--muted);font-size:11px;font-weight:900}
+  .legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+  .legend .lb{font-size:11.5px;font-weight:800;color:var(--muted);margin-right:2px}
+  /* side by side */
+  .sbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+  @media(max-width:760px){.sbs{grid-template-columns:minmax(0,1fr)}}
+  .pc{border:1px solid var(--line);border-radius:14px;background:var(--paper);min-width:0;display:flex;flex-direction:column}
+  .pc-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .pc-h img,.pc-h .ph{width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--wash);flex:none}
+  .pc-h .ph{border-style:dashed}
+  .pc-h .id{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .pc-h .x{flex:none;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;font:inherit;font-weight:900}
+  .pc-h .x:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .ba{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+  .ba .side{padding:10px 12px}
+  .ba .side+.side{border-top:1px dashed var(--line);background:color-mix(in srgb,var(--orange) 5%,transparent)}
+  .ba .cap{display:flex;gap:8px;align-items:center;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .ba .cap .len{margin-left:auto;font-variant-numeric:tabular-nums;letter-spacing:0;text-transform:none;font-size:11.5px}
+  .ba .cap .len.over{color:var(--risk)}
+  .ba .side.after .cap b{color:var(--orange-deep)}
+  .ba .mask{margin-top:6px}
+  .pc table{min-width:470px;width:100%;border-collapse:collapse;font-size:12px;border-top:1px solid var(--line)}
+  .pc th{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;background:var(--wash)}
+  .pc td{padding:5px 8px;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+  .pc td.c,.pc th.c{text-align:center;width:44px}
+  .pc td .col{display:block;font-size:10px;color:var(--muted);font-weight:700}
+  .pc td.e{color:var(--muted)}
+  .yes{color:var(--good);font-weight:900}.no{color:var(--muted)}
+  .ck{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:100px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;display:inline-block}
+  .ck.agree{border-color:var(--good);color:var(--good)}
+  .ck.title_only,.ck.differ{border-color:var(--orange-deep);color:var(--orange-ink);background:rgba(237,111,11,.1)}
+  .ck.field_only{border-style:dashed}
+  .kind{font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:100px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;display:inline-block}
+  .kind.added{border-color:var(--good);color:var(--good)}.kind.same,.kind.nobefore{border-style:dashed;color:var(--muted)}.kind.removed{border-color:var(--orange-deep);color:var(--orange-ink)}
+  /* masks + attribute presence */
+  .grid2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:18px;align-items:start}
+  @media(max-width:1000px){.grid2{grid-template-columns:minmax(0,1fr)}}
+  .sub-h{font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mrow{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:center;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-top:1px solid var(--line);padding:8px 4px;cursor:pointer;border-radius:6px}
+  .mrow:first-of-type{border-top:0}
+  .mrow:hover{background:var(--wash)}
+  .mrow .bar{height:10px;border-radius:0 4px 4px 0;background:var(--wash);position:relative;overflow:hidden}
+  .mrow .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--chart-1);border-radius:0 4px 4px 0}
+  .mrow .fig{display:flex;flex-direction:column;gap:3px}
+  .mrow .fig span{font-size:12px;font-weight:900;font-variant-numeric:tabular-nums}
+  .mrow .fig small{font-weight:800;color:var(--muted)}
+  .arow{display:grid;grid-template-columns:96px minmax(0,1fr) 92px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+  .arow:first-of-type{border-top:0}
+  .arow .bars{display:grid;gap:3px}
+  .arow .bb{height:8px;border-radius:0 4px 4px 0;background:var(--wash);position:relative;overflow:hidden}
+  .arow .bb i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+  .arow .bb.b i{background:#B8C0CC}.arow .bb.a i{background:var(--chart-1)}
+  [data-theme=dark] .arow .bb.b i{background:#4A5261}
+  .arow .v{font-size:12px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .arow .v small{display:block;font-weight:800;color:var(--muted);font-size:10.5px}
+  .prow{display:grid;grid-template-columns:96px minmax(0,1fr) 70px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .prow .v{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
+  .key{display:flex;gap:12px;font-size:11.5px;font-weight:800;color:var(--muted);margin-top:8px}
+  .key i{display:inline-block;width:10px;height:8px;border-radius:2px;margin-right:5px}
+  .key .kb{background:#B8C0CC}.key .ka{background:var(--chart-1)}
+  /* tables */
+  .tw{background:var(--paper)}
+  table.t td{font-size:12.5px;vertical-align:middle}
+  table.t td.num button,table.t td.num .z{font:inherit;font-weight:900;font-variant-numeric:tabular-nums}
+  table.t td.num button{border:1px solid transparent;background:none;color:var(--ink);cursor:pointer;border-radius:7px;padding:2px 8px}
+  table.t td.num button:hover{border-color:var(--orange);color:var(--orange-deep)}
+  table.t td.num button.w{color:var(--orange-ink);background:rgba(237,111,11,.1)}
+  table.t td.num .z{color:var(--muted)}
+  #list-t{min-width:980px}
+  #list-t td.tx{min-width:260px;max-width:420px}
+  #list-t td.tx .ttl{font-size:12.5px;line-height:1.6}
+  #list-t tbody tr{cursor:pointer}
+  #list-t tbody tr:hover td{background:var(--wash)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;font-weight:800}
+  .fchip{font-size:11.5px;font-weight:800;padding:4px 6px 4px 10px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.14);color:var(--orange-ink);display:inline-flex;align-items:center;gap:6px}
+  .fchip button{border:0;background:none;color:inherit;cursor:pointer;font:inherit;font-weight:900;padding:0 4px}
+  .how ol{margin:0 0 0 18px;padding:0;font-size:12.5px;color:var(--ink-2)}
+  .how li{margin:5px 0}
+  main .footmark{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
+  [data-theme=dark] table.t th{background:#181B22}
+  [data-theme=dark] .pc-h .x{background:#20242E}
+  @media(max-width:760px){.q{min-width:0;width:100%;flex:1 1 100%}.arow{grid-template-columns:80px minmax(0,1fr) 78px}.mrow{grid-template-columns:minmax(0,1fr) 96px}}
+</style>
+<style>/* FCC-THEME */
+#theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
+#theme-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+.nav-collapse{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);padding:5px;border-radius:8px;display:inline-flex;align-items:center;flex:none;margin-left:auto}
+.nav-collapse:hover{color:var(--orange-deep,#ED6F0B)}
+.tb-modules{margin-left:8px!important;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.tb-modules a.tbm{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;color:var(--ink-2,#4a4a4a);text-decoration:none;transition:background .15s,color .15s}
+.tb-modules a.tbm:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm.on{background:rgba(245,166,35,.14);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm::after{content:attr(data-lbl);position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1A365D;color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;white-space:nowrap;padding:4px 8px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:70}
+.tb-modules a.tbm:hover::after{opacity:1}
+.nav-collapsed .tb-modules{display:none}
+[data-theme=dark] .tb-modules a.tbm:hover{background:#20242E}
+[data-theme=dark] .tb-modules a.tbm.on{background:rgba(245,166,35,.16)}
+[data-theme=dark] .tb-modules a.tbm::after{background:#0B0D12}
+[data-theme=dark] .nav-collapse:hover{color:var(--orange-ink)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;
+  --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42);
+  --vin:#4C82E0;--vout:#C67B28;--grid:#242830}
+[data-theme=dark] body{background:var(--wash);color:var(--ink)}
+[data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
+[data-theme=dark] a{color:var(--orange-ink)}
+[data-theme=dark] .card{background:var(--paper);border-color:var(--line)}
+[data-theme=dark] .btn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
+[data-theme=dark] tr.cat-sub td{background:#181B22}
+[data-theme=dark] tr.brand-row:hover td{background:#181B22}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
+  <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
+  <div class="tb-tag">Title Lab · master → shopping feed</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/breakdown" class="tbm" data-lbl="Field breakdown" title="Field breakdown — pivot any field of any feed" aria-label="Field breakdown"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11"/><path d="M12.5 13h5M12.5 16.5h3"/></svg></a><a href="/titles" class="tbm on" data-lbl="Title Lab" title="Title Lab — every shopping title against the master feed, the mask and the fields" aria-label="Title Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h14M12 5v9"/><path d="M4 19h4M10 19h4M16 19h4"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/images" class="tbm" data-lbl="Image library" title="Image library — every product image, tagged by shot type" aria-label="Image library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M3 16.2l4.6-4.1 3.3 3 3-2.7L21 17"/></svg></a><a href="/social" class="tbm" data-lbl="Social DPA" title="Social DPA — one product as a dynamic ad on Meta, Instagram, Pinterest and TikTok" aria-label="Social DPA"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10.5 18.5h3"/><path d="M12 14.2l-2.4-2.3a1.55 1.55 0 0 1 2.4-1.95 1.55 1.55 0 0 1 2.4 1.95z"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/rules" class="tbm" data-lbl="Rules" title="Rules — every FeedHero rule, what it is for, what needs a look" aria-label="Rules"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></a><a href="/stock" class="tbm" data-lbl="Stock" title="Stock management — the stock rules behind every availability" aria-label="Stock management"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></a><a href="/catalog" class="tbm" data-lbl="Catalogue" title="Catalogue — every product, before and after FeedSpark" aria-label="Catalogue"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M13.5 15h7M13.5 18.5h4.5"/></svg></a><a href="/aivis" class="tbm" data-lbl="AI visibility" title="AI visibility — is the brand named in AI shopping answers" aria-label="AI visibility"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20.5 20.5"/><path d="M10.5 7l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a><a href="/workflow?pb=1" class="tbm" data-lbl="Playbook" title="Playbook — the account review, inside Workflow" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a></nav>
+</div></div>
+
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Private &amp; Confidential · Feed optimisation</div>
+  <h1>Title Lab<small>master feed → shopping feed</small></h1>
+  <p class="sub" data-instr>Every title in the shopping feed set against the title the client’s master feed carries for the same product. Each title is read for the eight attributes a shopping title is built from — brand, item type, pattern, material, colour, size, age group, gender — and the order they appear in is its mask. An attribute a title names is then checked against its own field, so a material in the title is also a material in the data.</p>
+  <div class="ctl">
+    <select class="fld" id="brand" aria-label="Brand"><option value="">Pick a brand</option></select>
+    <button class="btn" id="copysum" type="button" title="The summary in plain words, for a client email">⧉ Copy summary</button>
+    <button class="btn" id="csv" type="button" title="Every title as listed: before, after, both masks, what changed and each check">⬇ CSV</button>
+  </div>
+  <div class="chips" id="mkts" style="margin-top:10px"></div>
+  <div class="status"><span class="pip off" id="pip"></span><span id="mstate">Loading…</span><span class="ml" id="scopeline"></span></div>
+</div></header>
+
+<main class="wrap">
+  <div class="secbar"><button class="btn" id="foldall" type="button">⊕ Open all</button></div>
+
+  <section class="sec" id="sec-sum" data-sec="sum">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-sum-b"><span class="tt">What we have done</span><span class="ln" id="ln-sum">Waiting for the feed…</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-sum-b">
+      <div class="kpis" id="kp"></div>
+      <ul class="story" id="story"><li>Pick a brand and a market.</li></ul>
+    </div>
+  </section>
+
+  <section class="sec" id="sec-sbs" data-sec="sbs">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-sbs-b"><span class="tt">Side by side</span><span class="ln" id="ln-sbs">One product or several: the master title beside the shopping title</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-sbs-b">
+      <div class="tools">
+        <input class="q" id="add" type="search" list="add-list" placeholder="Add a product — an ID or a few words of its title, then Enter" aria-label="Add a product to compare" autocomplete="off"><datalist id="add-list"></datalist>
+        <button class="btn" id="best" type="button" title="Six products whose titles changed the most — the clearest examples in this feed">✦ Best examples</button>
+        <button class="btn" id="rand" type="button" title="Six other rewritten titles">🎲 Another six</button>
+        <button class="btn" id="clr" type="button">Clear</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="sbs" id="sbs"><div class="empty">Waiting for the feed…</div></div>
+      <p class="note" id="sbs-note"></p>
+    </div>
+  </section>
+
+  <section class="sec" id="sec-mask" data-sec="mask">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-mask-b"><span class="tt">The title mask</span><span class="ln" id="ln-mask">The order attributes are said in, before and after</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-mask-b">
+      <div class="grid2">
+        <div>
+          <div class="sub-h">Masks in the shopping feed <span class="seg" id="mside" role="group" aria-label="Which titles"><button type="button" data-s="a" class="on">Shopping feed</button><button type="button" data-s="b">Master feed</button></span></div>
+          <div id="masks"><div class="empty">Waiting for the feed…</div></div>
+        </div>
+        <div>
+          <div class="sub-h">Share of titles naming each attribute</div>
+          <div id="attrs"><div class="empty">Waiting for the feed…</div></div>
+          <div class="key"><span><i class="kb"></i>Master feed</span><span><i class="ka"></i>Shopping feed</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="sec-chk" data-sec="chk">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-chk-b"><span class="tt">Title against the fields</span><span class="ln" id="ln-chk">If a title names it, the field should hold it</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-chk-b">
+      <div class="tw"><table class="t" id="chk-t"><thead><tr><th>Attribute</th><th class="num">Title and field agree</th><th class="num">In the title, not in the field</th><th class="num">Title and field differ</th><th class="num">In the field, not in the title</th><th></th></tr></thead><tbody><tr><td colspan="6"><div class="empty">Waiting for the feed…</div></td></tr></tbody></table></div>
+      <div id="pairs"></div>
+      <p class="note">A count opens those titles in the list below. A difference is not always an error — a title can name the fabric (velvet) where the field holds the fibre (polyester) — so the commonest are listed for a person to judge. “In the field, not in the title” is a choice, not a fault — not every attribute belongs in every title.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="sec-list" data-sec="list">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-list-b"><span class="tt">Every title</span><span class="ln" id="ln-list">Before, after, the mask and what changed</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-list-b">
+      <div class="tools">
+        <span class="seg" id="views" role="group" aria-label="Which titles"><button type="button" data-v="all" class="on">All</button><button type="button" data-v="changed">Rewritten</button><button type="button" data-v="same">Unchanged</button><button type="button" data-v="look">To look at</button></span>
+        <input class="q" id="q" type="search" placeholder="Filter by ID or a word in either title…  ( / )" aria-label="Filter the list" autocomplete="off">
+        <span id="fchips"></span><span class="cnt" id="cnt"></span>
+      </div>
+      <div class="tw"><table class="t" id="list-t"><thead><tr><th>Product</th><th>Master title</th><th>Shopping title</th><th>Mask</th><th>Change</th><th class="num">Chars</th><th>Check</th></tr></thead><tbody><tr><td colspan="7"><div class="empty">Waiting for the feed…</div></td></tr></tbody></table></div>
+      <button class="btn more" id="more" type="button" hidden>Show more</button>
+      <p class="note">A row adds that product to Side by side.</p>
+    </div>
+  </section>
+
+  <section class="sec how" id="sec-how" data-sec="how">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-how-b"><span class="tt">How it is read</span><span class="ln">Where each title comes from and how an attribute is found</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-how-b"><ol>
+      <li><b>Two feeds, one product.</b> The shopping feed is read whole, as Google receives it. The master feed is the client’s own file as FeedHero last imported it. The two are joined product by product on the ID column that carries the most of the feed’s IDs.</li>
+      <li><b>Before and after.</b> “Before” is the master feed’s title for that product. Where no master row joins, the original title FeedSpark stamps on each item it rewrites is used and labelled as such. A product with neither has no before and is never counted as rewritten.</li>
+      <li><b>Finding an attribute.</b> A title is searched for the product’s own field values first — its brand, colour, material, pattern, size and the last level of its product type — as whole words, singular or plural. Then for values other products in this feed carry in that field. Gender and age group are read from their usual words (women’s, mens, girls, kids, baby).</li>
+      <li><b>The mask.</b> The attributes in the order the title says them; words that are none of the eight are the product name. The share of titles on the three biggest masks says how systematic the catalogue is.</li>
+      <li><b>The check.</b> For each attribute a title names: the field holds the same value (agree), the field is empty (in the title, not in the field), or the field says something else (differ). Nothing is corrected here — the list is what to fix in the data.</li>
+      <li><b>Limits.</b> A word no field in this feed has ever held is read as part of the name. Google’s limit is 150 characters; roughly the first 70 show in a Shopping result.</li>
+    </ol></div>
+  </section>
+
+  <div class="footmark"><span>FeedSpark · Private &amp; Confidential</span><span>Title Lab</span></div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function n0(v) { return v == null || v === '' || isNaN(v) ? '—' : Math.round(Number(v)).toLocaleString('en-GB'); }
+  function p1(n, d) { return d ? (Math.round(n / d * 1000) / 10) + '%' : '—'; }
+  function mb(b) { return (b / 1048576).toFixed(b < 10485760 ? 1 : 0) + ' MB'; }
+  function api(u) {
+    return fetch(u, { credentials: 'same-origin' })
+      .then(function (r) { return r.json().then(function (j) { j.__status = r.status; return j; }, function () { return { ok: false, error: 'HTTP ' + r.status + ' — not JSON (signed out?)', __status: r.status }; }); })
+      .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
+  }
+  function toast(msg) { var t = $('#toast'); if (!t) return; t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('on'); }, 2800); }
+  function remember(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+  function recall(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  /* A BRIEF OPENS WORKFLOW IN A NEW TAB (Ray's standing rule, 19 Oct 2026) — this module stays where it is; a blocked tab falls back to this one. */
+  function wfTab(u) { var w = window.open(u, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } else location.href = u; return w; }
+  function mmyy() { var d = new Date(); return ('0' + (d.getMonth() + 1)).slice(-2) + String(d.getFullYear()).slice(2); }
+  function download(name, text, mime) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: mime || 'text/csv;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+  function copyText(text) {
+    function fall() { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); toast('Copied'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast('Copied'); }, fall); else fall();
+  }
+  // the engines load the way /catalog loads them (fetched + run), so the browser tripwires can hand them over from a stub
+  var FA = null, E = null, T = null;
+  function loadEngines() {
+    var need = [['/feedlab/engine.js', 'FeedAudit'], ['/catalog/engine.js', 'FeedCatalog'], ['/titles/engine.js', 'FeedTitles']];
+    return Promise.all(need.map(function (n) {
+      if (window[n[1]]) return window[n[1]];
+      return fetch(n[0]).then(function (r) { if (!r.ok) throw new Error(n[0] + ' unavailable'); return r.text(); })
+        .then(function (s) { if (!s) throw new Error(n[0] + ' is empty'); (new Function(s))(); return window[n[1]] || null; });
+    })).then(function (a) { if (!a[0] || !a[1] || !a[2]) throw new Error('engines not ready'); FA = a[0]; E = a[1]; T = a[2]; });
+  }
+
+  // ---- state ------------------------------------------------------------------------------------------------------
+  var Q = new URLSearchParams(location.search), CAP = 60000, SEL_MAX = 12, PAGE = 100;
+  var S = {
+    gen: 0, an: 0, ctl: null, roster: null, brand: Q.get('brand') || Q.get('client') || recall('fcc-tl-brand'), mkt: Q.get('market') || recall('fcc-tl-mkt'),
+    want: (Q.get('id') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean),
+    out: { st: 'idle' }, m: { st: 'idle' }, prods: [], ixO: new Map(), ixI: new Map(),
+    rows: null, V: null, masks: null, sum: null, pairs: null, bsrc: 'master', pass: null, final: false,
+    sel: [], rank: null, rankAt: 0, view: 'all', q: '', fmask: null, fchk: null, shown: PAGE, mside: 'a', err: ''
+  };
+  window.__FCCTitles = { state: function () { return S; } };
+  function setQuery() {
+    var q = new URLSearchParams();
+    if (S.brand) q.set('brand', S.brand); if (S.mkt) q.set('market', S.mkt);
+    var s = q.toString(); history.replaceState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
+  }
+  function entry() { var ms = (S.roster && S.roster[S.brand]) || []; for (var i = 0; i < ms.length; i++) if (ms[i].mkt === S.mkt) return ms[i]; return null; }
+  function usable(m) { return m && m.kind !== 'none'; }
+  function sig() { return S.ctl ? { signal: S.ctl.signal } : {}; }
+  function mq() { return '?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt); }
+
+  // ---- boot ---------------------------------------------------------------------------------------------------------
+  function boot() {
+    foldInit();
+    loadEngines().then(function () { renderLegend(); return api('/api/catalog/roster'); }).then(function (d) {
+      if (!d || !d.ok) { S.err = (d && d.error) || 'the feed list is unavailable'; renderStatus(); return; }
+      S.roster = d.clients || {};
+      var names = Object.keys(S.roster).filter(function (c) { return S.roster[c].some(usable); }).sort();
+      $('#brand').innerHTML = '<option value="">Pick a brand</option>' + names.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+      if (names.indexOf(S.brand) < 0) S.brand = names[0] || '';
+      pickMarket(); $('#brand').value = S.brand;
+      remember('fcc-tl-brand', S.brand); remember('fcc-tl-mkt', S.mkt); setQuery();
+      renderChips(); load();
+    }).catch(function (e) { S.err = String((e && e.message) || e); renderStatus(); });
+  }
+  function pickMarket() {
+    var ms = (S.roster && S.roster[S.brand]) || [];
+    if (!usable(entry())) { var first = ms.filter(function (m) { return usable(m) && m.channel !== 'meta'; })[0] || ms.filter(usable)[0]; S.mkt = first ? first.mkt : ''; }
+  }
+
+  // ---- load: the shopping feed and the master on their own; titles are read as soon as the feed is in, and again once the master joins
+  function load() {
+    var g = ++S.gen; S.an++;
+    if (S.ctl) { try { S.ctl.abort(); } catch (e) {} }
+    S.ctl = window.AbortController ? new AbortController() : null;
+    S.out = { st: 'loading', bytes: 0, total: 0 }; S.m = { st: 'idle' }; S.prods = []; S.ixO = new Map(); S.ixI = new Map();
+    S.rows = null; S.V = null; S.masks = null; S.sum = null; S.pass = null; S.final = false; S.sel = []; S.rank = null; S.rankAt = 0;
+    S.fmask = null; S.fchk = null; S.shown = PAGE; S.err = '';
+    renderAll();
+    if (!S.brand || !S.mkt) { S.out = { st: 'idle' }; renderStatus(); return; }
+    loadOutput(g); loadMaster(g, 0);
+  }
+  function loadOutput(g) {
+    fetch('/api/feed/proxy' + mq(), sig()).then(function (res) {
+      if (g !== S.gen) return;
+      if (!res.ok || !res.body) return res.text().then(function (t) { var m = ''; try { m = JSON.parse(t).error; } catch (e) {} outFail(g, m || ('HTTP ' + res.status)); });
+      S.out.total = +(res.headers.get('x-feed-bytes') || 0);
+      var rd = res.body.getReader(), dec = new TextDecoder('utf-8'), parser = null, hdr = null, pl = null, plN = 0;
+      function onRow(row, h) {
+        if (!hdr) { hdr = h || row; pl = E.outPlan(hdr); plN = hdr.length; return; }
+        if (h && h.length !== plN) { pl = E.outPlan(h); plN = h.length; }
+        if (S.prods.length >= CAP) { S.out.capped = true; return; }
+        var p = E.outRow(pl, row); if (!p.id) return;
+        var i = S.prods.length; S.prods.push(p);
+        var a = E.idKey(p.oid), b = E.idKey(p.id);
+        if (a && !S.ixO.has(a)) S.ixO.set(a, i);
+        if (b && !S.ixI.has(b)) S.ixI.set(b, i);
+      }
+      function pump() {
+        return rd.read().then(function (x) {
+          if (g !== S.gen) { try { rd.cancel(); } catch (e) {} return; }
+          if (x.done) { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } outDone(g); return; }
+          S.out.bytes += x.value.length;
+          var t = dec.decode(x.value, { stream: true });
+          if (!parser) {
+            var t0 = t.replace(/^﻿/, '');
+            if (!t0.trim()) return pump();
+            parser = /^\s*</.test(t0) ? FA.createXmlParser(onRow) : FA.createParser(onRow);
+          }
+          parser.push(t); statusSoon();
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function (e) { if (g === S.gen && !(e && e.name === 'AbortError')) outFail(g, String((e && e.message) || e)); });
+  }
+  var TK = 0;
+  function statusSoon() { if (!TK) TK = setTimeout(function () { TK = 0; renderStatus(); }, 400); }
+  function outFail(g, msg) { if (g !== S.gen) return; S.out.st = 'error'; S.out.err = msg; renderAll(); }
+  function outDone(g) {
+    if (g !== S.gen) return;
+    S.out.st = 'done'; renderStatus();
+    if (S.m.st === 'held') joinMaster(g); else analyse(g);
+  }
+  var M_END = { none: 1, error: 1, nojoin: 1, ready: 1 };
+  function masterEnd(g) { if (g !== S.gen) return; renderStatus(); if (S.out.st === 'done') analyse(g); }
+  function loadMaster(g, tries) {
+    var e = entry();
+    if (!e || !e.cmpid) { S.m = { st: 'none', why: e && e.kind === 'sheet' ? 'this feed is read from a Google Sheet, so FeedHero holds no master for it' : 'no FeedHero company sits behind this feed' }; masterEnd(g); return; }
+    if (tries === 0) { S.m = { st: 'info' }; renderStatus(); }
+    fetch('/api/catalog/master' + mq(), sig())
+      .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }, function () { return { s: r.status, j: null }; }); })
+      .then(function (x) {
+        if (g !== S.gen) return;
+        var j = x.j || {};
+        if (x.s === 202 || j.state === 'preparing') {
+          S.m = { st: 'preparing' }; renderStatus();
+          if (tries < 12) setTimeout(function () { if (g === S.gen) loadMaster(g, tries + 1); }, 7000);
+          else { S.m = { st: 'error', err: 'FeedHero is still reading this master feed — try again in a few minutes' }; masterEnd(g); }
+          return;
+        }
+        if (!j.ok) { S.m = { st: 'error', err: j.error || ('HTTP ' + x.s) }; masterEnd(g); return; }
+        S.m = { st: 'file', info: j, got: 0, tot: 0 }; renderStatus();
+        return fetchBytes('/api/catalog/master/file' + mq(), g, function (got, tot) { S.m.got = got; S.m.tot = tot; statusSoon(); })
+          .then(function (u8) { if (g !== S.gen || !u8) return; S.m.bytes = u8; S.m.st = 'held'; renderStatus(); if (S.out.st === 'done') joinMaster(g); });
+      })
+      .catch(function (err) { if (g !== S.gen || (err && err.name === 'AbortError')) return; S.m = { st: 'error', err: String((err && err.message) || err) }; masterEnd(g); });
+  }
+  function fetchBytes(url, g, prog) {
+    return fetch(url, sig()).then(function (res) {
+      if (!res.ok || !res.body) return res.text().then(function (t) { var m = ''; try { m = JSON.parse(t).error; } catch (e) {} throw new Error(m || ('HTTP ' + res.status)); });
+      var tot = +(res.headers.get('x-feed-bytes') || 0), rd = res.body.getReader(), parts = [], got = 0;
+      function pump() {
+        return rd.read().then(function (x) {
+          if (g !== S.gen) { try { rd.cancel(); } catch (e) {} return null; }
+          if (x.done) { var u = new Uint8Array(got), o = 0; parts.forEach(function (p) { u.set(p, o); o += p.length; }); return u; }
+          parts.push(x.value); got += x.value.length; prog(got, tot); return pump();
+        });
+      }
+      return pump();
+    });
+  }
+  // unzip → sniff (XML / TSV / CSV) → parse → find the column this feed's IDs live in → keep the matched rows (the Catalogue's own join)
+  function joinMaster(g) {
+    var m = S.m; m.st = 'parsing'; m.rows = 0; renderStatus();
+    var u8 = m.bytes, stream;
+    try {
+      if (E.isZip(u8)) {
+        var ent = E.zipMain(E.zipEntries(u8) || []);
+        if (!ent) throw new Error('the zip is empty');
+        var data = E.zipData(u8, ent); if (!data) throw new Error('an unreadable zip entry');
+        stream = new Blob([data]).stream();
+        if (ent.method === 8) {
+          if (typeof DecompressionStream === 'undefined') throw new Error('this browser cannot unzip it');
+          stream = stream.pipeThrough(new DecompressionStream('deflate-raw'));
+        } else if (ent.method !== 0) throw new Error('zip method ' + ent.method + ' is not supported');
+      } else stream = new Blob([u8]).stream();
+    } catch (e) { m.st = 'error'; m.err = 'the master file could not be opened: ' + e.message; m.bytes = null; masterEnd(g); return; }
+    // one master is Windows-1252, not UTF-8: decode strictly and switch at the first byte that is not UTF-8
+    var rd = stream.getReader(), dec = new TextDecoder('utf-8', { fatal: true }), parser = null, hdr = null, sample = [], plan = null, map = null;
+    var by = new Map(), n = 0, stopped = '';
+    function decide() {
+      plan = E.plan(hdr);
+      var jA = E.detectJoin(plan, sample, new Set(S.ixO.keys())), jB = E.detectJoin(plan, sample, new Set(S.ixI.keys()));
+      var useB = jB.hit > jA.hit * 1.2, j = useB ? jB : jA;
+      if (j.col < 0) return false;
+      map = useB ? S.ixI : S.ixO; plan.join = j.col; m.join = { h: j.h };
+      var s = sample; sample = null; s.forEach(take);
+      return true;
+    }
+    function take(row) {
+      n++;
+      var key = E.idKey(row[plan.join]); if (!key) return;
+      var i = map.get(key);
+      if (i != null) by.set(i, E.masterCells(row));   // a repeated id: the last row is the one the output was built from
+    }
+    function onRow(row, h) {
+      if (!hdr) { hdr = (h || row).slice(); return; }
+      if (h && h.length !== hdr.length) hdr = h.slice();
+      if (sample) { sample.push(row); if (sample.length >= 4000 && !decide()) { stopped = 'nojoin'; try { rd.cancel(); } catch (e) {} } return; }
+      take(row);
+    }
+    function finish() {
+      if (g !== S.gen) return;
+      if (sample && !stopped && hdr && !decide()) stopped = 'nojoin';
+      m.bytes = null;
+      if (stopped === 'nojoin' || !plan || plan.join < 0) { m.st = 'nojoin'; m.err = 'none of the master feed’s columns carries the IDs this feed was built from'; masterEnd(g); return; }
+      var fin = E.plan(hdr); fin.join = plan.join;
+      m.plan = fin; m.by = by; m.rows = n; m.st = 'ready'; masterEnd(g);
+    }
+    function pump() {
+      return rd.read().then(function (x) {
+        if (g !== S.gen) { try { rd.cancel(); } catch (e) {} return; }
+        if (stopped || x.done) { if (x.done) { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } } return finish(); }
+        var t;
+        try { t = dec.decode(x.value, { stream: true }); }
+        catch (er) { dec = new TextDecoder('windows-1252'); t = dec.decode(x.value, { stream: true }); }
+        if (!parser) {
+          var t0 = t.replace(/^﻿/, '');
+          if (!t0.trim()) return pump();
+          var sn = E.sniff(t0.slice(0, 20000));
+          parser = sn.fmt === 'xml' ? FA.createXmlParser(onRow) : E.delimParser(sn.delim, function (r) { onRow(r); }, sn);
+        }
+        parser.push(t); m.rows = n + (sample ? sample.length : 0); statusSoon();
+        return pump();
+      });
+    }
+    pump().catch(function (e) { if (g === S.gen) { m.st = 'error'; m.err = 'reading the master feed failed: ' + ((e && e.message) || e); m.bytes = null; masterEnd(g); } });
+  }
+
+  // ---- the reading: two passes in slices so the page never stalls. Pass 1 learns the feed's own vocabulary, pass 2 reads every title.
+  var PV = { source: 's', populated: 'p', title: 't' };
+  function analyse(g) {
+    var pairs = {}, stampN = 0, run = ++S.an, P = S.prods, m = S.m.st === 'ready' ? S.m : null, V = T.vocabNew(), masks = T.masksNew(), rows = new Array(P.length), i = 0, phase = 1;
+    S.pass = { done: 0, of: P.length * 2 };
+    function side(k) { return T.sides(E, P[k], m ? m.by.get(k) : null, m ? m.plan : null); }
+    function slice() {
+      if (g !== S.gen || run !== S.an) return;
+      var end = Math.min(P.length, i + 1500);
+      for (; i < end; i++) {
+        var sd = side(i);
+        if (phase === 1) { T.vocabAdd(V, sd); continue; }
+        var rec = T.read(sd, V), r = T.lite(rec, masks), pv = '';
+        T.KEYS.forEach(function (k) { pv += PV[rec.prov[k]] || '-'; var c = rec.chk[k]; if (c === 'differ' || c === 'title_only') { var pm = pairs[k] || (pairs[k] = new Map()), key = rec.a.found[k].v.toLowerCase() + '\n' + (sd.f[k].f || '').toLowerCase(); var pe = pm.get(key); if (pe) pe.n++; else if (pm.size < 4000) pm.set(key, { t: rec.a.found[k].v, f: sd.f[k].f || '', n: 1 }); } });
+        if (sd.src === 'stamp') stampN++;
+        r.i = i; r.id = sd.id; r.a = sd.after; r.b = sd.before; r.src = sd.src; r.bh = sd.bh; r.img = sd.img; r.f = sd.f; r.pv = pv;
+        r.lc = (sd.id + '\n' + sd.after + '\n' + sd.before).toLowerCase();
+        rows[i] = r;
+      }
+      S.pass.done = (phase - 1) * P.length + i; statusSoon();
+      if (i >= P.length) {
+        if (phase === 1) { T.vocabSeal(V); phase = 2; i = 0; }
+        else return done();
+      }
+      setTimeout(slice, 0);
+    }
+    function done() {
+      var keepSel = S.sel.map(function (x) { return S.rows && S.rows[x] ? S.rows[x].id : null; }).filter(Boolean);
+      S.rows = rows; S.V = V; S.masks = masks; S.sum = T.summary(rows, masks); S.pairs = pairs; S.bsrc = stampN && stampN === S.sum.before ? 'stamp' : 'master'; S.pass = null; S.rank = null; S.rankAt = 0;
+      S.final = !!M_END[S.m.st];
+      if (S.final) { S.prods = []; if (S.m.by) S.m.by = null; }   // nothing reads the raw rows again
+      var want = S.want.length ? S.want : keepSel; S.want = [];
+      S.sel = [];
+      want.forEach(function (id) { var x = findId(id); if (x >= 0 && S.sel.indexOf(x) < 0) S.sel.push(x); });
+      if (!S.sel.length) S.sel = ranked().slice(0, 6);
+      S.fmask = null; S.fchk = null; S.shown = PAGE;
+      renderAll();
+    }
+    slice();
+  }
+  function findId(id) { var k = String(id).toLowerCase(), R = S.rows || []; for (var i = 0; i < R.length; i++) if (String(R[i].id).toLowerCase() === k) return i; return -1; }
+  // the clearest examples first: most attributes gained, then most characters gained — one per distinct before-title, so six sizes of one style are one example
+  function ranked() {
+    if (S.rank) return S.rank;
+    var R = S.rows || [], seen = {}, c = [];
+    R.forEach(function (r, i) { if (r.kind === 'same' || r.kind === 'nobefore') return; var k = r.b.toLowerCase(); if (seen[k]) return; seen[k] = 1; c.push(i); });
+    c.sort(function (x, y) { var a = R[x], b = R[y]; return (b.add - a.add) || ((b.la - b.lb) - (a.la - a.lb)) || (x - y); });
+    if (!c.length) { seen = {}; R.forEach(function (r, i) { var k = r.a.toLowerCase(); if (seen[k] || c.length >= 60) return; seen[k] = 1; c.push(i); }); }
+    return (S.rank = c);
+  }
+
+  // ---- drawing ------------------------------------------------------------------------------------------------------
+  function markHtml(title, spans) {
+    var out = '', pos = 0;
+    (spans || []).forEach(function (sp) {
+      if (sp.s < pos) return;
+      out += esc(title.slice(pos, sp.s)) + '<mark class="a-' + sp.k + '" title="' + esc(T.LABEL[sp.k]) + '">' + esc(title.slice(sp.s, sp.e)) + '</mark>'; pos = sp.e;
+    });
+    return out + esc(title.slice(pos));
+  }
+  function maskHtml(mask, newBits) {
+    if (!mask || !mask.length) return '<span class="mk a-name">no attribute found</span>';
+    return mask.map(function (k) { return '<span class="mk a-' + k + (newBits && T.BIT[k] && (newBits & T.BIT[k]) ? ' new' : '') + '"' + (newBits && T.BIT[k] && (newBits & T.BIT[k]) ? ' title="Added by FeedSpark"' : '') + '>' + esc(T.LABEL[k] || k) + '</span>'; }).join('<span class="plus">+</span>');
+  }
+  function sigMask(i) { var s = i >= 0 && S.masks ? S.masks.list[i] : ''; return s ? s.split('>') : []; }
+  var KIND_L = { same: 'Unchanged', added: 'Attributes added', reordered: 'Re-ordered', reworded: 'Reworded', removed: 'Attributes removed', nobefore: 'No master title' };
+  var CHK_S = { agree: 'Agrees', title_only: 'Not in field', differ: 'Differs', field_only: 'Field only', none: '—' };
+  var PV_L = { s: 'from the client’s data', p: 'populated by FeedSpark', t: 'in the title only' };
+  function srcWord(r) { return r.src === 'master' ? 'Master feed' : (r.src === 'stamp' ? 'Original title' : 'Master feed'); }
+  function renderLegend() {
+    $('#legend').innerHTML = '<span class="lb">Marked in each title:</span>' + T.ATTRS.map(function (a) { return '<span class="mk a-' + a.k + '">' + esc(a.l) + '</span>'; }).join('') + '<span class="mk a-name">Product name</span>';
+  }
+  function renderStatus() {
+    var pip = $('#pip'), st = $('#mstate'), sc = $('#scopeline'), o = S.out, m = S.m, cls = 'pip', txt = '';
+    if (S.err) { cls += ' bad'; txt = 'Could not start: ' + S.err; }
+    else if (!S.brand || !S.mkt) { cls += ' off'; txt = 'Pick a brand and a market.'; }
+    else if (o.st === 'loading') txt = 'Reading the shopping feed… ' + mb(o.bytes || 0) + (o.total ? ' of ' + mb(o.total) : '') + ' · ' + n0(S.prods.length) + ' products';
+    else if (o.st === 'error') { cls += ' bad'; txt = 'The shopping feed could not be read: ' + o.err; }
+    else if (o.st === 'done') {
+      txt = n0(S.rows ? S.rows.length : S.prods.length) + ' products in the shopping feed' + (o.capped ? ' (the first ' + n0(CAP) + ')' : '') + ' · ';
+      if (m.st === 'ready' || (S.final && S.sum && m.join)) txt += 'master feed joined on “' + (m.join ? m.join.h : '') + '”' + (S.sum ? ' — ' + n0(S.sum.before) + ' titles have a before' : '');
+      else if (m.st === 'info' || m.st === 'preparing') { cls += ' warn'; txt += 'FeedHero is preparing the master feed…'; }
+      else if (m.st === 'file') { cls += ' warn'; txt += 'downloading the master feed… ' + mb(m.got || 0) + (m.tot ? ' of ' + mb(m.tot) : ''); }
+      else if (m.st === 'held' || m.st === 'parsing') { cls += ' warn'; txt += 'joining the master feed… ' + n0(m.rows || 0) + ' rows'; }
+      else { cls += ' warn'; txt += 'no master title to compare with — ' + (m.why || m.err || 'not read') + (S.sum && S.sum.before ? '. Before is the original title FeedSpark stamps on each item' : ''); }
+    } else cls += ' off';
+    pip.className = cls; st.textContent = txt;
+    sc.textContent = S.pass ? 'Reading titles… ' + Math.round(S.pass.done / Math.max(1, S.pass.of) * 100) + '%' : '';
+  }
+  function renderChips() {
+    var ms = (S.roster && S.roster[S.brand]) || [];
+    $('#mkts').innerHTML = ms.map(function (m) {
+      var ok = usable(m);
+      return '<button class="chip' + (ok ? '' : ' none') + (S.mkt === m.mkt ? ' on' : '') + '" data-m="' + esc(m.mkt) + '"' + (ok ? '' : ' disabled') + ' title="' + esc(ok ? (m.channel === 'meta' ? 'Meta catalogue feed' : 'Google Shopping feed') : 'No feed wired for this market') + '">' + esc(m.mkt.toUpperCase()) + (ok ? '' : ' <span class="k">no feed</span>') + '</button>';
+    }).join('');
+  }
+  function kpi(n, l, s) { return '<div class="kpi"><div class="n">' + n + '</div><div class="l">' + l + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; }
+  function arrow(a, b) { return a + '<span class="ar">→</span>' + b; }
+  function renderSummary() {
+    var Sm = S.sum, kp = $('#kp'), st = $('#story'), ln = $('#ln-sum');
+    if (!Sm) {
+      kp.innerHTML = ''; st.innerHTML = '<li>' + (S.out.st === 'error' ? 'The shopping feed could not be read.' : (S.brand ? 'Reading the feed…' : 'Pick a brand and a market.')) + '</li>'; ln.textContent = 'Waiting for the feed…'; return;
+    }
+    var hb = Sm.before > 0;
+    kp.innerHTML =
+      kpi(n0(Sm.n), 'Titles read', hb ? n0(Sm.before) + ' with a before to compare' : 'no before title joined') +
+      kpi(hb ? p1(Sm.changed, Sm.before) : '—', 'Titles rewritten', hb ? n0(Sm.changed) + ' of ' + n0(Sm.before) : 'needs the master feed') +
+      kpi(hb ? arrow(Sm.perB.toFixed(1), Sm.perA.toFixed(1)) : Sm.perA.toFixed(1), 'Attributes in a title', 'of the eight, on average') +
+      kpi(hb ? arrow(Math.round(Sm.avgB), Math.round(Sm.avgA)) : Math.round(Sm.avgA), 'Characters in a title', Sm.over ? n0(Sm.over) + ' past Google’s ' + T.LEN_MAX : 'none past Google’s ' + T.LEN_MAX) +
+      kpi(p1(Sm.top3 * Sm.n, Sm.n), 'On the three biggest masks', n0(Sm.masksA.length) + ' masks in all') +
+      kpi(n0(Sm.issueRows), 'Titles to look at', Sm.issueRows ? n0(Sm.issues) + ' title-against-field gaps' : 'every named attribute is in its field');
+    st.innerHTML = T.story(Sm, { brand: S.brand, market: S.mkt.toUpperCase(), before: S.bsrc }).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+    ln.innerHTML = hb ? '<b>' + p1(Sm.changed, Sm.before) + '</b> of ' + n0(Sm.before) + ' titles rewritten · <b>' + Sm.perB.toFixed(1) + ' → ' + Sm.perA.toFixed(1) + '</b> attributes a title'
+      : '<b>' + n0(Sm.n) + '</b> titles read · <b>' + Sm.perA.toFixed(1) + '</b> attributes a title · no before to compare';
+  }
+  function card(x) {
+    var r = S.rows[x], a = T.readTitle(r.a, r.f, S.V, { side: 'f' }), b = r.b ? T.readTitle(r.b, r.f, S.V, { side: 'm' }) : null;
+    var gained = b ? (a.has & ~b.has) : 0, h = '';
+    h += '<article class="pc" data-x="' + x + '"><div class="pc-h">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="ph"></span>') +
+      '<span class="id" title="' + esc(r.id) + '">' + esc(r.id) + '</span><span class="kind ' + r.kind + '">' + KIND_L[r.kind] + '</span><button class="x" type="button" data-rm="' + x + '" aria-label="Remove ' + esc(r.id) + '">✕</button></div>';
+    h += '<div class="ba"><div class="side before"><div class="cap"><b>Before</b><span>' + esc(srcWord(r)) + (r.bh ? ' · ' + esc(r.bh) : '') + '</span>' + (r.b ? '<span class="len' + (r.lb > T.LEN_MAX ? ' over' : '') + '">' + r.lb + ' chars</span>' : '') + '</div>' +
+      (r.b ? '<div class="ttl">' + markHtml(r.b, b.spans) + '</div><div class="mask">' + maskHtml(b.mask) + '</div>' : '<div class="ttl plain">No master title joined for this product.</div>') + '</div>';
+    h += '<div class="side after"><div class="cap"><b>After</b><span>Shopping feed · g:title</span><span class="len' + (r.la > T.LEN_MAX ? ' over' : '') + '">' + r.la + ' chars</span></div>' +
+      '<div class="ttl">' + markHtml(r.a, a.spans) + '</div><div class="mask">' + maskHtml(a.mask, gained) + '</div></div></div>';
+    h += '<div style="overflow-x:auto"><table><thead><tr><th>Attribute</th><th>Master feed</th><th>Shopping feed</th><th class="c">Before</th><th class="c">After</th><th>Title vs field</th></tr></thead><tbody>';
+    T.KEYS.forEach(function (k, i) {
+      var f = r.f[k], fa = a.found[k], fb = b && b.found[k], ck = T.check(k, f.f, fa), pv = r.pv.charAt(i);
+      h += '<tr><td><span class="mk a-' + k + '">' + esc(T.LABEL[k]) + '</span></td>' +
+        '<td' + (f.m ? '' : ' class="e"') + '>' + (f.m ? esc(f.m) + (f.mh ? '<span class="col">' + esc(f.mh) + '</span>' : '') : '—') + '</td>' +
+        '<td' + (f.f ? '' : ' class="e"') + '>' + (f.f ? esc(f.f) : '—') + '</td>' +
+        '<td class="c">' + (fb ? '<span class="yes" title="' + esc(fb.v) + '">✓</span>' : '<span class="no">—</span>') + '</td>' +
+        '<td class="c">' + (fa ? '<span class="yes" title="' + esc(fa.v + (PV_L[pv] ? ' · ' + PV_L[pv] : '')) + '">✓</span>' : '<span class="no">—</span>') + '</td>' +
+        '<td>' + (ck === 'none' ? '<span class="no">—</span>' : '<span class="ck ' + ck + '">' + CHK_S[ck] + '</span>') + (fa && PV_L[pv] ? '<span class="col" style="display:block;font-size:10px;color:var(--muted);font-weight:700">' + PV_L[pv] + '</span>' : '') + '</td></tr>';
+    });
+    return h + '</tbody></table></div></article>';
+  }
+  function renderSbs() {
+    var el = $('#sbs'), ln = $('#ln-sbs'), note = $('#sbs-note');
+    if (!S.rows) { el.innerHTML = '<div class="empty">' + (S.out.st === 'error' ? 'The shopping feed could not be read.' : 'Waiting for the feed…') + '</div>'; note.textContent = ''; ln.textContent = 'One product or several: the master title beside the shopping title'; return; }
+    el.innerHTML = S.sel.length ? S.sel.map(card).join('') : '<div class="empty">Add a product above, or press ✦ Best examples.</div>';
+    ln.innerHTML = '<b>' + S.sel.length + '</b> product' + (S.sel.length === 1 ? '' : 's') + ' compared · ringed chips are attributes the shopping title gained';
+    note.textContent = S.sum && !S.sum.before ? 'No master title joined on this feed, so each card shows the shopping title alone.' : 'A ringed chip in the After mask is an attribute the master title did not name. Hover a tick for the words it found and where the value came from.';
+  }
+  function renderMasks() {
+    var Sm = S.sum, el = $('#masks'), at = $('#attrs'), ln = $('#ln-mask');
+    if (!Sm) { el.innerHTML = at.innerHTML = '<div class="empty">Waiting for the feed…</div>'; ln.textContent = 'The order attributes are said in, before and after'; return; }
+    var side = S.mside, list = side === 'a' ? Sm.masksA : Sm.masksB, tot = side === 'a' ? Sm.n : Sm.before;
+    $('#mside').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-s') === side); });
+    el.innerHTML = list.length ? list.slice(0, 12).map(function (m) {
+      return '<button class="mrow" type="button" data-mask="' + m.i + '" title="List these titles"><span class="mask">' + maskHtml(m.sig ? m.sig.split('>') : []) + '</span><span class="fig"><span>' + p1(m.n, tot) + ' <small>· ' + n0(m.n) + '</small></span><span class="bar"><i style="width:' + Math.max(1, m.n / list[0].n * 100).toFixed(1) + '%"></i></span></span></button>';
+    }).join('') + (list.length > 12 ? '<p class="note">' + n0(list.length - 12) + ' smaller masks not listed — ' + p1(list.slice(12).reduce(function (t, m) { return t + m.n; }, 0), tot) + ' of titles.</p>' : '')
+      : '<div class="empty">' + (side === 'b' ? 'No master title joined on this feed.' : 'No titles read.') + '</div>';
+    at.innerHTML = T.KEYS.map(function (k) {
+      var A = Sm.attr[k], pb = Sm.before ? A.b / Sm.before * 100 : 0, pa = Sm.n ? A.a / Sm.n * 100 : 0;
+      return '<div class="arow"><span><span class="mk a-' + k + '">' + esc(T.LABEL[k]) + '</span></span><span class="bars">' + (Sm.before ? '<span class="bb b"><i style="width:' + pb.toFixed(1) + '%"></i></span>' : '') + '<span class="bb a"><i style="width:' + pa.toFixed(1) + '%"></i></span></span>' +
+        '<span class="v">' + (Sm.before ? Math.round(pb) + '% → ' : '') + Math.round(pa) + '%' + (A.added ? '<small>+' + n0(A.added) + ' titles</small>' : '') + '</span></div>';
+    }).join('');
+    ln.innerHTML = Sm.masksA.length ? 'Top mask: <b>' + esc(T.maskLabel(Sm.masksA[0].sig)) + '</b> · ' + p1(Sm.masksA[0].n, Sm.n) + ' of titles' : 'No titles read';
+  }
+  var CK_COLS = ['agree', 'title_only', 'differ', 'field_only'];
+  function renderChecks() {
+    var Sm = S.sum, tb = $('#chk-t tbody'), ln = $('#ln-chk');
+    if (!Sm) { $('#pairs').innerHTML = ''; tb.innerHTML = '<tr><td colspan="6"><div class="empty">Waiting for the feed…</div></td></tr>'; ln.textContent = 'If a title names it, the field should hold it'; return; }
+    tb.innerHTML = T.KEYS.map(function (k) {
+      var c = Sm.attr[k].chk, bad = c.title_only + c.differ;
+      return '<tr><td><span class="mk a-' + k + '">' + esc(T.LABEL[k]) + '</span></td>' + CK_COLS.map(function (col) {
+        var n = c[col], w = n && (col === 'title_only' || col === 'differ');
+        return '<td class="num">' + (n ? '<button type="button" data-ck="' + k + '|' + col + '"' + (w ? ' class="w"' : '') + ' title="List these titles">' + n0(n) + '</button>' : '<span class="z">0</span>') + '</td>';
+      }).join('') + '<td class="num">' + (bad ? '<button class="btn" type="button" data-brief="' + k + '" title="Brief this into Workflow — opens in a new tab">→ Brief</button>' : '') + '</td></tr>';
+    }).join('');
+    var pr = [];
+    T.KEYS.forEach(function (k) { if (S.pairs && S.pairs[k]) S.pairs[k].forEach(function (v) { pr.push({ k: k, t: v.t, f: v.f, n: v.n }); }); });
+    pr.sort(function (a, b) { return b.n - a.n; });
+    $('#pairs').innerHTML = pr.length ? '<div class="sub-h" style="margin-top:16px">Most common gaps</div>' + pr.slice(0, 10).map(function (x) {
+      return '<div class="prow"><span class="mk a-' + x.k + '">' + esc(T.LABEL[x.k]) + '</span><span>title says <b>' + esc(x.t) + '</b> · field ' + (x.f ? 'says <b>' + esc(x.f) + '</b>' : 'is <b>empty</b>') + '</span><span class="v">' + n0(x.n) + '</span></div>';
+    }).join('') : '';
+    ln.innerHTML = Sm.issueRows ? '<span class="warn">' + n0(Sm.issueRows) + ' titles</span> name something their field does not hold or says differently' : 'Every attribute a title names is also in its field';
+  }
+  function hasCheck(r, k, col) { return T.chkOf(r.c, T.KEYS.indexOf(k)) === col; }
+  function filtered() {
+    var R = S.rows || [], q = S.q.trim().toLowerCase().split(/\s+/).filter(Boolean), v = S.view, fm = S.fmask, fc = S.fchk, out = [];
+    for (var i = 0; i < R.length; i++) {
+      var r = R[i];
+      if (v === 'changed' && (r.kind === 'same' || r.kind === 'nobefore')) continue;
+      if (v === 'same' && r.kind !== 'same') continue;
+      if (v === 'look' && !r.iss) continue;
+      if (fm && (fm.side === 'a' ? r.ma : (r.kind === 'nobefore' ? -2 : r.mb)) !== fm.i) continue;
+      if (fc && !hasCheck(r, fc.k, fc.col)) continue;
+      if (q.length && !q.every(function (w) { return r.lc.indexOf(w) >= 0; })) continue;
+      out.push(i);
+    }
+    return out;
+  }
+  function renderList() {
+    var tb = $('#list-t tbody'), cnt = $('#cnt'), more = $('#more'), ln = $('#ln-list'), fch = $('#fchips');
+    $('#views').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === S.view); });
+    if (!S.rows) { tb.innerHTML = '<tr><td colspan="7"><div class="empty">' + (S.out.st === 'error' ? 'The shopping feed could not be read.' : 'Waiting for the feed…') + '</div></td></tr>'; cnt.textContent = ''; more.hidden = true; fch.innerHTML = ''; ln.textContent = 'Before, after, the mask and what changed'; return; }
+    var F = filtered(), show = F.slice(0, S.shown), ch = '';
+    if (S.fmask) ch += '<span class="fchip">' + (S.fmask.side === 'a' ? 'Mask' : 'Master mask') + ': ' + esc(T.maskLabel(S.masks.list[S.fmask.i])) + '<button type="button" data-clear="mask" aria-label="Clear the mask filter">✕</button></span> ';
+    if (S.fchk) ch += '<span class="fchip">' + esc(T.LABEL[S.fchk.k]) + ': ' + esc(CHK_S[S.fchk.col].toLowerCase()) + '<button type="button" data-clear="chk" aria-label="Clear the check filter">✕</button></span>';
+    fch.innerHTML = ch;
+    tb.innerHTML = show.length ? show.map(function (x) {
+      var r = S.rows[x], a = T.readTitle(r.a, r.f, S.V, { side: 'f' }), gained = r.kind === 'nobefore' ? 0 : (r.ha & ~r.hb);
+      var add = T.KEYS.filter(function (k) { return gained & T.BIT[k]; }).map(function (k) { return T.LABEL[k]; });
+      return '<tr data-x="' + x + '" title="Add to Side by side"><td class="mono">' + esc(r.id) + '</td>' +
+        '<td class="tx">' + (r.b ? '<div class="ttl plain">' + esc(r.b) + '</div>' : '<span class="z" style="color:var(--muted)">—</span>') + '</td>' +
+        '<td class="tx"><div class="ttl">' + markHtml(r.a, a.spans) + '</div></td>' +
+        '<td><div class="mask">' + maskHtml(a.mask, gained) + '</div></td>' +
+        '<td><span class="kind ' + r.kind + '">' + KIND_L[r.kind] + '</span>' + (add.length ? '<div class="note" style="margin:3px 0 0">+ ' + esc(add.join(', ')) + '</div>' : '') + '</td>' +
+        '<td class="num"' + (r.la > T.LEN_MAX ? ' style="color:var(--risk)"' : '') + '>' + (r.b ? r.lb + ' → ' : '') + r.la + '</td>' +
+        '<td>' + (r.iss ? '<span class="ck differ">' + r.iss + ' to look at</span>' : '<span class="yes">✓</span>') + '</td></tr>';
+    }).join('') : '<tr><td colspan="7"><div class="empty">No title matches.</div></td></tr>';
+    cnt.textContent = n0(F.length) + ' of ' + n0(S.rows.length) + ' titles';
+    more.hidden = F.length <= S.shown; more.textContent = 'Show more (' + n0(Math.min(200, F.length - S.shown)) + ' of ' + n0(F.length - S.shown) + ' left)';
+    ln.innerHTML = '<b>' + n0(S.rows.length) + '</b> titles' + (F.length !== S.rows.length ? ' · ' + n0(F.length) + ' in this view' : '');
+  }
+  function renderAll() { [renderStatus, renderSummary, renderSbs, renderMasks, renderChecks, renderList].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error('titles:', e); } }); }
+
+  // ---- every section folds: this device's choice, a fresh device opens the first two, a #hash opens the one it names
+  var FOLD_K = 'fcc-tl-fold', OPEN0 = { sum: 1, sbs: 1 }, FOLD = null;
+  function secs() { return Array.prototype.slice.call(document.querySelectorAll('.sec[data-sec]')); }
+  function setOpen(sec, on, keep) {
+    sec.classList.toggle('open', !!on); $('.sec-h', sec).setAttribute('aria-expanded', on ? 'true' : 'false');
+    if (keep) { FOLD[sec.getAttribute('data-sec')] = on ? 1 : 0; try { localStorage.setItem(FOLD_K, JSON.stringify(FOLD)); } catch (e) {} }
+    foldBtn();
+  }
+  function foldBtn() { var all = secs().every(function (s) { return s.classList.contains('open'); }); var b = $('#foldall'); b.textContent = all ? '⊖ Fold all' : '⊕ Open all'; b.setAttribute('data-all', all ? '1' : '0'); }
+  function reveal(id) { var s = id && document.getElementById(id); if (s && s.classList.contains('sec')) { setOpen(s, true, false); return s; } return null; }
+  function foldInit() {
+    try { FOLD = JSON.parse(localStorage.getItem(FOLD_K) || 'null'); } catch (e) { FOLD = null; }
+    if (!FOLD || typeof FOLD !== 'object') FOLD = Object.assign({}, OPEN0);
+    secs().forEach(function (s) { setOpen(s, !!FOLD[s.getAttribute('data-sec')], false); $('.sec-h', s).addEventListener('click', function () { setOpen(s, !s.classList.contains('open'), true); }); });
+    $('#foldall').addEventListener('click', function () { var open = this.getAttribute('data-all') !== '1'; secs().forEach(function (s) { setOpen(s, open, true); }); });
+    function hash() { var s = reveal(location.hash.slice(1)); if (s) s.scrollIntoView({ block: 'start' }); }
+    window.addEventListener('hashchange', hash); if (location.hash) setTimeout(hash, 0);
+  }
+  function goList() { S.shown = PAGE; renderList(); var s = reveal('sec-list'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function addSel(x) {
+    var at = S.sel.indexOf(x); if (at >= 0) S.sel.splice(at, 1);
+    S.sel.unshift(x); if (S.sel.length > SEL_MAX) S.sel.length = SEL_MAX;
+    renderSbs(); reveal('sec-sbs');
+  }
+
+  // ---- controls -----------------------------------------------------------------------------------------------------
+  $('#brand').addEventListener('change', function () { S.brand = this.value; S.mkt = ''; pickMarket(); remember('fcc-tl-brand', S.brand); remember('fcc-tl-mkt', S.mkt); setQuery(); renderChips(); load(); });
+  $('#mkts').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (!b || b.disabled) return; S.mkt = b.getAttribute('data-m'); remember('fcc-tl-mkt', S.mkt); setQuery(); renderChips(); load(); });
+  $('#views').addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (!b) return; S.view = b.getAttribute('data-v'); S.shown = PAGE; renderList(); });
+  $('#mside').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; S.mside = b.getAttribute('data-s'); renderMasks(); });
+  var QT = 0; $('#q').addEventListener('input', function () { var v = this.value; clearTimeout(QT); QT = setTimeout(function () { S.q = v; S.shown = PAGE; renderList(); }, 140); });
+  document.addEventListener('keydown', function (e) { if (e.key === '/' && !/input|textarea|select/i.test((e.target && e.target.tagName) || '')) { e.preventDefault(); reveal('sec-list'); $('#q').focus(); } });
+  $('#more').addEventListener('click', function () { S.shown += 200; renderList(); });
+  $('#masks').addEventListener('click', function (e) { var b = e.target.closest('[data-mask]'); if (!b) return; S.fmask = { side: S.mside, i: +b.getAttribute('data-mask') }; S.view = 'all'; goList(); });
+  $('#fchips').addEventListener('click', function (e) { var b = e.target.closest('[data-clear]'); if (!b) return; if (b.getAttribute('data-clear') === 'mask') S.fmask = null; else S.fchk = null; S.shown = PAGE; renderList(); });
+  $('#chk-t').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ck]'), br = e.target.closest('[data-brief]');
+    if (b) { var p = b.getAttribute('data-ck').split('|'); S.fchk = { k: p[0], col: p[1] }; S.view = 'all'; goList(); }
+    else if (br) brief(br.getAttribute('data-brief'));
+  });
+  $('#list-t').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-x]'); if (!tr) return; addSel(+tr.getAttribute('data-x')); var s = $('#sec-sbs'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Added to Side by side'); });
+  $('#sbs').addEventListener('click', function (e) { var b = e.target.closest('[data-rm]'); if (!b) return; var x = +b.getAttribute('data-rm'), at = S.sel.indexOf(x); if (at >= 0) S.sel.splice(at, 1); renderSbs(); });
+  $('#best').addEventListener('click', function () { if (!S.rows) return; S.rankAt = 0; S.sel = ranked().slice(0, 6); renderSbs(); });
+  $('#rand').addEventListener('click', function () { if (!S.rows) return; var R = ranked(); if (!R.length) return; S.rankAt = (S.rankAt + 6) % R.length; S.sel = R.slice(S.rankAt, S.rankAt + 6); if (!S.sel.length) { S.rankAt = 0; S.sel = R.slice(0, 6); } renderSbs(); });
+  $('#clr').addEventListener('click', function () { S.sel = []; renderSbs(); });
+  function matches(v, max) {
+    var R = S.rows || [], q = v.trim().toLowerCase().split(/\s+/).filter(Boolean), out = []; if (!q.length) return out;
+    for (var i = 0; i < R.length && out.length < max; i++) if (q.every(function (w) { return R[i].lc.indexOf(w) >= 0; })) out.push(i);
+    return out;
+  }
+  var AT = 0;
+  $('#add').addEventListener('input', function () {
+    var v = this.value; clearTimeout(AT);
+    AT = setTimeout(function () { $('#add-list').innerHTML = matches(v, 8).map(function (x) { var r = S.rows[x]; return '<option value="' + esc(r.id) + '">' + esc(r.a.slice(0, 90)) + '</option>'; }).join(''); }, 120);
+  });
+  $('#add').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return; e.preventDefault();
+    if (!S.rows) return toast('The feed is still being read');
+    var v = this.value.trim(); if (!v) return;
+    var x = findId(v); if (x < 0) { var mm = matches(v, 1); x = mm.length ? mm[0] : -1; }
+    if (x < 0) return toast('No product matches “' + v + '”');
+    this.value = ''; addSel(x);
+  });
+  document.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG' && t.closest && t.closest('.pc-h')) { var s = document.createElement('span'); s.className = 'ph'; t.replaceWith(s); } }, true);
+  $('#copysum').addEventListener('click', function () { if (!S.sum) return toast('Nothing read yet'); copyText(T.story(S.sum, { brand: S.brand, market: S.mkt.toUpperCase(), before: S.bsrc }).join('\n')); });
+  function cell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  $('#csv').addEventListener('click', function () {
+    if (!S.rows) return toast('Nothing read yet');
+    var F = filtered(), L = [['Product ID', 'Before title', 'Before read from', 'Shopping title', 'Mask before', 'Mask after', 'Change', 'Chars before', 'Chars after'].concat(T.KEYS.map(function (k) { return T.LABEL[k] + ' · title vs field'; })).map(cell).join(',')];
+    F.forEach(function (x) {
+      var r = S.rows[x];
+      L.push([r.id, r.b, r.b ? (r.src === 'stamp' ? 'original-title stamp' : 'master · ' + r.bh) : '', r.a, r.kind === 'nobefore' ? '' : T.maskLabel(S.masks.list[r.mb]), T.maskLabel(S.masks.list[r.ma]), KIND_L[r.kind], r.b ? r.lb : '', r.la]
+        .concat(T.KEYS.map(function (k, i) { var c = T.chkOf(r.c, i); return c === 'none' ? '' : CHK_S[c]; })).map(cell).join(','));
+    });
+    download('titles_' + S.brand.replace(/\W+/g, '-') + '_' + S.mkt + '.csv', '﻿' + L.join('\n'));
+    toast(n0(F.length) + ' titles');
+  });
+  function brief(k) {
+    var Sm = S.sum; if (!Sm) return;
+    var c = Sm.attr[k].chk, L = T.LABEL[k], mk = S.mkt.toUpperCase(), ex = [], R = S.rows;
+    for (var i = 0; i < R.length && ex.length < 10; i++) { var col = T.chkOf(R[i].c, T.KEYS.indexOf(k)); if (col === 'title_only' || col === 'differ') ex.push(R[i].id + ' — ' + R[i].a.slice(0, 110) + ' [field: ' + (R[i].f[k].f || 'empty') + ']'); }
+    var lines = ['Title Lab — ' + S.brand + ' ' + mk + ' · ' + L,
+      n0(c.title_only) + ' titles name a ' + L.toLowerCase() + ' the ' + L.toLowerCase() + ' field does not hold; ' + n0(c.differ) + ' name one the field says differently (' + n0(Sm.n) + ' titles read).',
+      'Definition of done: every ' + L.toLowerCase() + ' a title names is also the value in its field — populate the field from the title where it is empty, and settle which side is right where they differ.',
+      '', 'Examples:'].concat(ex);
+    wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Title Fix - ' + L + ' in title, not in field - ' + S.brand + ' ' + mk + ' - ' + mmyy(), cat: 'technical', scope: lines.join('\n') }));
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
