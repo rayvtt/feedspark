@@ -84,6 +84,15 @@ with Forget. A taught span wears a double underline on the card.
 Not learned automatically: nothing is inferred from a correction beyond the rule itself — one click teaches one word
 or one pair, for the scope chosen.
 
+## Settling it by eye
+
+Ray, 12 Nov 2026: "can the image be clickable to showcase a carousel of all product images … the title says 'texture
+and pattern' but the field says 'embroidered,' so I need to look at the photo." A card's thumbnail is a button
+(badged with the image count) opening every picture the feed carries for the product — `image_link`, then each
+distinct `additional_image_link` — full screen: ‹ ›, arrow keys, a swipe, thumbnails, Esc. Under the picture sit the
+attributes where title and field part ways ("Pattern: title says … · field says …") and a link to the product page.
+Images load straight from the client's CDN, as the thumbnail does; nothing is stored.
+
 ## Before → after
 
 Each product is one of: unchanged, attributes added, re-ordered, reworded, attributes removed, no master title.

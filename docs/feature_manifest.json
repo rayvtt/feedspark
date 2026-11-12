@@ -17536,6 +17536,7 @@
   {"name": "Title Lab: a taught word is read first, before any field", "file": "docs/titlelab_engine.js", "pattern": "put(ta, ti, tn, 'taught', false);"},
   {"name": "Title Lab: an accepted pair is not a gap", "file": "docs/titlelab_engine.js", "pattern": "Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';"},
   {"name": "Title Lab: corrections are the team's — two shared-state namespaces", "file": "cloudflare/feedspark-deck/src/sharedstate.js", "pattern": "titleteachall: null,"},
-  {"name": "Title Lab: a correction re-reads every title and is pushed to the team", "file": "docs/FeedSpark_Titles.html", "pattern": "body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all })"}
+  {"name": "Title Lab: a correction re-reads every title and is pushed to the team", "file": "docs/FeedSpark_Titles.html", "pattern": "body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all })"},
+  {"name": "Title Lab: a card's thumbnail opens every image the feed carries", "file": "docs/FeedSpark_Titles.html", "pattern": "function imagesOf(r) {"}
  ]
 }

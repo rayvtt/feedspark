@@ -236,6 +236,31 @@ window.addEventListener('load',restore);
   .trow:first-child{border-top:0}
   .trow .sc{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
   @media(max-width:760px){.trow{grid-template-columns:86px minmax(0,1fr) auto}.trow .sc{grid-column:2}}
+  /* the product's pictures: the card's thumbnail opens every image the feed carries, so a title/field difference can be settled by eye */
+  .pc-h .pic{position:relative;flex:none;padding:0;border:0;background:none;cursor:zoom-in;border-radius:8px;line-height:0}
+  .pc-h .pic:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .pc-h .pic .n{position:absolute;right:-5px;bottom:-5px;font-size:9.5px;font-weight:900;line-height:1;padding:2px 4px;border-radius:100px;background:var(--navy);color:#fff}
+  .lbx{position:fixed;inset:0;z-index:400;background:rgba(10,12,16,.9);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:10px;padding:14px 16px;color:#fff}
+  .lbx[hidden]{display:none}
+  .lbx-h{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;min-width:0}
+  .lbx-h .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lbx-h .c{font-variant-numeric:tabular-nums;opacity:.8;white-space:nowrap}
+  .lbx button{font:inherit;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;cursor:pointer;font-weight:900}
+  .lbx button:hover{background:rgba(255,255,255,.22)}
+  .lbx-h button,.lbx-h a{height:36px;padding:0 12px;display:inline-flex;align-items:center;text-decoration:none;color:#fff;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);font-weight:900;font-size:12.5px;white-space:nowrap}
+  .lbx-m{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+  .lbx-m img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;background:#fff}
+  .lbx-m .nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;font-size:22px}
+  .lbx-m .nav.p{left:0}.lbx-m .nav.n{right:0}
+  .lbx-m .err{font-size:13px;font-weight:700;opacity:.8}
+  .lbx-th{display:flex;gap:6px;justify-content:center;overflow-x:auto;padding:2px}
+  .lbx-th button{flex:none;width:54px;height:54px;padding:0;overflow:hidden;background:#fff;border:2px solid transparent;opacity:.6}
+  .lbx-th button.on{border-color:var(--orange);opacity:1}
+  .lbx-th img{width:100%;height:100%;object-fit:cover}
+  .lbx-f{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:12px;font-weight:700}
+  .lbx-f span{background:rgba(255,255,255,.1);border-radius:8px;padding:4px 9px}
+  .lbx-f span.w{background:rgba(237,111,11,.35)}
+  @media(max-width:760px){.lbx{padding:10px}.lbx-h .t{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.lbx-th button{width:44px;height:44px}}
   main .footmark{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
   [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
   [data-theme=dark] table.t th{background:#181B22}
@@ -387,6 +412,12 @@ window.addEventListener('load',restore);
   <div class="footmark"><span>FeedSpark · Private &amp; Confidential</span><span>Title Lab</span></div>
 </main>
 
+<div class="lbx" id="lb" role="dialog" aria-modal="true" aria-label="Product images" hidden>
+  <div class="lbx-h"><span class="t" id="lb-t"></span><span class="c" id="lb-c"></span><a id="lb-link" target="_blank" rel="noopener" hidden>↗ Product page</a><button type="button" id="lb-x" aria-label="Close">✕ Close</button></div>
+  <div class="lbx-m"><button type="button" class="nav p" id="lb-p" aria-label="Previous image">‹</button><img id="lb-img" alt="" referrerpolicy="no-referrer"><span class="err" id="lb-err" hidden>This image could not be loaded.</span><button type="button" class="nav n" id="lb-n" aria-label="Next image">›</button></div>
+  <div class="lbx-th" id="lb-th"></div>
+  <div class="lbx-f" id="lb-f"></div>
+</div>
  <div class="tpop" id="tpop" role="dialog" aria-label="Correct how this is read" hidden>
   <div class="tp-h"><b id="tp-t"></b><button class="x" id="tp-x" type="button" aria-label="Close">✕</button></div>
   <div id="tp-b"></div>
@@ -727,7 +758,7 @@ window.addEventListener('load',restore);
         var rec = T.read(sd, V), r = T.lite(rec, masks), pv = '';
         T.KEYS.forEach(function (k) { pv += PV[rec.prov[k]] || '-'; var c = rec.chk[k]; if (c === 'differ' || c === 'title_only') { var pm = pairs[k] || (pairs[k] = new Map()), key = rec.a.found[k].v.toLowerCase() + '\n' + (sd.f[k].f || '').toLowerCase(); var pe = pm.get(key); if (pe) pe.n++; else if (pm.size < 4000) pm.set(key, { t: rec.a.found[k].v, f: sd.f[k].f || '', n: 1 }); } });
         if (sd.src === 'stamp') stampN++;
-        r.i = i; r.id = sd.id; r.a = sd.after; r.b = sd.before; r.src = sd.src; r.bh = sd.bh; r.img = sd.img; r.f = sd.f; r.pv = pv;
+        r.i = i; r.id = sd.id; r.a = sd.after; r.b = sd.before; r.src = sd.src; r.bh = sd.bh; r.img = sd.img; r.link = P[i].f.link || ''; r.f = sd.f; r.pv = pv;
         r.lc = (sd.id + '\n' + sd.after + '\n' + sd.before).toLowerCase();
         rows[i] = r;
       }
@@ -843,10 +874,51 @@ window.addEventListener('load',restore);
     ln.innerHTML = hb ? '<b>' + p1(Sm.changed, Sm.before) + '</b> of ' + n0(Sm.before) + ' titles rewritten · <b>' + Sm.perB.toFixed(1) + ' → ' + Sm.perA.toFixed(1) + '</b> attributes a title'
       : '<b>' + n0(Sm.n) + '</b> titles read · <b>' + Sm.perA.toFixed(1) + '</b> attributes a title · no before to compare';
   }
+  // every picture the feed carries for the product: the main image, then each additional one, once each
+  function imagesOf(r) {
+    var p = S.prods[r.i], out = [], seen = {};
+    [r.img].concat(p && p.f ? [].concat(p.f.additional_image_link || []) : []).forEach(function (u) { u = String(u || '').trim(); if (/^https?:\/\//i.test(u) && !seen[u]) { seen[u] = 1; out.push(u); } });
+    return out;
+  }
+  var LB = null;
+  function lbOpen(x) {
+    var r = S.rows[x], imgs = imagesOf(r); if (!imgs.length) return;
+    LB = { x: x, imgs: imgs, i: 0, back: document.activeElement };
+    $('#lb-t').textContent = r.id + ' — ' + r.a;
+    var l = $('#lb-link'); if (/^https?:\/\//i.test(r.link)) { l.href = r.link; l.hidden = false; } else l.hidden = true;
+    $('#lb-th').innerHTML = imgs.length > 1 ? imgs.map(function (u, i) { return '<button type="button" data-li="' + i + '" aria-label="Image ' + (i + 1) + '"><img src="' + esc(u) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></button>'; }).join('') : '';
+    // what the eye is being asked to settle: each attribute where the title and the field part ways
+    var a = T.readTitle(r.a, r.f, S.V, { side: 'f' }), bits = [];
+    T.KEYS.forEach(function (k) {
+      var ck = T.check(k, r.f[k].f, a.found[k], S.V.teach);
+      if (ck === 'differ' || ck === 'title_only') bits.push('<span class="w">' + esc(T.LABEL[k]) + ': title says “' + esc(a.found[k].v) + '” · field ' + (r.f[k].f ? 'says “' + esc(r.f[k].f) + '”' : 'is empty') + '</span>');
+      else if (r.f[k].f && (k === 'pattern' || k === 'material' || k === 'color')) bits.push('<span>' + esc(T.LABEL[k]) + ': ' + esc(r.f[k].f) + '</span>');
+    });
+    $('#lb-f').innerHTML = bits.join('');
+    $('#lb').hidden = false; document.body.style.overflow = 'hidden'; lbShow(0); $('#lb-x').focus();
+  }
+  function lbShow(i) {
+    if (!LB) return; var n = LB.imgs.length; LB.i = (i + n) % n;
+    var im = $('#lb-img'); $('#lb-err').hidden = true; im.hidden = false; im.src = LB.imgs[LB.i];
+    $('#lb-c').textContent = (LB.i + 1) + ' of ' + n;
+    $('#lb-p').hidden = $('#lb-n').hidden = n < 2;
+    $('#lb-th').querySelectorAll('button').forEach(function (b, j) { b.classList.toggle('on', j === LB.i); if (j === LB.i && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); });
+  }
+  function lbClose() { if (!LB) return; var b = LB.back; LB = null; $('#lb').hidden = true; document.body.style.overflow = ''; $('#lb-img').removeAttribute('src'); if (b && b.focus) try { b.focus(); } catch (e) {} }
+  $('#lb-x').addEventListener('click', lbClose);
+  $('#lb-p').addEventListener('click', function () { lbShow(LB.i - 1); });
+  $('#lb-n').addEventListener('click', function () { lbShow(LB.i + 1); });
+  $('#lb-th').addEventListener('click', function (e) { var b = e.target.closest('[data-li]'); if (b) lbShow(+b.getAttribute('data-li')); });
+  $('#lb').addEventListener('click', function (e) { if (e.target === this || e.target.classList.contains('lbx-m')) lbClose(); });
+  $('#lb-img').addEventListener('error', function () { if (LB) { this.hidden = true; $('#lb-err').hidden = false; } });
+  document.addEventListener('keydown', function (e) { if (!LB) return; if (e.key === 'Escape') { e.stopPropagation(); lbClose(); } else if (e.key === 'ArrowLeft') lbShow(LB.i - 1); else if (e.key === 'ArrowRight') lbShow(LB.i + 1); }, true);
+  var lbTx = null;
+  $('#lb').addEventListener('touchstart', function (e) { lbTx = e.touches[0].clientX; }, { passive: true });
+  $('#lb').addEventListener('touchend', function (e) { if (lbTx == null || !LB) return; var d = e.changedTouches[0].clientX - lbTx; lbTx = null; if (Math.abs(d) > 50) lbShow(LB.i + (d < 0 ? 1 : -1)); }, { passive: true });
   function card(x) {
     var r = S.rows[x], a = T.readTitle(r.a, r.f, S.V, { side: 'f' }), b = r.b ? T.readTitle(r.b, r.f, S.V, { side: 'm' }) : null;
     var gained = b ? (a.has & ~b.has) : 0, h = '';
-    h += '<article class="pc" data-x="' + x + '"><div class="pc-h">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="ph"></span>') +
+    h += '<article class="pc" data-x="' + x + '"><div class="pc-h">' + (r.img ? '<button class="pic" type="button" data-pics="' + x + '" title="Open this product’s images" aria-label="Open the images of ' + esc(r.id) + '"><img src="' + esc(r.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' + (imagesOf(r).length > 1 ? '<span class="n">' + imagesOf(r).length + '</span>' : '') + '</button>' : '<span class="ph"></span>') +
       '<span class="id" title="' + esc(r.id) + '">' + esc(r.id) + '</span><span class="kind ' + r.kind + '">' + KIND_L[r.kind] + '</span><button class="x" type="button" data-rm="' + x + '" aria-label="Remove ' + esc(r.id) + '">✕</button></div>';
     h += '<div class="ba"><div class="side before"><div class="cap"><b>Before</b><span>' + esc(srcWord(r)) + (r.bh ? ' · ' + esc(r.bh) : '') + '</span>' + (r.b ? '<span class="len' + (r.lb > T.LEN_MAX ? ' over' : '') + '">' + r.lb + ' chars</span>' : '') + '</div>' +
       (r.b ? '<div class="ttl">' + teachHtml(r.b, b.spans) + '</div><div class="mask">' + maskHtml(b.mask) + '</div>' : '<div class="ttl plain">No master title joined for this product.</div>') + '</div>';
@@ -988,6 +1060,7 @@ window.addEventListener('load',restore);
   });
   $('#list-t').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-x]'); if (!tr) return; addSel(+tr.getAttribute('data-x')); var s = $('#sec-sbs'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Added to Side by side'); });
   $('#sbs').addEventListener('click', function (e) {
+    var pc = e.target.closest('[data-pics]'); if (pc) return lbOpen(+pc.getAttribute('data-pics'));
     var w = e.target.closest('[data-tw]'), o = e.target.closest('[data-ok]');
     if (w) return tpOpen('w', { w: w.getAttribute('data-tw'), cur: w.getAttribute('data-cur') || '' }, e.clientX, e.clientY);
     if (o) return tpOpen('ok', { a: o.getAttribute('data-ok'), t: o.getAttribute('data-t'), f: o.getAttribute('data-f') }, e.clientX, e.clientY);
@@ -1016,7 +1089,7 @@ window.addEventListener('load',restore);
     if (x < 0) return toast('No product matches “' + v + '”');
     this.value = ''; addSel(x);
   });
-  document.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG' && t.closest && t.closest('.pc-h')) { var s = document.createElement('span'); s.className = 'ph'; t.replaceWith(s); } }, true);
+  document.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG' && t.closest && t.closest('.pc-h')) { var s = document.createElement('span'); s.className = 'ph'; (t.closest('.pic') || t).replaceWith(s); } }, true);
   $('#copysum').addEventListener('click', function () { if (!S.sum) return toast('Nothing read yet'); copyText(T.story(S.sum, { brand: S.brand, market: S.mkt.toUpperCase(), before: S.bsrc }).join('\n')); });
   function cell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
   $('#csv').addEventListener('click', function () {
