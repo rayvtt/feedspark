@@ -304,11 +304,11 @@ window.addEventListener('load',restore);
     <div class="sec-b" id="sec-mask-b">
       <div class="grid2">
         <div>
-          <h3 class="sub-h">Masks in the shopping feed <span class="seg" id="mside" role="group" aria-label="Which titles"><button type="button" data-s="a" class="on">Shopping feed</button><button type="button" data-s="b">Master feed</button></span></h3>
+          <div class="sub-h">Masks in the shopping feed <span class="seg" id="mside" role="group" aria-label="Which titles"><button type="button" data-s="a" class="on">Shopping feed</button><button type="button" data-s="b">Master feed</button></span></div>
           <div id="masks"><div class="empty">Waiting for the feed…</div></div>
         </div>
         <div>
-          <h3 class="sub-h">Share of titles naming each attribute</h3>
+          <div class="sub-h">Share of titles naming each attribute</div>
           <div id="attrs"><div class="empty">Waiting for the feed…</div></div>
           <div class="key"><span><i class="kb"></i>Master feed</span><span><i class="ka"></i>Shopping feed</span></div>
         </div>
@@ -764,7 +764,7 @@ window.addEventListener('load',restore);
     var pr = [];
     T.KEYS.forEach(function (k) { if (S.pairs && S.pairs[k]) S.pairs[k].forEach(function (v) { pr.push({ k: k, t: v.t, f: v.f, n: v.n }); }); });
     pr.sort(function (a, b) { return b.n - a.n; });
-    $('#pairs').innerHTML = pr.length ? '<h3 class="sub-h" style="margin-top:16px">Most common gaps</h3>' + pr.slice(0, 10).map(function (x) {
+    $('#pairs').innerHTML = pr.length ? '<div class="sub-h" style="margin-top:16px">Most common gaps</div>' + pr.slice(0, 10).map(function (x) {
       return '<div class="prow"><span class="mk a-' + x.k + '">' + esc(T.LABEL[x.k]) + '</span><span>title says <b>' + esc(x.t) + '</b> · field ' + (x.f ? 'says <b>' + esc(x.f) + '</b>' : 'is <b>empty</b>') + '</span><span class="v">' + n0(x.n) + '</span></div>';
     }).join('') : '';
     ln.innerHTML = Sm.issueRows ? '<span class="warn">' + n0(Sm.issueRows) + ' titles</span> name something their field does not hold or says differently' : 'Every attribute a title names is also in its field';
