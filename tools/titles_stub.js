@@ -35,7 +35,7 @@ function products() {
 }
 function outputXml() {
   const items = products().map((p) => '<item>\n<g:id>' + p.id + '</g:id>\n<title>' + esc(p.after) + '</title>\n<description>' + esc('A synthetic ' + p.type.toLowerCase() + ' made for the title tripwires.') + '</description>\n'
-    + '<link>https://shop.northwind.invalid/p/' + p.id.toLowerCase() + '</link>\n<g:image_link>https://img.northwind.invalid/' + p.id + '.jpg</g:image_link>\n'
+    + '<link>https://shop.northwind.invalid/p/' + p.id.toLowerCase() + '</link>\n<g:image_link>https://img.northwind.invalid/' + p.id + '.jpg</g:image_link>\n<g:additional_image_link>https://img.northwind.invalid/' + p.id + '-2.jpg</g:additional_image_link>\n<g:additional_image_link>https://img.northwind.invalid/' + p.id + '-3.jpg</g:additional_image_link>\n'
     + '<g:availability>in stock</g:availability>\n<g:price>' + (20 + p.i).toFixed(2) + ' GBP</g:price>\n<g:brand>Northwind</g:brand>\n'
     + '<g:product_type>' + esc(p.pt) + '</g:product_type>\n<g:color>' + p.fieldCol + '</g:color>\n' + (p.fieldMat ? '<g:material>' + p.fieldMat + '</g:material>\n' : '')
     + (p.pat ? '<g:pattern>' + p.pat + '</g:pattern>\n' : '') + '<g:size>' + p.size + '</g:size>\n<g:gender>' + p.gender + '</g:gender>\n<g:age_group>adult</g:age_group>\n'

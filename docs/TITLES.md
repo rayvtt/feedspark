@@ -57,6 +57,42 @@ A child word in a title ("Girls") agrees with any child age band and differs onl
 corrected by the page; **→ Brief** files `Title Fix - <Attribute> in title, not in field - <Brand> <MKT> - MMYY`
 into Workflow in a new tab, with the counts and ten example products.
 
+## Teaching it (auto-learn)
+
+Ray, 12 Nov 2026: "is there a way for the whole dashboard to auto-learn, so that when I start switching or adding
+comments and saving feedback, it applies across the brands and the feed? … the algorithm is picking 'youth' as the
+item type … the item type should be 'shoe'."
+
+Two things changed. First the reading itself: the item type is looked for at every level of the product type from
+the leaf up (three at most), with gender and age words set aside — so a tree whose leaf is the brand
+(`Kids > Girls > Shoes > Geox`) reads "Shoes", a level like "Girls Youth" is nobody's item type, and "Youth" is the
+age group.
+
+Second, a person's correction is a **rule** that holds for every title it fits:
+
+| Rule | Made by | Effect |
+|---|---|---|
+| `{w, a}` — this word or phrase is this attribute (or part of the product name) | clicking any word on a Side by side card | read first, before any field, on every title |
+| `{ok, a, t, f}` — a title saying *t* while the field says *f* is not a gap | "not a gap?" under a check, or on a Most common gaps row | that pair reads as agreeing |
+
+Each is saved for **this brand** (every market of it) or **every brand**. Stores: shared state `titleteach`
+(`<Brand>|<rule id>`, client-scoped like every Workflow route) and `titleteachall` (house-wide). Every brand's rules
+apply first and the brand's own win over them. Saving re-reads every title at once; a save the server refuses says
+so and holds on that screen only. "What it has been taught" lists the rules that apply to the feed on screen, each
+with Forget. A taught span wears a double underline on the card.
+
+Not learned automatically: nothing is inferred from a correction beyond the rule itself — one click teaches one word
+or one pair, for the scope chosen.
+
+## Settling it by eye
+
+Ray, 12 Nov 2026: "can the image be clickable to showcase a carousel of all product images … the title says 'texture
+and pattern' but the field says 'embroidered,' so I need to look at the photo." A card's thumbnail is a button
+(badged with the image count) opening every picture the feed carries for the product — `image_link`, then each
+distinct `additional_image_link` — full screen: ‹ ›, arrow keys, a swipe, thumbnails, Esc. Under the picture sit the
+attributes where title and field part ways ("Pattern: title says … · field says …") and a link to the product page.
+Images load straight from the client's CDN, as the thumbnail does; nothing is stored.
+
 ## Before → after
 
 Each product is one of: unchanged, attributes added, re-ordered, reworded, attributes removed, no master title.
