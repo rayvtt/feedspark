@@ -42,7 +42,7 @@ const TMDATA = (() => {
     health: { read: 1, total: 2, partial: 0, oldest: Date.now(), newest: Date.now(), complete: false, staleHours: 0 },
     scoped: false, queuesTotal: 2 });
 })();
-const ROAS_STUB = require('./roas_stub.js').stubLines();   // /roas renders its book off KV — synthetic payload so the dark pass meets its charts and table
+const ROAS_STUB = require('./roas_stub.js').stubLines();   // /api/roas still feeds Stock, the Catalogue and the dossier — synthetic payload so they render
 // /rules + /stock read FeedHero's rule report from KV — tools/rules_stub.js pushes a synthetic rule
 // list through the real engine so the bars, findings, tables and coverage matrix render
 const RULES_STUB = require('./rules_stub.js').stubLines();
@@ -53,9 +53,6 @@ const CATALOG_STUB = require('./catalog_stub.js').stubLines();
 // /aivis reads stored AI answers from KV — tools/aivis_stub.js hands over a SYNTHETIC book (behind a guard on the
 // page's file name) pushed through the real reading engine, so the grid, charts and history render
 const AIVIS_STUB = require('./aivis_stub.js').stubLines();
-// /restock streams a feed and FeedHero's 30-day Ads read, and keeps a ledger — tools/restock_stub.js hands over a SYNTHETIC
-// set (behind a guard on the page's file name) so the KPI band, the split, the category bars and the three views render
-const RESTOCK_STUB = require('./restock_stub.js').stubLines();
 // /breakdown streams a feed and pivots it — tools/breakdown_stub.js hands over the synthetic Northwind feed (behind a guard on
 // the page's file name) so the panes, the pivot and the fields catalogue render
 const BREAKDOWN_STUB = require('./breakdown_stub.js').stubLines();
@@ -75,7 +72,6 @@ window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Prom
  if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
 ${CATALOG_STUB}
 ${AIVIS_STUB}
-${RESTOCK_STUB}
 ${BREAKDOWN_STUB}
 ${SOCIAL_STUB}
 ${PRICER_STUB}

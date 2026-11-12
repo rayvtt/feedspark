@@ -149,9 +149,6 @@ echo "── validating: AI visibility (reading engine, every surface adapter vs
 node tools/test_aivis.mjs >/dev/null
 echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
-echo "── validating: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
-node tools/test_restock.mjs >/dev/null
-echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
 echo "── validating: Field breakdown (the column store, every reading, filters, the cross-tab, wiring)"
 node tools/test_breakdown.mjs >/dev/null
 echo "   ✓ any field of any feed: blanks as values, all slots, tiers, bands, styles, filters, the pivot"
@@ -478,12 +475,6 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
 
   NODE_PATH=$(npm root -g) node tools/check_tmviews.js || {
     echo "✗ chart-card tripwire failed — the control row grew back, a menu painted open, a leader label went missing, or a view carried its own account to another client"; exit 1; }
-  echo "── validating: ROAS segment (picking one populates the markets in view; the band filter names what it hid)"
-  NODE_PATH=$(npm root -g) node tools/check_roasseg.js || {
-    echo "✗ ROAS segment tripwire failed — a picked segment left the table empty, the band filter hid markets silently, or a cut FeedHero has not set up read as an error"; exit 1; }
-  echo "── validating: the ROAS dashboard, modular (even cards, ⊞ Modules read off the paint, every card against the book, PNG / CSV / Excel / PDF)"
-  NODE_PATH=$(npm root -g) node tools/check_roasmods.js || {
-    echo "✗ ROAS modules tripwire failed — the cards went uneven, a hidden module still painted, a card disagreed with the book, or an export lost rows / its currency / its capture height"; exit 1; }
   echo "── validating: /stock, evenly spaced for a client screen (six-tile band, full tile rows, one row height, a market named once)"
   NODE_PATH=$(npm root -g) node tools/check_stockeven.js || {
     echo "✗ stock-layout tripwire failed — the KPI band went ragged, a tile row stopped filling its card, a row grew taller for one button, a market was named twice in its run, or a finding painted its reason closed"; exit 1; }
@@ -508,9 +499,6 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Field breakdown, driven (any field, the cross-filter, the pivot, styles, CSV, views, folds, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_breakdown.js || {
     echo "✗ breakdown tripwire failed — a pane count, the cross-filter, the pivot, a reading, a view, a fold or the phone layout regressed"; exit 1; }
-  echo "── validating: Restock, driven (the join on the page, the KPIs against an independent count, the views, the ledger observation, the phone)"
-  NODE_PATH=$(npm root -g) node tools/check_restock.js || {
-    echo "✗ restock tripwire failed — the join, a KPI, a view, the sort, the ledger observation or the phone layout regressed"; exit 1; }
   echo "── validating: Social DPA, driven (six networks paint the product, the schedule moves the words, safe zones, a picture per network, folds, PNG, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_social.js || {
     echo "✗ social DPA tripwire failed — a preview, the schedule, a stood-down rule, the safe zones, a per-network picture, the folds or the phone regressed"; exit 1; }

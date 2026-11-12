@@ -90,7 +90,7 @@ const minus = (h) => CANON.filter((x) => x !== h);
   const CC = build('FeedSpark_Command_Center.html');
   const KW = build('FeedSpark_KWCal.html');
   const BARE = build('FeedSpark_Command_Center.html', { without: ['navrow_widget.html'], as: 'bare.html' });
-  const SCOPED = build('FeedSpark_Command_Center.html', { mods: ['workflow', 'feedlab', 'golden'], as: 'scoped.html' });
+  const SCOPED = build('FeedSpark_Command_Center.html', { mods: ['workflow', 'labels', 'golden'], as: 'scoped.html' });
 
   const server = http.createServer((req, res) => {
     const f = path.join(tmp, decodeURIComponent(req.url.split('?')[0]).replace(/^\//, ''));
@@ -265,7 +265,7 @@ const minus = (h) => CANON.filter((x) => x !== h);
     const r = await read(p);
     ok('MODGATE still hides the ungranted links', r.denied.length > 5, r.denied.length);
     ok('none of them is painted on the row', !r.onRow.some((h) => r.denied.includes(h)), r.onRow);
-    ok('the granted ones are on it', ['/workflow', '/feedlab', '/golden'].every((h) => r.onRow.includes(h)), r.onRow);
+    ok('the granted ones are on it', ['/workflow', '/labels', '/golden'].every((h) => r.onRow.includes(h)), r.onRow);
     await p.close();
     // the same signin with a denied module bundled on their device: it must not show in the ▦ either
     const q = await open(SCOPED, 1280, 800, { v: 1, place: { '/ptypes': 'apps' }, order: null });

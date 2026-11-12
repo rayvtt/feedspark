@@ -330,7 +330,8 @@ async function finishVideo(o) { const v = o.pg.video(); await o.ctx.close(); ret
       const raw = await finishVideo(o);
       encodeLoop(raw, 'aivis-loop', box, t0, dur);
     }
-    {
+    // the /roas page was retired 12 Nov 2026 — the footage already in docs/website/ stays; it can no longer be refilmed
+    if (fs.existsSync(path.join(D, 'FeedSpark_ROAS.html'))) {
       const o = await open(b, 'ROAS', { video: true, settle: 2500 });
       const pg = o.pg;
       await pg.evaluate(() => { const c = document.getElementById('win'); window.scrollTo(0, c.getBoundingClientRect().top + scrollY - 24); });

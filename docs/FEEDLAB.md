@@ -1,5 +1,7 @@
 # FeedSpark FCC — Feed Lab
 
+> **The /feedlab page was retired on 12 Nov 2026** (Ray: "remove / kill these modules from FCC"). The engine (`docs/feedlab_engine.js`, served at `/feedlab/engine.js`), the AI-readiness model and the feed wiring documented here are still live — Golden Record runs the same `audit()`. Page sections below are historic.
+
 How the Feed Lab module (`/feedlab`) turns a client's **live Google-Sheet shopping feed** into an
 animated in-browser audit, an AI-readiness score, and briefable recommendations — and how to keep
 it boring. Integration layer landed in `d26bd0f`; engine + page follow in the paired commit.

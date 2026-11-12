@@ -21,8 +21,6 @@ export const MIG_STATES = ['legacy', 'owned', 'migrating', 'migrated'];
 // p = the module's route (what the nav links to), n = its name, w = wave, m = planned month
 export const MIG_SEED = [
   { p: '/feedchat', n: 'Feed Chat', w: 0, m: '2026-11' },
-  { p: '/feedlab', n: 'Feed Lab', w: 1, m: '2026-12' },
-  { p: '/deck-builder', n: 'Deck generator', w: 1, m: '2026-12' },
   { p: '/pricer', n: 'Pricer', w: 1, m: '2026-12' },
   { p: '/schedule', n: 'Scheduled work', w: 1, m: '2026-12' },
   // wave 2 = the feed-scan family: one scan lane feeds all six, so they switch together
@@ -33,12 +31,10 @@ export const MIG_SEED = [
   { p: '/overlays', n: 'Overlays', w: 2, m: '2026-12' },
   { p: '/images', n: 'Image library', w: 2, m: '2026-12' },
   { p: '/tasks', n: 'FS Task Manager', w: 3, m: '2026-12' },
-  { p: '/roas', n: 'ROAS', w: 3, m: '2026-12' },
   { p: '/rules', n: 'Rules', w: 3, m: '2026-12' },
   { p: '/stock', n: 'Stock management', w: 3, m: '2026-12' },
   { p: '/catalog', n: 'Catalogue', w: 3, m: '2026-12' },
   { p: '/aivis', n: 'AI visibility', w: 3, m: '2026-12' },
-  { p: '/restock', n: 'Restock', w: 3, m: '2026-12' },
   { p: '/breakdown', n: 'Field breakdown', w: 3, m: '2026-12' },
   { p: '/social', n: 'Social DPA', w: 3, m: '2026-12' },
   { p: '/aiquote', n: 'AI Quote', w: 3, m: '2026-12' },

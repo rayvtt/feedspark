@@ -99,9 +99,7 @@ const INIT = "window.__posts=[];window.__slhits=0;(function(){var real=window.fe
   ok('the swing says what it is — arithmetic on two readings, not a forecast',
     s.says.length === 1 && /Moving a tenth of Plain’s spend \(£2,289\)/.test(s.says[0]) && /not a forecast/.test(s.says[0]), s.says);
   ok('one → Brief per finding', s.briefs === 3);
-  ok('a finding on a cut opens that cut in the ROAS module',
-    s.roasLinks.length === 2 && /brand=Northwind/.test(s.roasLinks[0])
-    && /market=gb/.test(s.roasLinks[0]) && /seg=Colour/.test(s.roasLinks[0]), s.roasLinks);
+  ok('no finding links to the retired ROAS module (Ray, 12 Nov 2026)', s.roasLinks.length === 0, s.roasLinks);
 
   console.log('\n2) what has NOT been read is named — never read as an account with nothing wrong');
   ok('each market says how many of its cuts have been read',
