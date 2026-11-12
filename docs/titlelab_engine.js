@@ -27,7 +27,7 @@
   else root.FeedTitles = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
 
   // the eight attributes, in the order Ray named them
   var ATTRS = [
@@ -127,11 +127,17 @@
   function parts(k, v) {
     var s = squash(v); if (!s) return [];
     if (k === 'type') {
-      var leaf = s.replace(/^[\s{\[(]+|[\s}\])]+$/g, '').split(/\s*(?:>|›|»|\|)\s*/).filter(Boolean).pop() || '';
-      var lw = words(leaf); if (!lw.length) return [];
-      var out = [lw];
-      // the head noun on its own: "Midi Dresses" is in a title that says "Dress"
-      if (lw.length > 1 && lw[lw.length - 1].length >= 3) out.push([lw[lw.length - 1]]);
+      // every level from the leaf up, three at most: a tree whose leaf is the BRAND ("Kids > Girls > Shoes > Geox") names
+      // the item one level higher, and the brand's own word is already taken by the time the type is looked for. A level's
+      // gender and age words are set aside first — "Girls Youth" names who it is for, not what it is.
+      var lv = s.replace(/^[\s{\[(]+|[\s}\])]+$/g, '').split(/\s*(?:>|›|»|\|)\s*/).filter(Boolean), out = [];
+      for (var d = lv.length - 1; d >= 0 && d >= lv.length - 3; d--) {
+        var lw = words(lv[d]).filter(function (w) { return !SYN_REV.gender[w] && !SYN_REV.age_group[w]; });
+        if (!lw.length) continue;
+        out.push(lw);
+        // the head noun on its own: "Midi Dresses" is in a title that says "Dress"
+        if (lw.length > 1 && lw[lw.length - 1].length >= 3) out.push([lw[lw.length - 1]]);
+      }
       return out;
     }
     if (k === 'brand' || k === 'size') { var bw = words(s); return bw.length ? [bw] : []; }
@@ -144,6 +150,24 @@
     });
     return list;
   }
+
+  // ---- what the team has taught it ---------------------------------------------------------------------
+  // Two kinds of rule, each a person's correction that then holds for every title it fits:
+  //   { w: 'youth', a: 'age_group' }                    this word (or phrase) is this attribute — a: 'name' = none of the eight
+  //   { ok: 1, a: 'material', t: 'velvet', f: 'polyester' }   a title saying t while the field says f is NOT a gap
+  // Later rules win, so the caller lists the all-brand rules first and the brand's own after them.
+  function phraseKey(v) { return words(v).join(' '); }
+  function teachNew(rules) {
+    var Tc = { w: new Map(), ok: new Set(), max: 1, n: 0 };
+    (rules || []).forEach(function (r) {
+      if (!r) return;
+      if (r.ok) { if (BIT[r.a] && phraseKey(r.t)) { Tc.ok.add(r.a + '|' + phraseKey(r.t) + '|' + phraseKey(r.f)); Tc.n++; } return; }
+      var key = phraseKey(r.w); if (!key || (!BIT[r.a] && r.a !== 'name')) return;
+      Tc.w.set(key, r.a); Tc.max = Math.max(Tc.max, key.split(' ').length); Tc.n++;
+    });
+    return Tc;
+  }
+  function vocabTeach(V, rules) { V.teach = teachNew(rules); return V; }
 
   // ---- the vocabulary: built from the feed it is about to read --------------------------------------
   function vocabNew() { var V = { n: {}, set: {}, sealed: false }; VOCAB_ATTRS.forEach(function (k) { V.n[k] = new Map(); V.set[k] = new Map(); }); return V; }
@@ -205,7 +229,19 @@
       found[k] = { v: title.slice(tt[i].s, e), via: via, own: own };
       spans.push({ k: k, s: s, e: e, v: title.slice(s, e), via: via });
     }
+    // what a person taught comes first: a taught word is that attribute (or, taught as the name, nobody's) whatever any field says
+    var Tc = V && V.teach;
+    if (Tc && Tc.w.size) for (var tn = Math.min(Tc.max, 5); tn >= 1; tn--) for (var ti = 0; ti + tn <= tt.length; ti++) {
+      var tfree = true, tkey = '';
+      for (var tj = 0; tj < tn; tj++) { if (used[ti + tj]) { tfree = false; break; } tkey += (tj ? ' ' : '') + tt[ti + tj].w; }
+      var ta = tfree && Tc.w.get(tkey); if (!ta) continue;
+      if (ta === 'name' || found[ta]) { claim(used, ti, tn, ta === 'name' ? 'name' : ta); continue; }
+      put(ta, ti, tn, 'taught', false);
+      if (ta === 'gender') found[ta].canon = canonGender(tkey) || SYN_REV.gender[tkey] || '';
+      if (ta === 'age_group') found[ta].canon = canonAge(tkey) || SYN_REV.age_group[tkey] || '';
+    }
     function own(k) {
+      if (found[k]) return true;
       for (var x = 0; x < 2; x++) {
         var src = first[x], v = (f[k] || {})[src]; if (!v) continue;
         var ps = parts(k, v);
@@ -227,7 +263,11 @@
     }
     function syn(k, table, canon) {
       // the field's own value first, then any word the list knows (a title saying "Girls" under g:gender male is a finding)
+      if (found[k]) return;
       var c = canon((f[k] || {}).f) || canon((f[k] || {}).m), i, j;
+      // a word nobody holds yet first: in "Girls Youth Shoes" the age group is "Youth", not a second reading of "Girls"
+      if (c && table[c]) for (i = 0; i < tt.length; i++) if (table[c].indexOf(tt[i].w) >= 0 && !used[i]) { put(k, i, 1, 'field', true); return; }
+      for (i = 0; i < tt.length; i++) { var free = SYN_REV[k][tt[i].w]; if (free && !used[i]) { put(k, i, 1, 'vocab', false); found[k].canon = free; return; } }
       if (c && table[c]) for (i = 0; i < tt.length; i++) if (table[c].indexOf(tt[i].w) >= 0 && (!used[i] || used[i] === 'gender' || used[i] === 'age_group')) {
         if (!used[i]) put(k, i, 1, 'field', true); else found[k] = { v: title.slice(tt[i].s, tt[i].e), via: 'field', own: true, shared: true };
         return;
@@ -275,7 +315,13 @@
   // one word of each is the same word, or the same word inflected: print / printed, stripe / striped, knit / knitted
   function near(x, y) { if (x === y) return true; var a = x.length <= y.length ? x : y, b = a === x ? y : x; return a.length >= 4 && b.length - a.length <= 3 && b.indexOf(a.replace(/e$/, '')) === 0; }
   function overlap(a, b) { var A = words(a), B = words(b); return A.some(function (w) { return B.some(function (v) { return near(w, v); }); }); }
-  function check(k, fieldV, fd) {
+  // a pair a person accepted is not a gap, whatever the words say
+  function check(k, fieldV, fd, Tc) {
+    var r = check0(k, fieldV, fd);
+    if ((r === 'differ' || r === 'title_only') && Tc && Tc.ok.size && Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';
+    return r;
+  }
+  function check0(k, fieldV, fd) {
     var has = !!squash(fieldV);
     if (k === 'gender' || k === 'age_group') {
       var canon = (k === 'gender' ? canonGender : canonAge)(fieldV);
@@ -327,7 +373,7 @@
     var b = side.before ? readTitle(side.before, side.f, V, { side: 'm' }) : null;
     var chk = {}, prov = {}, mset = null;
     KEYS.forEach(function (k) {
-      chk[k] = check(k, side.f[k].f, a.found[k]);
+      chk[k] = check(k, side.f[k].f, a.found[k], V && V.teach);
       var fd = a.found[k]; if (!fd) return;
       // where the value came from: the client's own data (its field, or its words anywhere in the master row), or populated
       if (side.f[k].m && overlap(fd.v, side.f[k].m)) { prov[k] = 'source'; return; }
@@ -429,7 +475,7 @@
   return {
     VERSION: VERSION, ATTRS: ATTRS, KEYS: KEYS, LABEL: LABEL, BIT: BIT, CHECKS: CHECKS, KINDS: KINDS, LEN_MAX: LEN_MAX, LEN_SEEN: LEN_SEEN,
     stem: stem, toks: toks, words: words, parts: parts, canonGender: canonGender, canonAge: canonAge,
-    vocabNew: vocabNew, vocabAdd: vocabAdd, vocabSeal: vocabSeal,
+    vocabNew: vocabNew, vocabAdd: vocabAdd, vocabSeal: vocabSeal, vocabTeach: vocabTeach, teachNew: teachNew, phraseKey: phraseKey,
     readTitle: readTitle, check: check, sides: sides, read: read, lite: lite, chkOf: chkOf, masksNew: masksNew,
     summary: summary, maskLabel: maskLabel, story: story, pct: pct
   };

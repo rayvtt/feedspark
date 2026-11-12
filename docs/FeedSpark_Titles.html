@@ -189,7 +189,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .arow .bb.b i{background:#4A5261}
   .arow .v{font-size:12px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   .arow .v small{display:block;font-weight:800;color:var(--muted);font-size:10.5px}
-  .prow{display:grid;grid-template-columns:96px minmax(0,1fr) 70px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .prow{display:grid;grid-template-columns:96px minmax(0,1fr) auto 56px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
   .prow .v{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   .key{display:flex;gap:12px;font-size:11.5px;font-weight:800;color:var(--muted);margin-top:8px}
   .key i{display:inline-block;width:10px;height:8px;border-radius:2px;margin-right:5px}
@@ -212,6 +212,30 @@ window.addEventListener('load',restore);
   .fchip button{border:0;background:none;color:inherit;cursor:pointer;font:inherit;font-weight:900;padding:0 4px}
   .how ol{margin:0 0 0 18px;padding:0;font-size:12.5px;color:var(--ink-2)}
   .how li{margin:5px 0}
+  /* teaching: any word on a card is a button; the pop-up names it and saves the correction for the team */
+  .pc .ttl [data-tw]{cursor:pointer;border-radius:4px}
+  .pc .ttl span[data-tw]:hover{background:rgba(245,166,35,.18)}
+  .pc .ttl mark[data-tw]:hover{background:color-mix(in srgb,var(--c) 28%,transparent)}
+  .pc .ttl mark.taught{border-bottom-style:double;border-bottom-width:4px}
+  .okb{font:inherit;font-size:10px;font-weight:800;color:var(--muted);background:none;border:0;border-bottom:1px dotted var(--muted);padding:0;margin-top:3px;cursor:pointer;display:block}
+  .okb:hover{color:var(--orange-deep);border-color:var(--orange-deep)}
+  .tpop{position:fixed;z-index:300;width:330px;max-width:calc(100vw - 16px);background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.28);padding:12px 14px}
+  .tpop[hidden]{display:none}
+  .tpop .tp-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900;margin-bottom:8px}
+  .tpop .tp-h b{flex:1}
+  .tpop .x{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer;font:inherit;font-weight:900}
+  .tpop .q{width:100%;min-width:0;margin-bottom:8px}
+  .tpop .opts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .tpop .opts button{font:inherit;cursor:pointer;opacity:.75}
+  .tpop .opts button.on{opacity:1;box-shadow:0 0 0 2px var(--orange)}
+  .tpop .tp-s{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+  .tpop .tp-f{display:flex;justify-content:flex-end;gap:8px}
+  .tpop p{font-size:12.5px;color:var(--ink-2);margin:0 0 10px}
+  @media(max-width:760px){.tpop{left:0!important;right:0;top:auto!important;bottom:0;width:auto;max-width:none;border-radius:16px 16px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom))}}
+  .trow{display:grid;grid-template-columns:96px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .trow:first-child{border-top:0}
+  .trow .sc{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+  @media(max-width:760px){.trow{grid-template-columns:86px minmax(0,1fr) auto}.trow .sc{grid-column:2}}
   main .footmark{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
   [data-theme=dark] .q{background:var(--paper);border-color:var(--line);color:var(--ink)}
   [data-theme=dark] table.t th{background:#181B22}
@@ -339,6 +363,14 @@ window.addEventListener('load',restore);
     </div>
   </section>
 
+  <section class="sec" id="sec-teach" data-sec="teach">
+    <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-teach-b"><span class="tt">What it has been taught</span><span class="ln" id="ln-teach">Click any word in a title to correct how it is read</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+    <div class="sec-b" id="sec-teach-b">
+      <div id="taught"><div class="empty">Nothing taught yet.</div></div>
+      <p class="note">A correction is saved for the whole team and re-reads every title at once. “This brand” holds on every market of the brand; “Every brand” holds on every feed in the FCC.</p>
+    </div>
+  </section>
+
   <section class="sec how" id="sec-how" data-sec="how">
     <button class="sec-h" type="button" aria-expanded="false" aria-controls="sec-how-b"><span class="tt">How it is read</span><span class="ln">Where each title comes from and how an attribute is found</span><span class="cv" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
     <div class="sec-b" id="sec-how-b"><ol>
@@ -347,6 +379,7 @@ window.addEventListener('load',restore);
       <li><b>Finding an attribute.</b> A title is searched for the product’s own field values first — its brand, colour, material, pattern, size and the last level of its product type — as whole words, singular or plural. Then for values other products in this feed carry in that field. Gender and age group are read from their usual words (women’s, mens, girls, kids, baby).</li>
       <li><b>The mask.</b> The attributes in the order the title says them; words that are none of the eight are the product name. The share of titles on the three biggest masks says how systematic the catalogue is.</li>
       <li><b>The check.</b> For each attribute a title names: the field holds the same value (agree), the field is empty (in the title, not in the field), or the field says something else (differ). Nothing is corrected here — the list is what to fix in the data.</li>
+      <li><b>Teaching it.</b> Click any word on a Side by side card to say what it is — one of the eight, or part of the product name — and whether that holds for this brand or every brand. A gap can be accepted as “not a gap” the same way. A taught word is read first, before any field; every title is re-read the moment it is saved, and the rule is the team’s, not one screen’s.</li>
       <li><b>Limits.</b> A word no field in this feed has ever held is read as part of the name. Google’s limit is 150 characters; roughly the first 70 show in a Shopping result.</li>
     </ol></div>
   </section>
@@ -354,6 +387,12 @@ window.addEventListener('load',restore);
   <div class="footmark"><span>FeedSpark · Private &amp; Confidential</span><span>Title Lab</span></div>
 </main>
 
+ <div class="tpop" id="tpop" role="dialog" aria-label="Correct how this is read" hidden>
+  <div class="tp-h"><b id="tp-t"></b><button class="x" id="tp-x" type="button" aria-label="Close">✕</button></div>
+  <div id="tp-b"></div>
+  <div class="tp-s"><span>Applies to</span><span class="seg" id="tp-scope" role="group" aria-label="Where it applies"><button type="button" data-sc="brand">This brand</button><button type="button" data-sc="all">Every brand</button></span></div>
+  <div class="tp-f"><button class="btn" id="tp-forget" type="button" hidden>Forget this</button><button class="btn on" id="tp-save" type="button">Save</button></div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -412,10 +451,92 @@ window.addEventListener('load',restore);
   function sig() { return S.ctl ? { signal: S.ctl.signal } : {}; }
   function mq() { return '?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt); }
 
+  // ---- what the team has taught it: two shared-state namespaces, one brand's rules and every brand's ----------------
+  var TEACH = { brand: {}, all: {}, base: 0, st: 'idle' };
+  function teachLoad() {
+    return fetch('/api/state?ns=titleteach,titleteachall', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); TEACH.base = +r.headers.get('X-Sync-Base') || 0; return r.json(); })
+      .then(function (d) { TEACH.brand = (d && d.titleteach) || {}; TEACH.all = (d && d.titleteachall) || {}; TEACH.st = 'ok'; })
+      .catch(function () { TEACH.st = 'off'; });
+  }
+  function ruleId(r) { return r.ok ? 'ok:' + r.a + ':' + T.phraseKey(r.t) + '=' + T.phraseKey(r.f) : 'w:' + T.phraseKey(r.w); }
+  // every brand's rules first, this brand's after them — the engine lets the later one win
+  function teachList() {
+    var out = [];
+    Object.keys(TEACH.all).forEach(function (k) { var r = TEACH.all[k]; if (r && typeof r === 'object') out.push({ key: k, sc: 'all', r: r }); });
+    Object.keys(TEACH.brand).forEach(function (k) { var r = TEACH.brand[k]; if (r && typeof r === 'object' && k.indexOf(S.brand + '|') === 0) out.push({ key: k, sc: 'brand', r: r }); });
+    return out;
+  }
+  function teachFind(id) { var bk = S.brand + '|' + id; if (TEACH.brand[bk]) return { sc: 'brand', key: bk, r: TEACH.brand[bk] }; if (TEACH.all[id]) return { sc: 'all', key: id, r: TEACH.all[id] }; return null; }
+  function teachPush() {
+    return fetch('/api/state', { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(TEACH.base) }, body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all }) })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); var b = +r.headers.get('X-Sync-Base'); if (b) TEACH.base = b; return r.json(); })
+      .then(function (d) { if (d && d.titleteach) TEACH.brand = d.titleteach; if (d && d.titleteachall) TEACH.all = d.titleteachall; return true; });
+  }
+  function teachApply(msg) {
+    renderTaught();
+    if (S.out.st === 'done') analyse(S.gen);
+    teachPush().then(function () { toast(msg + ' — saved for the team'); renderTaught(); }, function (e) { toast(msg + ' on this screen — NOT saved for the team (' + ((e && e.message) || e) + ')'); });
+  }
+  function teachSet(rule, scope) {
+    var id = ruleId(rule); rule.at = Date.now();
+    delete TEACH.brand[S.brand + '|' + id]; delete TEACH.all[id];
+    if (scope === 'all') TEACH.all[id] = rule; else TEACH.brand[S.brand + '|' + id] = rule;
+    teachApply(rule.ok ? 'Accepted' : 'Taught');
+  }
+  function teachForget(key, sc) { if (sc === 'all') delete TEACH.all[key]; else delete TEACH.brand[key]; teachApply('Forgotten'); }
+  function ruleWords(r) {
+    return r.ok ? 'A title saying <b>' + esc(r.t) + '</b> while the field ' + (r.f ? 'says <b>' + esc(r.f) + '</b>' : 'is <b>empty</b>') + ' is not a gap'
+      : '<b>' + esc(r.w) + '</b> is read as ' + (r.a === 'name' ? 'part of the <b>product name</b>' : '<b>' + esc(T.LABEL[r.a]) + '</b>');
+  }
+  function renderTaught() {
+    var L = teachList().sort(function (a, b) { return (b.r.at || 0) - (a.r.at || 0); }), el = $('#taught'), ln = $('#ln-teach');
+    el.innerHTML = L.length ? L.map(function (x) {
+      return '<div class="trow"><span><span class="mk a-' + esc(x.r.a) + '">' + esc(T.LABEL[x.r.a] || x.r.a) + '</span></span><span>' + ruleWords(x.r) + '</span><span class="sc">' + (x.sc === 'all' ? 'Every brand' : esc(S.brand)) + (x.r.at ? ' · ' + new Date(x.r.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '') + '</span><button class="btn" type="button" data-forget="' + esc(x.key) + '" data-sc="' + x.sc + '">Forget</button></div>';
+    }).join('') : '<div class="empty">' + (TEACH.st === 'off' ? 'The team’s corrections could not be read — anything taught now holds on this screen only.' : 'Nothing taught yet. Click any word in a title on a Side by side card.') + '</div>';
+    ln.innerHTML = L.length ? '<b>' + L.length + '</b> correction' + (L.length === 1 ? '' : 's') + ' appl' + (L.length === 1 ? 'ies' : 'y') + ' to this feed · ' + L.filter(function (x) { return x.sc === 'all'; }).length + ' from every brand' : 'Click any word in a title to correct how it is read';
+  }
+  // the pop-up: one for both kinds of correction
+  var TP = null;
+  function tpOpen(mode, data, x, y) {
+    var id = ruleId(mode === 'ok' ? { ok: 1, a: data.a, t: data.t, f: data.f } : { w: data.w }), had = teachFind(id);
+    TP = { mode: mode, data: data, a: mode === 'ok' ? data.a : ((had && had.r.a) || data.cur || ''), sc: (had && had.sc) || recall('fcc-tl-scope') || 'brand', had: had };
+    $('#tp-t').textContent = mode === 'ok' ? 'Not a gap?' : 'What is this?';
+    $('#tp-b').innerHTML = mode === 'ok' ? '<p>' + ruleWords({ ok: 1, a: data.a, t: data.t, f: data.f }) + ' for <b>' + esc(T.LABEL[data.a]) + '</b>. Titles with this pair then read as agreeing.</p>'
+      : '<input class="q" id="tp-w" type="text" value="' + esc(data.w) + '" aria-label="The word or phrase" autocomplete="off"><div class="opts" id="tp-opts">' + T.ATTRS.map(function (a) { return '<button type="button" class="mk a-' + a.k + '" data-ta="' + a.k + '">' + esc(a.l) + '</button>'; }).join('') + '<button type="button" class="mk a-name" data-ta="name">Product name</button></div>';
+    $('#tp-forget').hidden = !had;
+    tpPaint();
+    var p = $('#tpop'); p.hidden = false;
+    p.style.left = Math.max(8, Math.min(window.innerWidth - 338, x - 160)) + 'px';
+    var h = p.offsetHeight; p.style.top = (y + 14 + h > window.innerHeight ? Math.max(8, y - h - 14) : y + 14) + 'px';
+  }
+  function tpPaint() {
+    if (!TP) return;
+    $('#tp-scope').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-sc') === TP.sc); if (b.getAttribute('data-sc') === 'brand') b.textContent = S.brand || 'This brand'; });
+    var o = $('#tp-opts'); if (o) o.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-ta') === TP.a); });
+  }
+  function tpClose() { $('#tpop').hidden = true; TP = null; }
+  $('#tpop').addEventListener('click', function (e) {
+    var ta = e.target.closest('[data-ta]'), sc = e.target.closest('[data-sc]');
+    if (ta) { TP.a = ta.getAttribute('data-ta'); tpPaint(); }
+    else if (sc) { TP.sc = sc.getAttribute('data-sc'); remember('fcc-tl-scope', TP.sc); tpPaint(); }
+  });
+  $('#tp-x').addEventListener('click', tpClose);
+  $('#tp-save').addEventListener('click', function () {
+    if (!TP) return;
+    if (TP.mode === 'ok') { var d = TP.data, sc0 = TP.sc; tpClose(); return teachSet({ ok: 1, a: d.a, t: d.t, f: d.f }, sc0); }
+    var w = ($('#tp-w').value || '').trim();
+    if (!T.phraseKey(w)) return toast('Type the word or phrase');
+    if (!TP.a) return toast('Pick what it is');
+    var a = TP.a, sc = TP.sc; tpClose(); teachSet({ w: w, a: a }, sc);
+  });
+  $('#tp-forget').addEventListener('click', function () { if (!TP || !TP.had) return; var h = TP.had; tpClose(); teachForget(h.key, h.sc); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && TP) tpClose(); });
+  document.addEventListener('mousedown', function (e) { if (TP && !e.target.closest('#tpop') && !e.target.closest('[data-tw],[data-ok],[data-okp]')) tpClose(); });
+
   // ---- boot ---------------------------------------------------------------------------------------------------------
   function boot() {
     foldInit();
-    loadEngines().then(function () { renderLegend(); return api('/api/catalog/roster'); }).then(function (d) {
+    loadEngines().then(function () { renderLegend(); return teachLoad(); }).then(function () { return api('/api/catalog/roster'); }).then(function (d) {
       if (!d || !d.ok) { S.err = (d && d.error) || 'the feed list is unavailable'; renderStatus(); return; }
       S.roster = d.clients || {};
       var names = Object.keys(S.roster).filter(function (c) { return S.roster[c].some(usable); }).sort();
@@ -612,7 +733,7 @@ window.addEventListener('load',restore);
       }
       S.pass.done = (phase - 1) * P.length + i; statusSoon();
       if (i >= P.length) {
-        if (phase === 1) { T.vocabSeal(V); phase = 2; i = 0; }
+        if (phase === 1) { T.vocabSeal(V); T.vocabTeach(V, teachList().map(function (x) { return x.r; })); phase = 2; i = 0; }
         else return done();
       }
       setTimeout(slice, 0);
@@ -621,12 +742,12 @@ window.addEventListener('load',restore);
       var keepSel = S.sel.map(function (x) { return S.rows && S.rows[x] ? S.rows[x].id : null; }).filter(Boolean);
       S.rows = rows; S.V = V; S.masks = masks; S.sum = T.summary(rows, masks); S.pairs = pairs; S.bsrc = stampN && stampN === S.sum.before ? 'stamp' : 'master'; S.pass = null; S.rank = null; S.rankAt = 0;
       S.final = !!M_END[S.m.st];
-      if (S.final) { S.prods = []; if (S.m.by) S.m.by = null; }   // nothing reads the raw rows again
       var want = S.want.length ? S.want : keepSel; S.want = [];
       S.sel = [];
       want.forEach(function (id) { var x = findId(id); if (x >= 0 && S.sel.indexOf(x) < 0) S.sel.push(x); });
       if (!S.sel.length) S.sel = ranked().slice(0, 6);
-      S.fmask = null; S.fchk = null; S.shown = PAGE;
+      S.fmask = null;
+      S.shown = PAGE;
       renderAll();
     }
     slice();
@@ -650,6 +771,22 @@ window.addEventListener('load',restore);
       out += esc(title.slice(pos, sp.s)) + '<mark class="a-' + sp.k + '" title="' + esc(T.LABEL[sp.k]) + '">' + esc(title.slice(sp.s, sp.e)) + '</mark>'; pos = sp.e;
     });
     return out + esc(title.slice(pos));
+  }
+  // the same title with EVERY word a button (cards only): a marked run names its attribute, a plain word is the name's
+  function teachHtml(title, spans) {
+    var out = '', pos = 0, tk = T.toks(title), ti = 0;
+    function plain(to) {
+      while (ti < tk.length && tk[ti].e <= to) { var w = tk[ti]; if (w.s >= pos) { out += esc(title.slice(pos, w.s)) + '<span data-tw="' + esc(title.slice(w.s, w.e)) + '" title="Click to say what this is">' + esc(title.slice(w.s, w.e)) + '</span>'; pos = w.e; } ti++; }
+      out += esc(title.slice(pos, to)); pos = to;
+    }
+    (spans || []).forEach(function (sp) {
+      if (sp.s < pos) return;
+      plain(sp.s);
+      out += '<mark class="a-' + sp.k + (sp.via === 'taught' ? ' taught' : '') + '" data-tw="' + esc(sp.v) + '" data-cur="' + sp.k + '" title="' + esc(T.LABEL[sp.k] + (sp.via === 'taught' ? ' · taught' : '') + ' — click to correct') + '">' + esc(title.slice(sp.s, sp.e)) + '</mark>'; pos = sp.e;
+      while (ti < tk.length && tk[ti].s < pos) ti++;
+    });
+    plain(title.length);
+    return out;
   }
   function maskHtml(mask, newBits) {
     if (!mask || !mask.length) return '<span class="mk a-name">no attribute found</span>';
@@ -712,18 +849,18 @@ window.addEventListener('load',restore);
     h += '<article class="pc" data-x="' + x + '"><div class="pc-h">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="ph"></span>') +
       '<span class="id" title="' + esc(r.id) + '">' + esc(r.id) + '</span><span class="kind ' + r.kind + '">' + KIND_L[r.kind] + '</span><button class="x" type="button" data-rm="' + x + '" aria-label="Remove ' + esc(r.id) + '">✕</button></div>';
     h += '<div class="ba"><div class="side before"><div class="cap"><b>Before</b><span>' + esc(srcWord(r)) + (r.bh ? ' · ' + esc(r.bh) : '') + '</span>' + (r.b ? '<span class="len' + (r.lb > T.LEN_MAX ? ' over' : '') + '">' + r.lb + ' chars</span>' : '') + '</div>' +
-      (r.b ? '<div class="ttl">' + markHtml(r.b, b.spans) + '</div><div class="mask">' + maskHtml(b.mask) + '</div>' : '<div class="ttl plain">No master title joined for this product.</div>') + '</div>';
+      (r.b ? '<div class="ttl">' + teachHtml(r.b, b.spans) + '</div><div class="mask">' + maskHtml(b.mask) + '</div>' : '<div class="ttl plain">No master title joined for this product.</div>') + '</div>';
     h += '<div class="side after"><div class="cap"><b>After</b><span>Shopping feed · g:title</span><span class="len' + (r.la > T.LEN_MAX ? ' over' : '') + '">' + r.la + ' chars</span></div>' +
-      '<div class="ttl">' + markHtml(r.a, a.spans) + '</div><div class="mask">' + maskHtml(a.mask, gained) + '</div></div></div>';
+      '<div class="ttl">' + teachHtml(r.a, a.spans) + '</div><div class="mask">' + maskHtml(a.mask, gained) + '</div></div></div>';
     h += '<div style="overflow-x:auto"><table><thead><tr><th>Attribute</th><th>Master feed</th><th>Shopping feed</th><th class="c">Before</th><th class="c">After</th><th>Title vs field</th></tr></thead><tbody>';
     T.KEYS.forEach(function (k, i) {
-      var f = r.f[k], fa = a.found[k], fb = b && b.found[k], ck = T.check(k, f.f, fa), pv = r.pv.charAt(i);
+      var f = r.f[k], fa = a.found[k], fb = b && b.found[k], ck = T.check(k, f.f, fa, S.V.teach), pv = r.pv.charAt(i);
       h += '<tr><td><span class="mk a-' + k + '">' + esc(T.LABEL[k]) + '</span></td>' +
         '<td' + (f.m ? '' : ' class="e"') + '>' + (f.m ? esc(f.m) + (f.mh ? '<span class="col">' + esc(f.mh) + '</span>' : '') : '—') + '</td>' +
         '<td' + (f.f ? '' : ' class="e"') + '>' + (f.f ? esc(f.f) : '—') + '</td>' +
         '<td class="c">' + (fb ? '<span class="yes" title="' + esc(fb.v) + '">✓</span>' : '<span class="no">—</span>') + '</td>' +
         '<td class="c">' + (fa ? '<span class="yes" title="' + esc(fa.v + (PV_L[pv] ? ' · ' + PV_L[pv] : '')) + '">✓</span>' : '<span class="no">—</span>') + '</td>' +
-        '<td>' + (ck === 'none' ? '<span class="no">—</span>' : '<span class="ck ' + ck + '">' + CHK_S[ck] + '</span>') + (fa && PV_L[pv] ? '<span class="col" style="display:block;font-size:10px;color:var(--muted);font-weight:700">' + PV_L[pv] + '</span>' : '') + '</td></tr>';
+        '<td>' + (ck === 'none' ? '<span class="no">—</span>' : '<span class="ck ' + ck + '">' + CHK_S[ck] + '</span>') + ((ck === 'differ' || ck === 'title_only') ? '<button class="okb" type="button" data-ok="' + k + '" data-t="' + esc(fa.v) + '" data-f="' + esc(f.f) + '">not a gap?</button>' : '') + (fa && PV_L[pv] ? '<span class="col" style="display:block;font-size:10px;color:var(--muted);font-weight:700">' + PV_L[pv] + '</span>' : '') + '</td></tr>';
     });
     return h + '</tbody></table></div></article>';
   }
@@ -731,7 +868,7 @@ window.addEventListener('load',restore);
     var el = $('#sbs'), ln = $('#ln-sbs'), note = $('#sbs-note');
     if (!S.rows) { el.innerHTML = '<div class="empty">' + (S.out.st === 'error' ? 'The shopping feed could not be read.' : 'Waiting for the feed…') + '</div>'; note.textContent = ''; ln.textContent = 'One product or several: the master title beside the shopping title'; return; }
     el.innerHTML = S.sel.length ? S.sel.map(card).join('') : '<div class="empty">Add a product above, or press ✦ Best examples.</div>';
-    ln.innerHTML = '<b>' + S.sel.length + '</b> product' + (S.sel.length === 1 ? '' : 's') + ' compared · ringed chips are attributes the shopping title gained';
+    ln.innerHTML = '<b>' + S.sel.length + '</b> product' + (S.sel.length === 1 ? '' : 's') + ' compared · ringed chips are attributes the shopping title gained · click any word to correct how it is read';
     note.textContent = S.sum && !S.sum.before ? 'No master title joined on this feed, so each card shows the shopping title alone.' : 'A ringed chip in the After mask is an attribute the master title did not name. Hover a tick for the words it found and where the value came from.';
   }
   function renderMasks() {
@@ -765,7 +902,7 @@ window.addEventListener('load',restore);
     T.KEYS.forEach(function (k) { if (S.pairs && S.pairs[k]) S.pairs[k].forEach(function (v) { pr.push({ k: k, t: v.t, f: v.f, n: v.n }); }); });
     pr.sort(function (a, b) { return b.n - a.n; });
     $('#pairs').innerHTML = pr.length ? '<div class="sub-h" style="margin-top:16px">Most common gaps</div>' + pr.slice(0, 10).map(function (x) {
-      return '<div class="prow"><span class="mk a-' + x.k + '">' + esc(T.LABEL[x.k]) + '</span><span>title says <b>' + esc(x.t) + '</b> · field ' + (x.f ? 'says <b>' + esc(x.f) + '</b>' : 'is <b>empty</b>') + '</span><span class="v">' + n0(x.n) + '</span></div>';
+      return '<div class="prow"><span class="mk a-' + x.k + '">' + esc(T.LABEL[x.k]) + '</span><span>title says <b>' + esc(x.t) + '</b> · field ' + (x.f ? 'says <b>' + esc(x.f) + '</b>' : 'is <b>empty</b>') + '</span><button class="okb" type="button" data-okp="' + x.k + '" data-t="' + esc(x.t) + '" data-f="' + esc(x.f) + '">not a gap?</button><span class="v">' + n0(x.n) + '</span></div>';
     }).join('') : '';
     ln.innerHTML = Sm.issueRows ? '<span class="warn">' + n0(Sm.issueRows) + ' titles</span> name something their field does not hold or says differently' : 'Every attribute a title names is also in its field';
   }
@@ -807,7 +944,7 @@ window.addEventListener('load',restore);
     more.hidden = F.length <= S.shown; more.textContent = 'Show more (' + n0(Math.min(200, F.length - S.shown)) + ' of ' + n0(F.length - S.shown) + ' left)';
     ln.innerHTML = '<b>' + n0(S.rows.length) + '</b> titles' + (F.length !== S.rows.length ? ' · ' + n0(F.length) + ' in this view' : '');
   }
-  function renderAll() { [renderStatus, renderSummary, renderSbs, renderMasks, renderChecks, renderList].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error('titles:', e); } }); }
+  function renderAll() { [renderTaught, renderStatus, renderSummary, renderSbs, renderMasks, renderChecks, renderList].forEach(function (f) { try { f(); } catch (e) { if (window.console) console.error('titles:', e); } }); }
 
   // ---- every section folds: this device's choice, a fresh device opens the first two, a #hash opens the one it names
   var FOLD_K = 'fcc-tl-fold', OPEN0 = { sum: 1, sbs: 1 }, FOLD = null;
@@ -850,6 +987,13 @@ window.addEventListener('load',restore);
     else if (br) brief(br.getAttribute('data-brief'));
   });
   $('#list-t').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-x]'); if (!tr) return; addSel(+tr.getAttribute('data-x')); var s = $('#sec-sbs'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Added to Side by side'); });
+  $('#sbs').addEventListener('click', function (e) {
+    var w = e.target.closest('[data-tw]'), o = e.target.closest('[data-ok]');
+    if (w) return tpOpen('w', { w: w.getAttribute('data-tw'), cur: w.getAttribute('data-cur') || '' }, e.clientX, e.clientY);
+    if (o) return tpOpen('ok', { a: o.getAttribute('data-ok'), t: o.getAttribute('data-t'), f: o.getAttribute('data-f') }, e.clientX, e.clientY);
+  });
+  $('#pairs').addEventListener('click', function (e) { var o = e.target.closest('[data-okp]'); if (o) tpOpen('ok', { a: o.getAttribute('data-okp'), t: o.getAttribute('data-t'), f: o.getAttribute('data-f') }, e.clientX, e.clientY); });
+  $('#taught').addEventListener('click', function (e) { var b = e.target.closest('[data-forget]'); if (b) teachForget(b.getAttribute('data-forget'), b.getAttribute('data-sc')); });
   $('#sbs').addEventListener('click', function (e) { var b = e.target.closest('[data-rm]'); if (!b) return; var x = +b.getAttribute('data-rm'), at = S.sel.indexOf(x); if (at >= 0) S.sel.splice(at, 1); renderSbs(); });
   $('#best').addEventListener('click', function () { if (!S.rows) return; S.rankAt = 0; S.sel = ranked().slice(0, 6); renderSbs(); });
   $('#rand').addEventListener('click', function () { if (!S.rows) return; var R = ranked(); if (!R.length) return; S.rankAt = (S.rankAt + 6) % R.length; S.sel = R.slice(S.rankAt, S.rankAt + 6); if (!S.sel.length) { S.rankAt = 0; S.sel = R.slice(0, 6); } renderSbs(); });
