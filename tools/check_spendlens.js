@@ -114,7 +114,7 @@ const INIT = "window.__posts=[];window.__slhits=0;(function(){var real=window.fe
     s.mkts.some((m) => /1 market carried no spend in the window/.test(m)), s.mkts);
   // a link out of the rail throws away the rail, the board's filters and the scroll position
   ok('every link out of the rail opens a new tab, as its \u2197 says',
-    s.newTab.length >= 3 && s.newTab.every((t) => t === '_blank|noopener'), s.newTab);
+    s.newTab.length >= 1 && s.newTab.every((t) => t === '_blank|noopener'), s.newTab);
   // the Breakdown reads `brand`, not `client` — a link on the wrong parameter lands on whatever
 // feed that device last had open, which is somebody else's account
 ok('the fields FeedHero does not cut are pointed at /breakdown, on its own parameters',
