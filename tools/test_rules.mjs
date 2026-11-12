@@ -202,7 +202,7 @@ t('the stock route also serves heroRuns — the runs table', /matrix: RULES\.sto
 
 console.log('· the pages');
 const navOf = (h) => (h.match(/<nav class="tb-nav tb-modules"[\s\S]*?<\/nav>/) || [''])[0];
-t('every nav-bearing page carries both module icons, after ROAS', fs.readdirSync(new URL('../docs/', import.meta.url)).filter((f) => f.endsWith('.html')).map((f) => read('docs/' + f)).filter((h) => /class="tb-nav tb-modules"/.test(h)).every((h) => /href="\/roas"[\s\S]*?<\/a><a href="\/rules" class="tbm[^"]*"[\s\S]*?<\/a><a href="\/stock" class="tbm/.test(navOf(h))));
+t('every nav-bearing page carries both module icons, after the Pricer', fs.readdirSync(new URL('../docs/', import.meta.url)).filter((f) => f.endsWith('.html')).map((f) => read('docs/' + f)).filter((h) => /class="tb-nav tb-modules"/.test(h)).every((h) => /href="\/pricer"[\s\S]*?<\/a><a href="\/rules" class="tbm[^"]*"[\s\S]*?<\/a><a href="\/stock" class="tbm/.test(navOf(h))));
 t('each page lights its own icon only', /href="\/rules" class="tbm on"/.test(RP) && !/href="\/stock" class="tbm on"/.test(RP) && /href="\/stock" class="tbm on"/.test(SP) && !/href="\/rules" class="tbm on"/.test(SP));
 [['Rules', RP], ['Stock', SP]].forEach(([n, h]) => {
   t(n + ': loads the shared design stylesheet', h.indexOf('<link rel="stylesheet" href="/design/fcc.css">') >= 0);

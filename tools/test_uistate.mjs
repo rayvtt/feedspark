@@ -133,9 +133,8 @@ r = runRestore({ urlQuery: '', stored: { 'fcc-tm-table': '0' } });
 ok('…and a remembered OFF stays off (not just "truthy string present")', r.els.ctab.checked === false, r.els.ctab.checked);
 
 /* =================================== THE FOUR BRAND-SELECTOR MODULES ======================== */
-console.log('\n-- Feed Lab / Volume / KWCal / AI Quote: the brand picker remembers this device’s last pick --');
+console.log('\n-- Volume / KWCal / AI Quote: the brand picker remembers this device’s last pick --');
 const cases = [
-  { name: 'Feed Lab', file: 'docs/FeedSpark_FeedLab.html', key: 'fcc-fl-client' },
   { name: 'Volume', file: 'docs/FeedSpark_Volume.html', key: 'fcc-vol-client' },
   { name: 'KWCal', file: 'docs/FeedSpark_KWCal.html', key: 'fcc-kw-client' },
   { name: 'AI Quote', file: 'docs/FeedSpark_AIQuote.html', key: 'fcc-aiq-client' },
@@ -161,9 +160,6 @@ cases.forEach(({ name, file, key }) => {
       });
     })());
 });
-ok('Feed Lab: an explicit ?client= link still wins over a remembered brand (the deep-link contract is untouched)',
-  /var remembered='';try\{remembered=localStorage\.getItem\('fcc-fl-client'\)\|\|''\}catch\(e\)\{\}/.test(read('docs/FeedSpark_FeedLab.html'))
-  && /load\(META\[pre\]\?pre:\(META\[remembered\]\?remembered:'Reiss'\),preM\|\|undefined\)/.test(read('docs/FeedSpark_FeedLab.html')));
 ok('KWCal: ?client=*  (All brands) and a remembered "*" both still resolve, not just named brands',
   /remembered==='\*'\|\|roster\[remembered\]/.test(read('docs/FeedSpark_KWCal.html')));
 ok('AI Quote: the remembered brand is checked against the CURRENT client list — a brand dropped from the estate never sticks',

@@ -1,5 +1,7 @@
 # Work-volume charts — the Deck Generator's chart workbench
 
+> **The Deck Generator page was retired on 12 Nov 2026** (Ray: "remove / kill these modules from FCC"). `/api/volumes` (src/volumes.js) stays — the Command Center and the client one-pagers read it. The workbench below is historic.
+
 Ray, 15 Sep 2026: *"Within the deck-generator module, could you also build a chart generator for
 any kind of work-volumes type analysis? For example, I'm looking at Reiss for the past six months
 of work. With the data knowledge of all the current workstreams — project plans, emails, calls,

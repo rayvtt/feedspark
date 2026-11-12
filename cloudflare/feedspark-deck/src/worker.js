@@ -54,8 +54,6 @@ import * as RULES from "./rules.js";
 import * as HERO from "./herosizes.js";
 import * as LEVERS from "./stocklevers.js";
 import * as AIVIS from "./aivis.js";
-// /restock (Ray, 7 Oct 2026): the ledger half — first seen unavailable per product, kept in KV
-import * as RESTOCK from "./restock.js";
 // SERVICES & PRICER (7 Oct 2026): the six /api/pricer/* stores — key grammar, allow-lists, sanitizers
 import * as PSTORE from "./pricerstore.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
@@ -86,7 +84,6 @@ import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
 import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
-import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
 import ACTIVITY from "../../../docs/FeedSpark_Activity.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
@@ -106,7 +103,6 @@ import VIEWASW from "../../../docs/viewas_widget.html";
 // FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
 // so every module's explainer subtext folds behind a ⓘ by default
 import INSTR from "../../../docs/instr_collapse.html";
-import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
 import FEEDCHAT from "../../../docs/FeedSpark_FeedChat.html";
 import PRICER from "../../../docs/FeedSpark_Pricer.html";
 // Label Guard — custom-label capture + drop-off monitoring module (page at /labels)
@@ -120,7 +116,6 @@ import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
 // Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
 import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
-import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
 import RULES_MOD_PAGE from "../../../docs/FeedSpark_Rules.html";
 import STOCK_PAGE from "../../../docs/FeedSpark_Stock.html";
 // the hero-size engine (docs/herosize_engine.js): the master-stock agent builds each market's size census with it,
@@ -141,11 +136,6 @@ import PIXEL_ENGINE_SRC from "../../../docs/pixel_engine.js";
 // Claude? The asking is src/aivis.js (streamed); reading the answers is docs/aivis_engine.js, in the page.
 import AIVIS_PAGE from "../../../docs/FeedSpark_AIVisibility.html";
 import AIVIS_ENGINE_SRC from "../../../docs/aivis_engine.js";
-// /restock (Ray, 7 Oct 2026: "feedhero-reports have got By Products report - and 'Restock products' is interesting
-// to build as a module"): products Google Ads is still serving that the feed sends out of stock or no longer carries.
-// The join runs in the page (docs/restock_engine.js, served verbatim at /restock/engine.js, node-tested).
-import RESTOCK_PAGE from "../../../docs/FeedSpark_Restock.html";
-import RESTOCK_ENGINE_SRC from "../../../docs/restock_engine.js";
 // /breakdown (Ray, 15 Oct 2026: "a custom 'breakdown' fields module to breakdown in pivot with any fields in any
 // feeds"): Label Guard's value · SKUs · share table and a cross-tab, for ANY field of ANY wired feed. The feed streams
 // through /api/feed/proxy and is read in the page (docs/breakdown_engine.js, served verbatim at /breakdown/engine.js).
@@ -382,10 +372,8 @@ const PAGES = {
   '/leadership/roadmap':   { html: ROADMAP,   slug: 'roadmap' },
   '/leadership/readiness': { html: READINESS, slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
-  '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
-  '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
   '/feedchat':    { html: FEEDCHAT,    slug: 'feedchat' },
   '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
   '/ptypes':      { html: PTGUARD_PAGE, slug: 'ptypes' },
@@ -394,12 +382,10 @@ const PAGES = {
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
-  '/roas':        { html: ROAS_PAGE,   slug: 'roas' },
   '/rules':       { html: RULES_MOD_PAGE, slug: 'rules' },
   '/stock':       { html: STOCK_PAGE,  slug: 'stock' },
   '/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },
   '/aivis':       { html: AIVIS_PAGE, slug: 'aivis' },
-  '/restock':     { html: RESTOCK_PAGE, slug: 'restock' },
   '/breakdown':   { html: BREAKDOWN_PAGE, slug: 'breakdown' },
   '/titles':      { html: TITLES_PAGE, slug: 'titles' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
@@ -773,7 +759,7 @@ async function route(request, env, ctx) {
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality', '/api/golden/meta': 'golden-meta',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task', '/api/restock/ledger': 'restock-ledger',
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task',
         '/api/pricer/examples': 'pricer-examples',
         '/api/pricer/bank': 'pricer-bank',
         '/api/pricer/ops': 'pricer-ops', '/api/pricer/price': 'pricer-price', '/api/pricer/cost': 'pricer-cost',
@@ -840,6 +826,14 @@ async function route(request, env, ctx) {
     // first links sent to management still land on it
     if (path === '/transformation') {
       return new Response(null, { status: 301, headers: { Location: '/migration', ...CORS } });
+    }
+
+    // RETIRED MODULES (Ray, 12 Nov 2026: "remove / kill these modules from FCC: Feed Lab, Deck Generator, Restock,
+    // RoAS"): the pages are gone; an old link or bookmark lands on the Command Center rather than a 404. What other
+    // modules still read stays live — /feedlab/engine.js (Golden Record, Label/PT Guard, Stock, Catalogue …), /api/roas
+    // + its cron (Stock, Catalogue, the dossier, Workflow) and /api/volumes (the Command Center, one-pagers).
+    if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {
+      return new Response(null, { status: 301, headers: { Location: '/', ...CORS } });
     }
 
     // the Playbook is now Workflow's right-hand rail, not a module of its own — old links land on it
@@ -1829,9 +1823,6 @@ async function route(request, env, ctx) {
     }
     if (path === '/breakdown/engine.js' && request.method === 'GET') {
       return new Response(BREAKDOWN_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
-    }
-    if (path === '/restock/engine.js' && request.method === 'GET') {
-      return new Response(RESTOCK_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -3039,19 +3030,6 @@ async function route(request, env, ctx) {
       }
     }
 
-    // RESTOCK (Ray, 7 Oct 2026: "feedhero-reports have got By Products report - and 'Restock products' is
-    // interesting to build as a module"). A restock product = one Google Ads is still serving (an impression, a
-    // click, a conversion in FeedHero's trailing 30-day Ads Traffic read — the Catalogue's lane, catAdsRead with
-    // a period) that a shopper cannot buy: the output feed sends it OUT OF STOCK, or no longer carries it at all
-    // (FeedHero's own "Unlisted SKUs in Ads traffic"). The feed streams through /api/feed/proxy and the JOIN runs
-    // in the page (docs/restock_engine.js); what the worker adds is the DEMAND read and the LEDGER (src/restock.js:
-    // first seen unavailable per product, so "out for N days" is read off a record, never guessed from a window).
-    // Company id off the WIRED output feed (catCmpid), never the query; scoped like /api/catalog; a Meta market is
-    // refused (Google Ads is the Google feed's). Nothing in git: KV only.
-    //   GET /api/restock/roster                      → every client × Google market this signin may open (ads: FeedHero holds a company for it)
-    //   GET /api/restock/ads?client=&market=[&fresh] → the 30-day read, a chunk a call: 202 preparing · done:false → call again · done:true carries the rows
-    //   GET /api/restock/ledger?client=&market=      → the market's ledger + its summary (tracking began …)
-    //   PUT /api/restock/ledger?client=&market=      → the page's observation {oos, gone, back, n, feedN} merged in; the ledger comes back
     // FIELD BREAKDOWN roster: every client × market this signin may open, Google AND Meta (a Meta catalogue is a feed
     // like any other here — the module pivots fields, it prices nothing). The feed itself streams through
     // /api/feed/proxy; nothing is stored.
@@ -3065,7 +3043,7 @@ async function route(request, env, ctx) {
     }
     // FIELD BREAKDOWN × GOOGLE ADS (Ray, 19 Oct 2026: "bring AdWords and ROAS data into these breakdowns … how much
     // spend in the past 30 days each group of custom labels has received, in contrast with the total spend"): the
-    // SAME 30-day Ads Traffic read the Restock module uses (catAdsRead, one record per company × period), a chunk a
+    // SAME 30-day Ads Traffic read (catAdsRead, one record per company × period), a chunk a
     // call. A Meta market reads its GOOGLE market's report — Google Ads is the Google feed's, and the page joins it by
     // product id, so a Meta catalogue's groups get the spend the same products earned in Google Ads, said as such.
     //   GET /api/breakdown/ads?client=&market=[&fresh] → 202 preparing · done:false → call again · done:true carries the rows
@@ -3080,7 +3058,7 @@ async function route(request, env, ctx) {
       const cmpid = catCmpid(src);
       if (!cmpid) return json({ ok: false, state: 'no_ads', error: 'this market\'s Google feed is read from a Google Sheet — FeedHero holds no Ads Traffic report for it' }, 404);
       try {
-        const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'), RESTOCK.RESTOCK_PERIOD);
+        const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'), '30_days');
         if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
         if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
         if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
@@ -3095,59 +3073,6 @@ async function route(request, env, ctx) {
         return json({ ok: false, error: msg, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error' }, 502);
       }
     }
-    if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {
-      const acc = await accessOf(env, request);
-      const inScope = (c) => acc.owner || clientMatch(acc.clients, c);
-      if (path === '/api/restock/roster') {
-        const out = {};
-        (await feedRoster(env)).filter((r) => inScope(r.client) && !/-fb$/.test(r.mkt)).forEach((r) => {
-          const cmpid = catCmpid(r.src);
-          (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, kind: r.src && r.src.xml ? 'xml' : 'sheet', cmpid, ads: !!cmpid });
-        });
-        return json({ ok: true, period: RESTOCK.RESTOCK_PERIOD, keep: RESTOCK.RESTOCK_BACK_KEEP_DAYS, clients: out });
-      }
-      const client = (url.searchParams.get('client') || '').slice(0, 60);
-      if (!client || client.indexOf(':') >= 0) return json({ ok: false, error: 'bad client' }, 400);
-      if (!inScope(client)) return json({ ok: false, error: 'out of scope' }, 403);
-      const mkt = mktOf(url.searchParams.get('market'));
-      if (/-fb$/i.test(mkt)) return json({ ok: false, error: 'Google Ads is read for the Google feed — pick the Google market' }, 400);
-      const src = await feedSourceFor(env, client, mkt);
-      if (!src) return json({ ok: false, error: 'no feed wired for this client/market' }, 404);
-      const cmpid = catCmpid(src);
-      if (!cmpid) return json({ ok: false, state: 'no_ads', error: 'this feed is read from a Google Sheet — FeedHero holds no Ads Traffic report for it' }, 404);
-      try {
-        if (path === '/api/restock/ads') {
-          const rec = await catAdsRead(env, cmpid, !!url.searchParams.get('fresh'), RESTOCK.RESTOCK_PERIOD);
-          if (rec.state === 'no_token') return json({ ok: false, state: 'no_token', error: rec.error }, 503);
-          if (rec.state === 'preparing') return json({ ok: false, state: 'preparing', note: rec.note }, 202);
-          if (rec.state === 'missing') return json({ ok: true, missing: true, done: true, note: rec.note, at: rec.at });
-          const head = { ok: true, cmpid, period: rec.period, from: rec.from, to: rec.to, range: rec.range, total: rec.total, pages: rec.pages, next: rec.next,
-            got: Object.keys(rec.rows || {}).length, cur: rec.cur, curMix: !!rec.curMix, restarted: !!rec.restarted, cached: !!rec.cached };
-          if (rec.state !== 'ok') return json(Object.assign(head, { done: false }));
-          if (!rec.cached) logActivity(ctx, env, request, 'restock-ads', cmpid + ' ' + rec.period + ' ' + head.got);
-          return json(Object.assign(head, { done: true, at: rec.at, rows: rec.rows }));
-        }
-        if (path === '/api/restock/ledger') {
-          const key = RESTOCK.ledgerKey(cmpid), now = Date.now();
-          let L = null; try { L = await env.EDITS.get(key, 'json'); } catch (e) { L = null; }
-          if (request.method === 'PUT') {
-            let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-            const obs = RESTOCK.cleanObs(b);
-            // a feed that failed to stream carries no lists — never written as "everything came back"
-            if (!obs) return json({ ok: false, error: 'no observation' }, 400);
-            L = RESTOCK.ledgerUpdate(L, obs, now);
-            await env.EDITS.put(key, JSON.stringify(L), { expirationTtl: RESTOCK.RESTOCK_TTL_S });
-          }
-          return json({ ok: true, cmpid, client, market: mkt, ledger: L || null, summary: RESTOCK.ledgerSummary(L, now), keep: RESTOCK.RESTOCK_BACK_KEEP_DAYS, stale: RESTOCK.RESTOCK_STALE_DAYS });
-        }
-      } catch (e) {
-        const msg = String((e && e.message) || e).slice(0, 160);
-        if (/prepar|being read|still reading|try again|shortly|timed? ?out|aborted|timeout/i.test(msg)) return json({ ok: false, state: 'preparing', note: msg }, 202);
-        return json({ ok: false, error: msg, state: e && e.code === 'unauthorized' ? 'unauthorized' : 'error' }, 502);
-      }
-      return json({ ok: false, error: 'not found' }, 404);
-    }
-
     // THE CATALOGUE (Ray, 28 Sep 2026: "a module to browse / view / track / deep dive product
     // catalogs … when you hover over an image or product, you should have access to what we call
     // a master feed source in FeedHero report MCP … the product data before FeedSpark
@@ -4922,7 +4847,7 @@ async function catMasterInfo(env, cmpid, fresh) {
 // so a read that meets a different window or row count than the one it started from STARTS AGAIN rather than
 // splicing two reports. Sorted by the Ads item id so the page order holds across calls. Nothing in git: KV only.
 const CAT_ADS_PERIOD = '7_days', CAT_ADS_SIZE = 200, CAT_ADS_CHUNK = 24, CAT_ADS_CONC = 4;
-// the periods a caller may ask for (the Catalogue reads 7 days, /restock 30 — RESTOCK.RESTOCK_PERIODS is its twin); anything else reads the default
+// the periods a caller may ask for (the Catalogue reads 7 days, Field breakdown 30); anything else reads the default
 // The Design studio asks for the longer one (Ray, 7 Oct 2026: "x clicks over past 30 days"). 30 days
 // is a SECOND full read of a big account (Schuh UK 22,283 rows), so it is never the default.
 const CAT_ADS_PERIODS = ['7_days', '30_days'];

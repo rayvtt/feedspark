@@ -213,7 +213,7 @@ ok(/'tight'[\s\S]{0,80}'over'[\s\S]{0,80}'served'[\s\S]{0,80}'held'/.test(
 
 ok(/select#brand|getElementById\('brand'\)/.test(WIDGET),
   'a module page that picks a brand from its own selector gets a badge without being touched');
-['KWCal', 'FeedLab', 'Volume', 'Overlays', 'Schedule', 'AIQuote'].forEach((p) =>
+['KWCal', 'Volume', 'Overlays', 'Schedule', 'AIQuote'].forEach((p) =>
   ok(/<select id="brand"/.test(rd('docs', 'FeedSpark_' + p + '.html')),
     'FeedSpark_' + p + ' is covered by that rule'));
 

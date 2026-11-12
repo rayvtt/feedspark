@@ -26,9 +26,8 @@ const SCALED = /^(TaskManager)$/;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'viewas_widget.html', 'apps_widget.html', 'navrow_widget.html', 'lang_widget.html', 'hours_widget.html', 'keep_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html', 'migration_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
-// /roas reads its book from /api/roas (KV, nothing committed) — the synthetic stub in
-// tools/roas_stub.js lets the scorecards, trend, movers and drill table render so the overflow
-// and parity rules actually meet them
+// /api/roas (KV, nothing committed) still feeds Stock, the Catalogue and the dossier now the /roas page is retired —
+// the synthetic stub in tools/roas_stub.js keeps those reads answering
 const ROAS_STUB = require('./roas_stub.js').stubLines();
 // /rules + /stock read FeedHero's rule report from KV — tools/rules_stub.js pushes a synthetic rule
 // list through the real engine so the bars, findings, tables and coverage matrix render
@@ -40,9 +39,6 @@ const CATALOG_STUB = require('./catalog_stub.js').stubLines();
 // /aivis reads stored AI answers from KV — tools/aivis_stub.js hands over a SYNTHETIC book (behind a guard on the
 // page's file name) pushed through the real reading engine, so the grid, charts and history render
 const AIVIS_STUB = require('./aivis_stub.js').stubLines();
-// /restock streams a feed and FeedHero's 30-day Ads read, and keeps a ledger — tools/restock_stub.js hands over a SYNTHETIC
-// set (behind a guard on the page's file name) so the KPI band, the split, the category bars and the three views render
-const RESTOCK_STUB = require('./restock_stub.js').stubLines();
 // /breakdown streams a feed and pivots it — tools/breakdown_stub.js hands over the synthetic Northwind feed (behind a guard on
 // the page's file name) so the panes, the pivot and the fields catalogue render
 const BREAKDOWN_STUB = require('./breakdown_stub.js').stubLines();
@@ -91,7 +87,6 @@ const STUB = `window.fetch=function(url,opts){url=String(url);var j=function(o,s
  if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
 ${CATALOG_STUB}
 ${AIVIS_STUB}
-${RESTOCK_STUB}
 ${BREAKDOWN_STUB}
 ${TITLES_STUB}
 ${SOCIAL_STUB}

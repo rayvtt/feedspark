@@ -1,5 +1,7 @@
 # ROAS — Google Ads return on ad spend, read from FeedHero (working name)
 
+> **The /roas page was retired on 12 Nov 2026** (Ray: "remove / kill these modules from FCC"). The data lane documented here — `/api/roas`, `/api/roas/live`, the cron pull, `src/roas.js` and the KV records — is still live: Stock, the Catalogue, the brand dossier and Workflow read it. Page sections below are historic.
+
 Ray, 23 Sep 2026: *"Build a new module for FCC. We can call it something else, not ROS, but let's
 start with ROS for now."* Then, 24 Sep 2026, on the v1 table: *"i can see ROAS now mirror
 exactly features like AdWords but futuristic design pls."*

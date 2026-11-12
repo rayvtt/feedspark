@@ -25,7 +25,6 @@ const ok = (name, cond, extra) => {
 const read = (f) => readFileSync(new URL('../docs/' + f, import.meta.url), 'utf8');
 const PAGES = {
   golden: read('FeedSpark_GoldenRecord.html'),
-  feedlab: read('FeedSpark_FeedLab.html'),
   dossier: read('FeedSpark_Command_Center.html'),
   playbook: read('FeedSpark_Workflow.html'),
   // Leadership's Golden Record portfolio trend colours each tile's score (Ray, 24 Sep 2026)
@@ -59,14 +58,6 @@ console.log('── /golden');
   ok('content-quality bars read the legend', /function qualBand\(s\) \{ return 'b-' \+ auditBand\(s\); \}/.test(g) &&
     ['b-yellow', 'b-orange', 'b-red'].every((c) => g.includes('.qz-bar i.' + c + '{')));
   ok('AI-readiness keeps its tier colours (40 / 60 / 80)', /function airCol\(s\) \{ return s < 40 \? 'var\(--risk\)' : \(s < 60 \? 'var\(--orange-deep\)' : \(s < 80 \? 'var\(--orange\)' : 'var\(--good\)'\)\); \}/.test(g));
-}
-
-console.log('── /feedlab');
-{
-  const f = PAGES.feedlab;
-  ok('attribute coverage rows are banded', /class="arow b-'\+auditBand\(pct\)\+'"/.test(f));
-  ok('…the bar AND the percentage carry the band colour', ['b-green', 'b-yellow', 'b-orange', 'b-red'].every((c) => f.includes('.arow.' + c + ' .afill{') && f.includes('.arow.' + c + ' .apc{')));
-  ok('the AI-readiness headline keeps its tier colours', /function scoreColor\(s\)\{return s<40\?'var\(--risk\)':s<60\?'var\(--orange-deep\)':s<80\?'var\(--orange\)':'var\(--good\)'\}/.test(f));
 }
 
 console.log('── the dossier Golden Record card');

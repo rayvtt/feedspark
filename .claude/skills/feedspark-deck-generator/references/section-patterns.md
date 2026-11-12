@@ -1,6 +1,6 @@
 # Section → component pattern map
 
-Every id below is one of `FeedSpark_DeckBuilder.html`'s `SECTIONS` entries — match a brief's
+Every id below is one of the retired Deck Generator's `SECTIONS` entries (the page is gone; the ids stand) — match a brief's
 outline label back to its id, then open the referenced file/anchor for a real, working
 example of the markup to adapt. `YuMOVE` = `docs/YuMOVE_Strategy_Review_Jul26.html`,
 `Template` = `docs/FeedSpark_Strategy_Review_Template.html`. Where a pattern has no direct

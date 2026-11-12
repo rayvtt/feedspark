@@ -7,7 +7,7 @@ import os, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, "..", "docs")
 PAGES = ["FeedSpark_Command_Center.html","FeedSpark_Workflow.html","FeedSpark_Readiness.html",
-         "FeedSpark_Leadership.html","FeedSpark_Task_Library.html","FeedSpark_DeckBuilder.html",
+         "FeedSpark_Leadership.html","FeedSpark_Task_Library.html",
          "FeedSpark_Templates.html","FeedSpark_Roadmap.html"]
 
 def I(d):  # 20x20 stroked feather-style icon body

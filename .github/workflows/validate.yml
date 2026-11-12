@@ -131,8 +131,6 @@ jobs:
         run: node tools/test_gmcvis.mjs
       - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)
         run: node tools/test_aivis.mjs
-      - name: Restock harness (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)
-        run: node tools/test_restock.mjs
       - name: Title Lab harness (attributes, the mask, title against field, the master join, wiring)
         run: node tools/test_titles.mjs
       - name: Field breakdown harness (the column store, every reading, filters, the cross-tab, wiring)

@@ -13,7 +13,16 @@ const req = createRequire(path.join(process.env.NODE_PATH || '/usr/lib/node_modu
 let chromium;
 try { ({ chromium } = req('playwright')); } catch (e) { console.log('· playwright unavailable — skipped'); process.exit(0); }
 const D = path.resolve(__dirname, '..', 'docs');
-const PAGE = 'file://' + path.join(D, 'FeedSpark_GoldenRecord.html');
+// served over a local HTTP origin, not file:// — Chromium does not reliably keep sessionStorage across a reload
+// of a file:// page (opaque origin), so one run in four lost the demo's open set on "reload mid-share" and the
+// harness re-seeded itself; the live page runs on a real origin, which is what this now tests
+const http = require('http'), fs = require('fs');
+const SRV = http.createServer((q, s) => {
+  const f = path.join(D, decodeURIComponent(q.url.split('?')[0].split('#')[0]).replace(/^\/+/, ''));
+  if (!f.startsWith(D)) { s.writeHead(403); return s.end(); }
+  fs.readFile(f, (e, b) => { if (e) { s.writeHead(404); s.end(); } else { s.writeHead(200, { 'content-type': /\.js$/.test(f) ? 'text/javascript' : 'text/html; charset=utf-8' }); s.end(b); } });
+});
+let PAGE = '';
 let fail = 0;
 const ok = (name, cond, extra) => {
   if (cond) console.log('   ✓ ' + name);
@@ -22,6 +31,8 @@ const ok = (name, cond, extra) => {
 const NAMES = ['Accessorize', 'Monsoon', 'Reiss'];
 
 (async () => {
+  await new Promise((res) => SRV.listen(0, '127.0.0.1', res));
+  PAGE = 'http://127.0.0.1:' + SRV.address().port + '/FeedSpark_GoldenRecord.html';
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
   const errs = [];
   const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
@@ -108,7 +119,7 @@ const NAMES = ['Accessorize', 'Monsoon', 'Reiss'];
   cards = await read();
   ok('switching demo on again starts with nothing named', cards.every((x) => !x.open) && named(cards).length === 0, cards);
   ok('no page errors', errs.length === 0, errs);
-  await browser.close();
+  await browser.close(); SRV.close();
   console.log(fail ? '\n✗ ' + fail + ' demo-reveal check(s) failed' : '\n✓ Golden Record demo: opening a brand names it, folding masks it');
   process.exit(fail ? 1 : 0);
 })();

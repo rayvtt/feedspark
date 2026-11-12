@@ -23,7 +23,7 @@ const CC = R('FeedSpark_Command_Center.html');
 const WF = R('FeedSpark_Workflow.html');
 const LG = R('FeedSpark_LabelGuard.html');
 const PT = R('FeedSpark_ProductTypeGuard.html');
-const FLAB = R('FeedSpark_FeedLab.html');
+const GR = R('FeedSpark_GoldenRecord.html');   // the dossier's scan links land on Golden Record since /feedlab retired (12 Nov 2026)
 const KW = R('FeedSpark_KWCal.html');
 
 let pass = 0, fail = 0;
@@ -91,13 +91,12 @@ console.log('\n-- the guards honour it --');
 });
 
 console.log('\n-- Feed Lab and the calendar already took these, and still do --');
-ok('Feed Lab reads ?client=', /\[\?&\]client=\(\[\^&\]\+\)/.test(FLAB));
-ok('Feed Lab reads ?market=', /\[\?&\]market=\(\[\^&\]\+\)/.test(FLAB));
+ok('Golden Record reads ?client=', /get\('client'\)/.test(GR));
 ok('the calendar reads ?client=', /\[\?&\]client=\(\[\^&\]\+\)/.test(KW));
 ok('the calendar reads ?market=', /\[\?&\]market=\(\[\^&\]\+\)/.test(KW));
 
 console.log('\n-- every link the dossier emits points somewhere that reads it --');
-const HONOURS = { '/workflow': WF, '/labels': LG, '/ptypes': PT, '/feedlab': FLAB, '/kwcal': KW };
+const HONOURS = { '/workflow': WF, '/labels': LG, '/ptypes': PT, '/golden': GR, '/kwcal': KW };
 Object.keys(HONOURS).forEach((route) => {
   ok(route + ' parses a query string at all', /location\.search/.test(HONOURS[route]));
 });

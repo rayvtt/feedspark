@@ -584,12 +584,6 @@ if node tools/test_pairscan.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ Pair scan harness FAILED — see node tools/test_pairscan.mjs"; FAIL=1
 fi
-echo "── qa-gate 3h6e/7: Restock (demand × feed join, the ledger, the lifted 30-day Ads lane, wiring)"
-if node tools/test_restock.mjs >/dev/null 2>&1; then
-  echo "   ✓ availability vocab, the join, one-currency sums, categories, ledger episodes + purge, catAdsRead by period, routes, registries hold"
-else
-  echo "   ✗ Restock harness FAILED — see node tools/test_restock.mjs"; FAIL=1
-fi
 
 echo "── qa-gate 3h6e2/7: Social DPA (platform frames + safe zones, field limits, the schedule's honesty rules, the overlay inside the safe zone, wiring)"
 if node tools/test_social.mjs >/dev/null 2>&1; then

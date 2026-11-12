@@ -95,12 +95,6 @@
       "pr": 0
     },
     {
-      "name": "DeckBuilder: RYOBI plan sheet wired",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
-      "pr": 53
-    },
-    {
       "name": "Workflow: client-level remove from intake (reversible)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "fcc-wf-removed",
@@ -539,28 +533,9 @@
       "pr": 109
     },
     {
-      "name": "Workflow: Feed Lab in module nav",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/feedlab\"",
-      "pr": 109
-    },
-    {
-      "name": "CmdCenter: Feed Lab in module nav + sidenav",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/feedlab\"",
-      "min": 2,
-      "pr": 109
-    },
-    {
       "name": "Workflow: WF-MOBILE phone layout layer (must stay the LAST style block)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "WF-MOBILE",
-      "pr": 109
-    },
-    {
-      "name": "FeedLab: module page (scanner + score + recs + dissection)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "Dissection theatre",
       "pr": 109
     },
     {
@@ -569,12 +544,6 @@
       "pattern": "FeedAudit",
       "min": 2,
       "pr": 109
-    },
-    {
-      "name": "FeedLab: uniform reservoir sample (head-biased audits banned)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "Algorithm R",
-      "pr": 117
     },
     {
       "name": "worker: multi-market feed resolution + portal index",
@@ -587,13 +556,6 @@
       "name": "worker: /api/feed/markets one-call portal bootstrap",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "api/feed/markets",
-      "pr": 133
-    },
-    {
-      "name": "FeedLab: multi-market portal (league + heatmap + scan-all)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "renderPortal",
-      "min": 2,
       "pr": 133
     },
     {
@@ -863,26 +825,6 @@
       "pr": 163
     },
     {
-      "name": "FeedLab: selector bootstraps from /api/feed/clients",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "api/feed/clients",
-      "pr": 163
-    },
-    {
-      "name": "FeedLab: FL-SHOW demo animation layer (reveals, score pulse, heat wave)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "rv-armed",
-      "min": 3,
-      "pr": 164
-    },
-    {
-      "name": "FeedLab: 🎬 demo tour + auto-dissect spotlight",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "demoTour",
-      "min": 2,
-      "pr": 164
-    },
-    {
       "name": "claude: SessionStart auto-sync hook registered",
       "file": ".claude/settings.json",
       "pattern": "session_sync.sh",
@@ -1018,18 +960,6 @@
     {
       "name": "nav: Label Guard link on Command_Center",
       "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on DeckBuilder",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on FeedLab",
-      "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "href=\"/labels\"",
       "pr": 179
     },
@@ -1801,18 +1731,8 @@
       "pattern": "href=\"/ptypes\""
     },
     {
-      "name": "nav: PT Guard link on DeckBuilder",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "href=\"/ptypes\""
-    },
-    {
       "name": "nav: PT Guard link on FeedChat",
       "file": "docs/FeedSpark_FeedChat.html",
-      "pattern": "href=\"/ptypes\""
-    },
-    {
-      "name": "nav: PT Guard link on FeedLab",
-      "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "href=\"/ptypes\""
     },
     {
@@ -1864,18 +1784,6 @@
       "name": "nav: PT Guard link on Workflow",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "href=\"/ptypes\""
-    },
-    {
-      "name": "DeckBuilder: pptx-only output + core template library panel",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "TEMPLATES:START",
-      "pr": 243
-    },
-    {
-      "name": "DeckBuilder: brief mandates .pptx output",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "OUTPUT IS A .PPTX",
-      "pr": 243
     },
     {
       "name": "tools: nav-parity tripwire present (identical menu on every page)",
@@ -2242,18 +2150,8 @@
       "pattern": "href=\"/golden\""
     },
     {
-      "name": "nav: Golden Record link on DeckBuilder",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "href=\"/golden\""
-    },
-    {
       "name": "nav: Golden Record link on FeedChat",
       "file": "docs/FeedSpark_FeedChat.html",
-      "pattern": "href=\"/golden\""
-    },
-    {
-      "name": "nav: Golden Record link on FeedLab",
-      "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "href=\"/golden\""
     },
     {
@@ -3651,13 +3549,6 @@
       "min": 1
     },
     {
-      "name": "ROAS: a module subtitle wraps to two lines, never cut mid-sentence",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": ".mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2",
-      "pr": 0,
-      "min": 1
-    },
-    {
       "name": "Catalogue: a module subtitle wraps to two lines, never cut mid-sentence",
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": ".mod>.chead .ch{display:-webkit-box;-webkit-line-clamp:2",
@@ -4826,27 +4717,6 @@
       "min": 1
     },
     {
-      "name": "deckgen: work-volume chart workbench section",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "id=\"vz\"",
-      "pr": 371,
-      "min": 1
-    },
-    {
-      "name": "deckgen: pinned charts ride the build brief as native-chart data tables",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "window.__dgChartsBrief=function",
-      "pr": 371,
-      "min": 1
-    },
-    {
-      "name": "deckgen: pinned charts render as slides in the in-browser preview",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "window.__dgChartSlides=function",
-      "pr": 371,
-      "min": 1
-    },
-    {
       "name": "Intake archive: completed work with NO date leaves the working view (Ray 15 Sep 2026)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function isArchived(r){",
@@ -5252,13 +5122,6 @@
       "min": 1
     },
     {
-      "name": "…and the chart states the conversion instead of inviting the comparison",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "function convRows(m){",
-      "pr": 380,
-      "min": 1
-    },
-    {
       "name": "overlays: per-product fields judged by cardinality, never recipe variants",
       "file": "docs/FeedSpark_Overlays.html",
       "pattern": "function profileOf",
@@ -5451,27 +5314,6 @@
       "min": 0,
       "forbidden": true,
       "pr": 380
-    },
-    {
-      "name": "Volume chart: bars and table columns share ONE geometry, month by month (Ray 16 Sep 2026)",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "var GEO={ gut:0.118, tail:0.070 };",
-      "pr": 384,
-      "min": 1
-    },
-    {
-      "name": "…the table's colgroup is bound to the chart's bands (table-layout:fixed)",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "function bandPct(n){",
-      "pr": 384,
-      "min": 1
-    },
-    {
-      "name": "…and the phone pans the table rather than crushing 12 months into 390px",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "table.vz-tbl{min-width:var(--vz-minw,100%)}",
-      "pr": 384,
-      "min": 1
     },
     {
       "name": "Golden Record: ★ on a REC attribute lifts it to best-practice weight ×2 — profiling sale_price must move the number (Ray 16 Sep 2026)",
@@ -6682,12 +6524,6 @@
       "min": 1
     },
     {
-      "name": "Feed Lab: the pillar grid states what is measured but NOT scored, with the reason and a link to Label Guard",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "Custom labels are measured but not scored",
-      "min": 1
-    },
-    {
       "name": "Golden Record: the AI-Readiness method — plain words, conversational heaviest; the custom-labels and same-as-Feed-Lab lines removed (Ray, 8 Oct 2026: 'remove these 2 sentences')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "the custom-labels and same-as-Feed-Lab lines are gone",
@@ -7537,12 +7373,6 @@
       "min": 1
     },
     {
-      "name": "Feed Lab (/feedlab): the front-door page fetches the same /api/golden/profile industry profile the nested /golden reading uses, so the two never disagree",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "function profileForFL(client)",
-      "min": 1
-    },
-    {
       "name": "Command Center dossier: the Golden Record card shows TWO labelled scores per market (feed scorecard + content quality), capped at 8 markets with the overflow named — Ray, 17 Sep 2026: 'carefully label them so we don't mistake'",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function grMiniRow(r)",
@@ -7670,12 +7500,6 @@
       "name": "Worker: /api/golden/quality PUT allow-lists pillar.reads (bounded strings, never HTML)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "reads: Array.isArray(p.reads) ? p.reads.slice(0, 8)",
-      "min": 1
-    },
-    {
-      "name": "Feed Lab page: pillar tiles carry no subtext and open the same BASIS pop-up as /golden",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "function scorePop(a,key)",
       "min": 1
     },
     {
@@ -9847,12 +9671,6 @@
       "pr": 507
     },
     {
-      "name": "Audit colour legend on /feedlab attribute coverage",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "class=\"arow b-'+auditBand(pct)+'\"",
-      "pr": 507
-    },
-    {
       "name": "Audit colour legend on the dossier Golden Record card",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function grBand(n){ return ({green:'good',yellow:'mid',orange:'warn',red:'bad'})[auditBand(n)]||''; }",
@@ -9923,12 +9741,6 @@
       "name": "Task Manager: a bare reload restores the search text, split, form and tab — the same URL-param-or-remembered-pick rule as meas/lab (Ray, 24 Sep 2026: \"the text bar … should stay there unless changed … a preselected option on a certain module should also remain after refresh, not result in a completely blank page\")",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "fcc-tm-q",
-      "pr": 558
-    },
-    {
-      "name": "Feed Lab / Volume / KWCal / AI Quote: the brand picker remembers this device's last pick across a bare reload",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "fcc-fl-client",
       "pr": 558
     },
     {
@@ -10265,18 +10077,6 @@
       "name": "ROAS v2: live segment route — Brand / Gender / Price group on demand, roster-only, cached",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "path === '/api/roas/live' && request.method === 'GET'",
-      "pr": 558
-    },
-    {
-      "name": "ROAS v2: the page's Google Ads scorecards (value + delta + sparkline, click to plot)",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "id=\"sc-row\"",
-      "pr": 558
-    },
-    {
-      "name": "ROAS v2: the drill table's segment select (Category stored, the rest live)",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "['Price_group','Price group']",
       "pr": 558
     },
     {
@@ -11283,24 +11083,6 @@
       "pr": 558
     },
     {
-      "name": "ROAS: picking a segment opens the markets in view",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "function segOpen(){",
-      "pr": 558
-    },
-    {
-      "name": "ROAS: the band filter names the markets it hid",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "hidden by the band filter (",
-      "pr": 558
-    },
-    {
-      "name": "ROAS: a chevron toggles off what is on screen",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var was=chv&&chv.getAttribute('aria-expanded')==='true';",
-      "pr": 558
-    },
-    {
       "name": "Catalogue: the page is served",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "'/catalog':     { html: CATALOG_PAGE, slug: 'catalog' },",
@@ -11980,24 +11762,6 @@
       "pr": 0
     },
     {
-      "name": "ROAS: every FeedHero cut in the Segment select — the one list (Ray 30 Sep 2026)",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "['Title_optimisation_status','Title optimisation']",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: a live cut says when it is all Unsorted or one page of a longer list",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "function segRows(lv,m,t,mk){",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: an unknown linked cut falls back to Category",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "function segOk(v){ return SEGL[v]?v:'Category'; }",
-      "pr": 0
-    },
-    {
       "name": "ROAS: the worker allow-lists FeedHero's eighteen cuts (Batch id)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "'Custom_label_0', 'Custom_label_1', 'Custom_label_2', 'Custom_label_3', 'Custom_label_4', 'Batch_id'];",
@@ -12256,54 +12020,6 @@
       "pr": 0
     },
     {
-      "name": "ROAS modular: the eight original modules lead the one list (the brand-on-brand ten follow)",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var MODS=[['trend','Trend',1],['movers','Movers'],['bands','ROAS bands'],['split','Spend vs revenue share'],['ladder','ROAS by market'],['cost','Cost per conversion'],['zombie','Zombie SKUs'],['fresh','Data freshness'],",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: one card size on a container-query grid",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "main.wrap{container-type:inline-size;container-name:roas}",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: a hidden module is not painted",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": ".mod[hidden]{display:none!important}",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: one model feeds card, CSV and Excel tab",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var MODEL={trend:mTrend,movers:mMovers,bands:mBands,split:mSplit,ladder:mLadder,cost:mCost,zombie:mZombie,fresh:mFresh,",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: money leaves beside a Currency column",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "function withCur(x){ return x.money?[{k:'__cur',l:'Currency'}]",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: ⬇ Export → Excel workbook",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "loadScript('/xlsx/engine.js'",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: a captured card at its natural height",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": ".mod.xshot,body.xshotall .mod{height:auto}",
-      "pr": 0
-    },
-    {
-      "name": "ROAS modular: the rendered tripwire in presync",
-      "file": "tools/presync.sh",
-      "pattern": "node tools/check_roasmods.js",
-      "pr": 0
-    },
-    {
       "name": "KWCal: Reiss / Accessorize / Schuh themes scoped to their own product types",
       "file": "tools/check_kwcal_scopes.js",
       "pattern": "every scoped card reads the sum of its own paths",
@@ -12457,66 +12173,6 @@
       "name": "KWCal: Superdry GB product-type census (independent check on every seeded path)",
       "file": "ops/calendars/superdry_gb_product_types_2026-09-30.json",
       "pattern": "distinct_primary_paths",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — the button + menu beside ⊞ Columns",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "id=\"heat-btn\"",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — a scale per LEVEL, money per currency",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var g=r.type+(r.type==='cat'?'|'+r.depth:'')+(cur?'|'+cur:'');",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — the midpoint is the MEDIAN",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "med=vs.length%2?vs[Math.floor(h)]:(vs[h-1]+vs[h])/2",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — orange → green, the validator-passed dark steps",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "--heat-hi:34,160,107;--heat-lo:198,123,40",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — orange → green, the validator-passed light step",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "--heat-hi:22,101,52;--heat-lo:237,111,11",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — where lower is better, green marks the lowest",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "var weak=h.rev?h.t>0:h.t<0;",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — the reversed column checked in the tripwire",
-      "file": "tools/check_roasmods.js",
-      "pattern": "Zombie % (lower is better): the LOWEST brand is green",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat — per device + carried by a saved view",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "heat:S.heat.slice()",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: every menu nudged back inside the screen (fitPop)",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "if(open)fitPop(pop);",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: ◐ Heat rendered in the tripwire",
-      "file": "tools/check_roasmods.js",
-      "pattern": "◐ Heat — a colour scale per column",
       "pr": 0
     },
     {
@@ -13634,114 +13290,6 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "⏱ auto 12:00 UK · last ",
       "pr": 602
-    },
-    {
-      "name": "Restock: the page is served",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/restock':     { html: RESTOCK_PAGE, slug: 'restock' },",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the engine is served verbatim",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (path === '/restock/engine.js' && request.method === 'GET')",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the Catalogue's Ads lane reads by PERIOD",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "async function catAdsRead(env, cmpid, fresh, period) {",
-      "pr": 0
-    },
-    {
-      "name": "Restock: a 30-day read keeps its own record, never spliced with the 7-day one",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "const key = 'catads:' + cmpid + ':' + per, now = Date.now();",
-      "pr": 0
-    },
-    {
-      "name": "Restock: /api/restock/* scoped like /api/catalog, PUT only on the ledger",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (path.startsWith('/api/restock/') && (request.method === 'GET' || (request.method === 'PUT' && path === '/api/restock/ledger'))) {",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the ledger is written only from a real observation",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (!obs) return json({ ok: false, error: 'no observation' }, 400);",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the ledger write is logged",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/api/restock/ledger': 'restock-ledger'",
-      "pr": 0
-    },
-    {
-      "name": "Restock: a grantable module",
-      "file": "cloudflare/feedspark-deck/src/access.js",
-      "pattern": "{ slug: 'restock', label: 'Restock', path: '/restock' }",
-      "pr": 0
-    },
-    {
-      "name": "Restock: on the migration board",
-      "file": "cloudflare/feedspark-deck/src/migration.js",
-      "pattern": "{ p: '/restock', n: 'Restock', w: 3, m: '2026-12' }",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the migration board's page twin",
-      "file": "docs/FeedSpark_Transformation.html",
-      "pattern": "{p:'/restock',n:'Restock',w:3,m:'2026-12',",
-      "pr": 0
-    },
-    {
-      "name": "Restock: an episode keeps its first-seen date while the product stays unavailable",
-      "file": "cloudflare/feedspark-deck/src/restock.js",
-      "pattern": "if (e && !e[3]) L.p[id] = [e[0], now, code, 0];",
-      "pr": 0
-    },
-    {
-      "name": "Restock: money never crosses a currency",
-      "file": "docs/restock_engine.js",
-      "pattern": "if (!curMix) { s.money = { value: r2(value), cost: r2(cost), valueAll: r2(valueAll), costAll: r2(costAll) }; s.share = valueAll > 0 ? value / valueAll : null; }",
-      "pr": 0
-    },
-    {
-      "name": "Restock: nothing is joined against a feed that did not stream whole",
-      "file": "docs/FeedSpark_Restock.html",
-      "pattern": "if (S.feed.st !== 'done' || S.ads.st !== 'ready') return;",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the stub feeds the phone tripwire",
-      "file": "tools/check_mobile.js",
-      "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the stub feeds the dark-mode tripwire",
-      "file": "tools/check_darkmode.js",
-      "pattern": "const RESTOCK_STUB = require('./restock_stub.js').stubLines();",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the harness runs in qa_gate",
-      "file": "tools/qa_gate.sh",
-      "pattern": "node tools/test_restock.mjs",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the tripwire runs in presync",
-      "file": "tools/presync.sh",
-      "pattern": "node tools/check_restock.js",
-      "pr": 0
-    },
-    {
-      "name": "Restock: the harness runs in CI",
-      "file": ".github/workflows/validate.yml",
-      "pattern": "run: node tools/test_restock.mjs",
-      "pr": 0
     },
     {
       "name": "Module row: the icons shrink on one line rather than wrap (one row whatever the count)",
@@ -15164,12 +14712,6 @@
       "pr": 0
     },
     {
-      "name": "Restock: the module row styled like every other page",
-      "file": "docs/FeedSpark_Restock.html",
-      "pattern": ".tb-modules a.tbm.on{background:rgba(245,166,35,.14)",
-      "pr": 0
-    },
-    {
       "name": "Social DPA: every control in one tabbed panel beside the previews",
       "file": "docs/FeedSpark_Social.html",
       "pattern": "<nav class=\"rtabs\" role=\"tablist\" aria-label=\"Studio panels\" aria-orientation=\"vertical\">",
@@ -16455,30 +15997,6 @@
       "pr": 0
     },
     {
-      "name": "ROAS: brand on brand — ONE grouping (brands on All brands, markets once a brand is picked) serves the ten stories",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "function groups(){",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: brand on brand — a day of a brand's history counts only when every market of the brand was read",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": ".filter(function(d){ return d.n===g.n; })",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: brand on brand — the ten stories registered as modules (card + CSV + Excel tab + ⊞ Modules)",
-      "file": "docs/FeedSpark_ROAS.html",
-      "pattern": "['bandmix','Band mix',1],['funnel','Funnel'],['concentration','Market concentration',1],['scale','Scale vs return'],['momentum','Momentum'],['horizon','Short run vs long run'],['breakeven','Break-even margin'],['attention','Cost of attention'],['persku','Per advertised SKU'],['steady','Consistency']",
-      "pr": 0
-    },
-    {
-      "name": "ROAS: brand on brand — the rendered stories are checked against counts made in the harness",
-      "file": "tools/check_roasmods.js",
-      "pattern": "brand on brand — ten stories, each against a count made HERE",
-      "pr": 0
-    },
-    {
       "name": "KWCal: a condition layers onto the chain above it, or starts a new one (the scope is the union)",
       "file": "docs/kwcal_engine.js",
       "pattern": "function condChains",
@@ -16832,12 +16350,6 @@
       "name": "Catalogue: a brief opens Workflow in a new tab",
       "file": "docs/FeedSpark_Catalog.html",
       "pattern": "function wfTab(u)",
-      "pr": 714
-    },
-    {
-      "name": "Restock: a brief opens Workflow in a new tab",
-      "file": "docs/FeedSpark_Restock.html",
-      "pattern": "wfTab('/workflow?brief=' + b64url(",
       "pr": 714
     },
     {
@@ -17532,6 +17044,32 @@
   {"name": "Title Lab: the page reads the Catalogue's master lane", "file": "docs/FeedSpark_Titles.html", "pattern": "fetchBytes('/api/catalog/master/file' + mq(), g,"},
   {"name": "Title Lab: every section folds, per device", "file": "docs/FeedSpark_Titles.html", "pattern": "var FOLD_K = 'fcc-tl-fold', OPEN0 = { sum: 1, sbs: 1 }, FOLD = null;"},
   {"name": "Title Lab: a brief opens Workflow in a new tab", "file": "docs/FeedSpark_Titles.html", "pattern": "wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Title Fix - '"},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /feedlab in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /deck-builder in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /restock in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
+  {"name": "Retired module: no link to /roas in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/feedlab':     { html: FEEDLAB", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/feedlab':     { html: FEEDLAB", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/roas':        { html: ROAS_PAGE", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/roas':        { html: ROAS_PAGE", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/restock':     { html: RESTOCK_PAGE", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: '/deck-builder':{ html: DECKBUILDER", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/deck-builder':{ html: DECKBUILDER", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'restock'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'restock'", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'roas'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'roas'", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'feedlab'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'feedlab'", "forbidden": true, "pr": 0},
+  {"name": "Retired module stays retired: slug: 'deck-builder'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'deck-builder'", "forbidden": true, "pr": 0},
+  {"name": "Retired modules: old links 301 to the Command Center", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {", "pr": 0},
+  {"name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')", "pr": 0},
   {"name": "Title Lab: the item type is looked for up the tree, gender and age words set aside", "file": "docs/titlelab_engine.js", "pattern": "var lw = words(lv[d]).filter(function (w) { return !SYN_REV.gender[w] && !SYN_REV.age_group[w]; });"},
   {"name": "Title Lab: a taught word is read first, before any field", "file": "docs/titlelab_engine.js", "pattern": "put(ta, ti, tn, 'taught', false);"},
   {"name": "Title Lab: an accepted pair is not a gap", "file": "docs/titlelab_engine.js", "pattern": "Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';"},

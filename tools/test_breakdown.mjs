@@ -189,7 +189,7 @@ console.log('· Google Ads in the breakdown (Ray, 19 Oct 2026: "how much spend i
   t('the cross-tab sums a cell, its row and its column the same way; products travel beside', X.total === 75 && X.totalP === 4 && xr['in stock'].n === 55 && xr['in stock'].p === 3 && xr['in stock'].cells[ci] === 40 && xr['in stock'].cells2[ci] === 160 && X.cols[ci].n === 60 && X.cols[ci].n2 === 160, [X.rows, X.cols]);
   t('…an unweighted read is exactly what it was', B.cross(S, { f: 'g:availability' }, { f: 'g:brand' }, null, {}).total === 4 && !B.cross(S, { f: 'g:availability' }, { f: 'g:brand' }, null, {}).weighted);
   t('…a weighted read never counts item groups (spend belongs to a product)', B.pivot(S, { f: 'g:brand' }, null, { w, unit: 'group' }).unit === 'sku');
-  t('the worker serves the 30-day read on its own route, scoped, a Meta market reading its Google market\'s report', /path === '\/api\/breakdown\/ads'/.test(WK) && /gmkt = asked\.replace\(\/-fb\$\/i, ''\)/.test(WK) && /catAdsRead\(env, cmpid, !!url\.searchParams\.get\('fresh'\), RESTOCK\.RESTOCK_PERIOD\)/.test(WK.slice(WK.indexOf("'/api/breakdown/ads'"))) && /clientMatch\(acc\.clients, client\)/.test(WK.slice(WK.indexOf("'/api/breakdown/ads'"), WK.indexOf("'/api/breakdown/ads'") + 1200)));
+  t('the worker serves the 30-day read on its own route, scoped, a Meta market reading its Google market\'s report', /path === '\/api\/breakdown\/ads'/.test(WK) && /gmkt = asked\.replace\(\/-fb\$\/i, ''\)/.test(WK) && /catAdsRead\(env, cmpid, !!url\.searchParams\.get\('fresh'\), '30_days'\)/.test(WK.slice(WK.indexOf("'/api/breakdown/ads'"))) && /clientMatch\(acc\.clients, client\)/.test(WK.slice(WK.indexOf("'/api/breakdown/ads'"), WK.indexOf("'/api/breakdown/ads'") + 1200)));
   t('the page: a Measure picker (Products, then Google Ads · last 30 days), the share of products beside a sum, ROAS never a share, the out-of-feed spend named', /<select class="fld" id="pv-meas"[^>]*data-no-keep>/.test(PG) && /<optgroup label="Google Ads · last 30 days">/.test(PG) && />% of products</.test(PG) && /ROAS is a ratio — it is shown as itself, never as a share/.test(PG) && /no longer carries — in no row/.test(PG) && /fetch\('\/api\/breakdown\/ads'/.test(PG));
 }
 
@@ -212,7 +212,7 @@ console.log('· the registries, the nav');
   t('the Transformation page carries the twin row and an assessment row', /\{p:'\/breakdown',n:'Field breakdown',w:3,m:'2026-12'/.test(TX) && /\{id:'breakdown',p:'\/breakdown',n:'Field breakdown',ben:/.test(TX));
   const pages = fs.readdirSync(new URL('../docs/', import.meta.url)).filter((f) => /^FeedSpark_.*\.html$/.test(f)).map((f) => read('docs/' + f)).filter((s) => s.indexOf('id="tb-modules"') >= 0);
   const after = pages.every((s) => /<a href="\/ptypes" class="tbm(?: on)?"[^>]*>[\s\S]*?<\/a><a href="\/breakdown" class="tbm(?: on)?"/.test(s));
-  t('the nav carries /breakdown right after PT Guard on every nav-bearing page (' + pages.length + ')', pages.length >= 30 && after);
+  t('the nav carries /breakdown right after PT Guard on every nav-bearing page (' + pages.length + ')', pages.length >= 28 && after);
   t('the Breakdown page marks its own link .on and no other', (PG.match(/class="tbm on"/g) || []).length === 1 && /<a href="\/breakdown" class="tbm on"/.test(PG));
 }
 

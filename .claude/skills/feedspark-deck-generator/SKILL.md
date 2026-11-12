@@ -1,6 +1,6 @@
 ---
 name: feedspark-deck-generator
-description: Builds a full, on-brand FeedSpark client deck (Strategy Review, Onboarding, Intro, etc.) from a brief produced by the FCC Deck Generator (/deck-builder), or from plain-English instructions naming a client and a set of sections (e.g. "intro for Hobbycraft new agency", "Q2–Q3 review for Schuh"). The deliverable is ALWAYS a PowerPoint file (.pptx) built on the FeedSpark core deck template (reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx — design/element/colour/text/voice) — HTML decks are no longer an output option. Sections are authored with the proven chapter/card/tier/table component library as an internal intermediate, populated with the client's actual numbers from the ATRT plan data AND, when attached, a live product-feed export analysed directly (title/attribute/taxonomy/image scoring), not placeholder copy, then exported to the templated .pptx. Use this whenever Ray pastes a "Deck brief" or "Deck Build Brief" block (starts with "# [Client] — [Deck type] deck" or "FEEDSPARK — DECK BUILD BRIEF", has an outline/section list), attaches a feed export (.xlsx/.csv) alongside a deck request, or asks to "build/generate/create the deck for [client]", "turn this brief into a deck", "make the Strategy Review for [client]", or similar — even if he doesn't say the word "skill". The Deck Generator module only produces a rough in-browser mockup and the brief text; this skill produces the real, client-ready, fully-editable .pptx.
+description: Builds a full, on-brand FeedSpark client deck (Strategy Review, Onboarding, Intro, etc.) from plain-English instructions, a pasted deck brief, or a reference deck to mirror, naming a client and a set of sections (e.g. "intro for Hobbycraft new agency", "Q2–Q3 review for Schuh"). The deliverable is ALWAYS a PowerPoint file (.pptx) built on the FeedSpark core deck template (reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx — design/element/colour/text/voice) — HTML decks are no longer an output option. Sections are authored with the proven chapter/card/tier/table component library as an internal intermediate, populated with the client's actual numbers from the ATRT plan data AND, when attached, a live product-feed export analysed directly (title/attribute/taxonomy/image scoring), not placeholder copy, then exported to the templated .pptx. Use this whenever Ray pastes a "Deck brief" or "Deck Build Brief" block (starts with "# [Client] — [Deck type] deck" or "FEEDSPARK — DECK BUILD BRIEF", has an outline/section list), attaches a feed export (.xlsx/.csv) alongside a deck request, or asks to "build/generate/create the deck for [client]", "turn this brief into a deck", "make the Strategy Review for [client]", or similar — even if he doesn't say the word "skill". The FCC Deck Generator page was retired (Nov 2026) — this skill is the whole deck lane, producing the real, client-ready, fully-editable .pptx.
 ---
 
 # FeedSpark Deck Generator
@@ -33,12 +33,14 @@ See `reference-files/deck-templates/README.md` for the deposit convention.
 
 ## Why this exists
 
-`docs/FeedSpark_DeckBuilder.html` (served at `/deck-builder`) lets Ray compose an outline —
-pick a client, a deck type, drag sections into order — and either preview a rough mockup
-in the browser (generic bullet content, not on-brand) or copy a **brief**: a short markdown
-spec naming the client, deck type, look-back window, ordered section list, and (if the
-client has a linked plan) live score/task numbers. That handoff is this skill — take
-the brief, and build the actual `.pptx` the DeckBuilder only sketches.
+The FCC's Deck Generator page (`/deck-builder`) used to compose outlines and copy a **brief**
+— client, deck type, look-back window, ordered section list, live plan numbers. That page was
+RETIRED on 12 Nov 2026 (Ray: "remove / kill these modules from FCC"); this skill is now the
+whole deck lane. Briefs arrive as plain instructions ("build the Reiss strategy review"), as an
+older pasted brief, or as a reference deck to mirror (e.g. "use this Schuh strategy deck to
+generate for Hobbycraft & Monsoon" — keep its chapter structure and layout, rebuild every
+figure from the new client's own sources). The Services & Pricer module's → Deck brief still
+copies a brief to paste here.
 
 ## Always a cover
 
@@ -68,7 +70,7 @@ A brief looks like this (client name, deck type and outline vary):
 
 If Ray instead just says "build the Reiss deck" or similar without a formal brief, treat it
 as an implicit brief: client = Reiss, deck type = Strategy Review (the default unless he
-says otherwise), sections = the "strategy" preset in `FeedSpark_DeckBuilder.html`
+says otherwise), sections = the "strategy" preset
 (`recap, lookback, wins, score, airead, cases, roadmap`) unless he names different ones.
 
 Match each outline line back to a **section id** using `references/section-patterns.md` —
