@@ -7709,7 +7709,21 @@ async function renamePlanTask(env, id, tab, match, value) {
 // that brand's token in the sheet's brand column so the board can tell them apart, and a task
 // for both is left blank, because blank already means both (Ray, 14 Oct 2026). Omit it and the
 // write is exactly what it was.
+// ONE APPEND AT A TIME PER WORKBOOK, AND EVERY APPEND CHECKED (Ray, 13 Nov 2026: "when call tasks
+// parsed from Gemini notes - these rows are not auto-updated in Project Plan Gsheet btw"). An append
+// reads the grid, picks the row under the last task and writes there — so two appends running at
+// once pick the SAME row and the second overwrites the first, while both answer ok:true. That is
+// how six of the Monsoon x Katte.Co call's seven actions vanished. Requests that reach one isolate
+// queue here; and since two isolates cannot share a lock, the write is READ BACK — a row that no
+// longer carries the task it was given answers ok:false (non-fatal), so the page retries it.
+const _planAppendQ = new Map();
 async function appendPlanRows(env, id, tab, rows, client) {
+  const prev = _planAppendQ.get(id) || Promise.resolve();
+  const run = prev.catch(() => {}).then(() => appendPlanRowsNow(env, id, tab, rows, client));
+  _planAppendQ.set(id, run);
+  try { return await run; } finally { if (_planAppendQ.get(id) === run) _planAppendQ.delete(id); }
+}
+async function appendPlanRowsNow(env, id, tab, rows, client) {
   try {
     const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
     const info = await resolveTabInfo(id, tab, token);
@@ -7776,6 +7790,20 @@ async function appendPlanRows(env, id, tab, rows, client) {
     const wd = await wr.json();
     if (wd.error) return { ok: false, error: permHint(wd.error.message) };
     try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+    // read the task cells back: another append that chose the same row may have landed over ours
+    try {
+      const vr = realTab ? realTab + '!' : '';
+      const tcl = colLetter(tc);
+      const cr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(vr + tcl + startRow + ':' + tcl + (startRow + values.length - 1)), { headers: { Authorization: 'Bearer ' + token } });
+      const cd = await cr.json();
+      if (!cd.error) {
+        const got = (cd.values || []).map(v => normAppendKey((v || [])[0]));
+        // USER_ENTERED can reformat a value, so only a cell holding SOMETHING ELSE (or nothing) is a loss
+        const same = (a, b) => a === b || (a.length >= 8 && b.length >= 8 && (a.slice(0, 12) === b.slice(0, 12)));
+        const lost = values.filter((v, i) => !same(got[i] || '', normAppendKey(v[tc]))).length;
+        if (lost) return { ok: false, error: 'overwritten by another plan write on row ' + startRow + ' — will retry', lost, atRow: startRow };
+      }
+    } catch (e) {}
     return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut, brand: brandTok || null, anchor: place.anchor };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }

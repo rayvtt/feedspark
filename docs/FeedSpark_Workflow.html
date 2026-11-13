@@ -2662,7 +2662,7 @@ aside.ck[hidden]{display:none}
     MANUAL.push({client:client,task:name,owner:owner,status:'Open',due:due}); saveManual();
     toast('↻ '+REC_LBL[r.every]+' — next occurrence created, due '+due);
     var id=PLANSHEET[client];
-    if(id){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:name,owner:owner,status:'Open',due:due}]})})
+    if(id){ planFetch({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:name,owner:owner,status:'Open',due:due}]})})
       .then(function(x){return x.json();}).then(function(d){ if(d&&d.ok){ markWritten(client,name); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } }).catch(function(){}); } }
   function recMenu(btn,t){
     var old=document.getElementById('rec-menu'); if(old)old.remove();
@@ -2835,6 +2835,41 @@ aside.ck[hidden]{display:none}
   // adoptIntoPlan's own write and by resyncPlanWrites, cleared when that write fails, so one
   // row is never sent twice at once and a failure is never stranded for the session.
   var _planTried={};
+  /* ONE PLAN WRITE AT A TIME, PER WORKBOOK (Ray, 13 Nov 2026, over two Monsoon 📞 Call rows
+     still missing from the Project Plan: "when call tasks parsed from Gemini notes - these rows
+     are not auto-updated in Project Plan Gsheet btw"). adoptCalls files every action of a call
+     at once and each one was its own /api/sheets/append — sent together, so every request read
+     the same "last task row", chose the SAME row below it and wrote there, each overwriting the
+     one before. The Monsoon x Katte.Co call's seven actions landed on one row: only the last
+     write ("Share Overlay Designs") survived, and every request had answered ok:true, so all
+     seven were stamped w:1 and nothing ever retried. Every append on this page now goes through
+     planFetch, which chains requests per sheet id — the next one starts only once the previous
+     write has answered, so it reads the grid with that row already in it. */
+  var PLAN_Q=PLAN_Q||{};   // an append fired during boot may reach planFetch before this line runs
+  function planFetch(opts){
+    var id=''; try{ id=JSON.parse(opts&&opts.body||'{}').id||''; }catch(e){}
+    PLAN_Q=PLAN_Q||{}; var prev=PLAN_Q[id]||Promise.resolve();
+    var p=prev.catch(function(){}).then(function(){ return fetch('/api/sheets/append',opts); });
+    // the queue waits on the whole answer (headers AND body) so a slow write never lets the next start early
+    PLAN_Q[id]=p.then(function(r){ return r.clone().text(); }).catch(function(){});
+    return p; }
+  /* AND THE ROWS IT ALREADY LOST HEAL (the same report). A row confirmed by the sheet (w:1) that
+     a LIVE read of its brand's plan does not carry — exact wording, the worker's own rule — was
+     overwritten after it landed. Once the live plan is in, such a row is handed back to the retry
+     pass ONCE (hv): the worker's append is idempotent by task text, so a row that really is in
+     the tab costs nothing, and a lost one is written again. Deleted and renamed rows are left
+     alone, as resyncPlanWrites already does. */
+  function planHeal(){
+    if(typeof MANUAL==='undefined'||!LIVE_CONN)return 0;
+    var ren=renameOverlay(), n=0;
+    MANUAL.forEach(function(m){ if(!m||!m.w||m.hv||!m.client||!m.task)return;
+      var k=m.client+'|'+m.task; if(DELETED[k]||ren[k]||!PLANSHEET[m.client])return;
+      var lv=LIVE[m.client]; if(!lv||!lv.tasks)return;
+      var nt=normTask(m.task);
+      if(lv.tasks.some(function(t){ return normTask(t.t)===nt; }))return;
+      m.hv=1; delete m.w; delete _planTried[k]; n++; });
+    if(n){ saveManual(); resyncPlanWrites(); }
+    return n; }
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
   function adoptIntoPlan(client,task,status,dueDD,owner,esrc,strict){
@@ -2852,7 +2887,7 @@ aside.ck[hidden]{display:none}
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       _planTried[client+'|'+task]=1;                 // this write is in flight — the resync pass must not send the same row alongside it
-      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
+      planFetch({method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
         .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):(client+'’s sheet refused it · saved here — see the Intake heading')); if(d&&d.ok){ markWritten(client,task); planWriteOk(client); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else { var ae=(d&&d.error)||'write failed';
           if(!planFatal(ae))delete _planTried[client+'|'+task];   // a refusal this workbook will repeat is not handed back to the retry pass
@@ -2896,7 +2931,7 @@ aside.ck[hidden]{display:none}
       (by[m.client]=by[m.client]||[]).push(m); });
     saveManual();
     Object.keys(by).forEach(function(c){ var rows=by[c];
-      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
+      planFetch({method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:PLANSHEET[c],client:c,tab:'Project Plan',rows:rows.map(function(m){ return {task:m.task,owner:m.owner||'',status:m.status||'Open',due:m.due||''}; })})})
         .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok){ var re=(d&&d.error)||'write failed';
             if(!planFatal(re))rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; });
@@ -3000,7 +3035,7 @@ aside.ck[hidden]{display:none}
     renderAll(); ti.focus();
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
-      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
+      planFetch({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
         .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):(client+'’s sheet refused it · saved here — see the Intake heading')); if(d&&d.ok){ markWritten(client,task); planWriteOk(client); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); }
           // ＋ Add task's own refusal used to be a toast and nothing else — the row stayed in
           // Intake unwritten with the only word about it already faded. Same reporting as every
@@ -3101,7 +3136,7 @@ aside.ck[hidden]{display:none}
     var oldId=PLANSHEET[oc], newId=PLANSHEET[nc];
     if(oldId){ fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:oldId,tab:'Project Plan',tasks:[t.task]})})
       .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok&&d.deleted)toast('✓ Removed from '+oc+'’s plan'); }).catch(function(){}); }
-    if(newId){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:newId,client:nc,tab:'Project Plan',rows:[{task:t.task,owner:owner,status:status,due:due}]})})
+    if(newId){ planFetch({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:newId,client:nc,tab:'Project Plan',rows:[{task:t.task,owner:owner,status:status,due:due}]})})
       .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+nc+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Moved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(nc,t.task); if(LIVE[nc])setTimeout(function(){fetchLive(true);},800); } })
       .catch(function(){ toast('Moved locally — plan write failed (check the SA has Editor access)'); }); }
     else toast('Moved to '+nc+' · no plan sheet linked to write back');
@@ -4517,6 +4552,7 @@ aside.ck[hidden]{display:none}
           if(banner) banner.textContent='Live — '+n+' tasks across '+brands+' plans · synced '+timeAgo(LIVE_AT)+(errs.length?(' · '+errs.length+' not shared with the service account'):'');
           renderAll();
           reconcileBriefTasks();   // a ticket whose task never reached the plan gets its row now
+          planHeal();              // a row the sheet confirmed but the live plan does not carry was overwritten — write it again
         } else { if(banner) banner.textContent=(d&&d.error==='no_sa')?'Not connected — set the Google service-account secret to sync plans live.':'Sync unavailable — showing the last snapshot.'; }
       }).catch(function(){ if(btn)btn.disabled=false; if(banner) banner.textContent='Sync failed — showing the last snapshot.'; });
   }

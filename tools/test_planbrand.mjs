@@ -172,7 +172,7 @@ ok(/String\(body\.client \|\| ''\)/.test(W), '/api/sheets/append reads the clien
 /* ---------- 8. the page ---------- */
 console.log('\n── the Workflow board');
 const P = readFileSync(new URL('../docs/FeedSpark_Workflow.html', import.meta.url), 'utf8');
-const appends = [...P.matchAll(/\/api\/sheets\/append[\s\S]{0,420}?rows:/g)].map((m) => m[0]);
+const appends = [...P.matchAll(/planFetch\(\{method:'POST'[\s\S]{0,420}?rows:/g)].map((m) => m[0]);   // every append goes through planFetch (one write at a time per workbook)
 ok(appends.length === 5, 'the page has five plan-write call sites (' + appends.length + ')');
 appends.forEach((a, i) => ok(/client:\s*(client|c|nc)\s*,/.test(a),
   'write ' + (i + 1) + ' names the client it is filing for'));
