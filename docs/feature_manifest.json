@@ -17075,6 +17075,11 @@
   {"name": "Title Lab: an accepted pair is not a gap", "file": "docs/titlelab_engine.js", "pattern": "Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';"},
   {"name": "Title Lab: corrections are the team's — two shared-state namespaces", "file": "cloudflare/feedspark-deck/src/sharedstate.js", "pattern": "titleteachall: null,"},
   {"name": "Title Lab: a correction re-reads every title and is pushed to the team", "file": "docs/FeedSpark_Titles.html", "pattern": "body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all })"},
-  {"name": "Title Lab: a card's thumbnail opens every image the feed carries", "file": "docs/FeedSpark_Titles.html", "pattern": "function imagesOf(r) {"}
+  {"name": "Title Lab: a card's thumbnail opens every image the feed carries", "file": "docs/FeedSpark_Titles.html", "pattern": "function imagesOf(r) {"},
+  {"name": "Workflow: plan appends go one at a time per workbook (call actions no longer overwrite each other)", "file": "docs/FeedSpark_Workflow.html", "pattern": "function planFetch(opts){"},
+  {"name": "Workflow: a confirmed row the live plan does not carry is written again", "file": "docs/FeedSpark_Workflow.html", "pattern": "function planHeal(){"},
+  {"name": "Worker: plan appends queue per workbook", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const _planAppendQ = new Map();"},
+  {"name": "Worker: an append reads its rows back and reports an overwrite", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "overwritten by another plan write on row"},
+  {"name": "Workflow: no direct append fetch bypasses the queue", "file": "docs/FeedSpark_Workflow.html", "pattern": "fetch('/api/sheets/append',{method:'POST'", "forbidden": true}
  ]
 }

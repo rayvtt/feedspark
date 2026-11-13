@@ -95,7 +95,7 @@ ok(/sheets\.properties\(sheetId,title,gridProperties\(rowCount\)\)/.test(W),
   '— plus its sheetId, so rows can be added to it');
 ok(/async function resolveTab\(id, tab, token\) \{ const i = await resolveTabInfo/.test(W),
   'resolveTab delegates to it, so the tab-name matching has one implementation');
-const ap = liftFrom(W, 'appendPlanRows', 'worker.js');
+const ap = liftFrom(W, 'appendPlanRowsNow', 'worker.js');
 ok(/const info = await resolveTabInfo\(id, tab, token\)/.test(ap), 'appendPlanRows resolves the tab through it');
 ok(/if \(!info\) return tabAmbiguous/.test(ap), 'an ambiguous workbook is still refused by name');
 ok(/const place = planAppendRow\(grid, tc, values\.length\)/.test(ap), 'and places its rows with planAppendRow');
@@ -166,23 +166,41 @@ console.log('\n── appendPlanRows over that grid, with Google stubbed');
 const PB = (await import('../cloudflare/feedspark-deck/src/planbrand.js')).default
   || await import('../cloudflare/feedspark-deck/src/planbrand.js');
 const SHEET = '1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w';
-async function runAppend(rows, client, { rowCount = 891 } = {}) {
-  const calls = [];
-  const fetchStub = async (url, init) => {
-    calls.push({ url: String(url), method: (init && init.method) || 'GET', body: init && init.body ? JSON.parse(init.body) : null });
-    const u = String(url);
+// The stub is a SHEET, not a script: a PUT really changes the grid, a later read sees it, and the
+// worker's read-back reads the cells it wrote — so two appends racing for one row can be run.
+// `clobber` makes a write that lands be overwritten straight after (another isolate's append).
+function sheetStub(grid, rowCount, calls, { clobber = false, delay = 0 } = {}) {
+  const g = grid.map((r) => (r || []).slice());
+  return async (url, init) => {
+    const method = (init && init.method) || 'GET';
+    calls.push({ url: String(url), method, body: init && init.body ? JSON.parse(init.body) : null });
+    const u = decodeURIComponent(String(url));
+    if (delay) await new Promise((res) => setTimeout(res, delay));
     if (/fields=sheets\.properties/.test(u)) return { json: async () => ({ sheets: [{ properties: { sheetId: 7, title: 'Project Plan', gridProperties: { rowCount } } }] }) };
-    if (/\/values\/.*A1%3AZZ5000/.test(u) || /A1:ZZ5000/.test(u)) return { json: async () => ({ values: realGrid }) };
     if (/:batchUpdate/.test(u)) return { json: async () => ({ replies: [{}] }) };
-    return { json: async () => ({ updatedCells: 1 }) };
+    if (/A1:ZZ5000/.test(u)) { const snap = g.map((r) => r.slice()); return { json: async () => ({ values: snap }) }; }
+    const m = /!([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?/.exec(u);
+    if (method === 'PUT' && m) {
+      const at = +m[2] - 1, vals = JSON.parse(init.body).values;
+      vals.forEach((v, i) => { g[at + i] = v.slice(); if (clobber) { g[at + i] = v.slice(); g[at + i][TC] = 'Someone else\'s task written over this row'; } });
+      return { json: async () => ({ updatedCells: vals.length }) };
+    }
+    if (m && m[3]) { const col = m[1].charCodeAt(0) - 65, a = +m[2] - 1, b = +m[4] - 1, out = [];
+      for (let r = a; r <= b; r++) out.push([((g[r] || [])[col]) || '']);
+      return { json: async () => ({ values: out }) }; }
+    return { json: async () => ({}) };
   };
-  const sandbox = new Function('deps', `
+}
+function lift(fetchStub) {
+  return new Function('deps', `
     const { fetchStub, PB, PLAN_SHEETS, resolveCols, colLetter, permHint, tabAmbiguous, googleToken, env } = deps;
     const fetch = fetchStub;
     const { brandsOnSheet, brandToken, rowBrands, appendToken, rowCovered, noteRow } = PB;
+    const _planAppendQ = new Map();
     ${liftFrom(W, 'resolveTabInfo', 'worker.js')}
     ${liftFrom(W, 'planAppendRow', 'worker.js')}
     ${liftFrom(W, 'appendPlanRows', 'worker.js')}
+    ${liftFrom(W, 'appendPlanRowsNow', 'worker.js')}
     return appendPlanRows;`)({
       fetchStub, PB, PLAN_SHEETS: { Monsoon: SHEET, Accessorize: SHEET, Reiss: 'other' },
       resolveCols: () => ({ headerRow: 10, offset: 0, statusCol: SC, taskCol: TC, ownerCol: 3, dueCol: 6 }),
@@ -190,6 +208,11 @@ async function runAppend(rows, client, { rowCount = 891 } = {}) {
       tabAmbiguous: () => ({ ok: false, error: 'ambiguous' }),
       googleToken: async () => 'tok', env: { EDITS: { delete: async () => {} } },
     });
+}
+async function runAppend(rows, client, { rowCount = 891 } = {}) {
+  const calls = [];
+  const fetchStub = sheetStub(realGrid, rowCount, calls);
+  const sandbox = lift(fetchStub);
   const out = await sandbox({ EDITS: { delete: async () => {} } }, SHEET, 'Project Plan', rows, client);
   return { out, calls };
 }
@@ -217,6 +240,55 @@ ok(grow && grow.body.requests[0].appendDimension.sheetId === 7, '— on the tab 
 ok(grow && grow.body.requests[0].appendDimension.length === (518 - 517) + 50,
   '— by what it needs plus a little slack', grow && grow.body.requests[0].appendDimension.length);
 ok(r2.out.ok === true && r2.out.atRow === 516, 'and the write then lands where it meant to', r2.out);
+
+/* ---------- 5b. seven actions of one call, sent at once (Ray, 13 Nov 2026: "when call tasks parsed
+   from Gemini notes - these rows are not auto-updated in Project Plan Gsheet btw") ---------- */
+console.log('\n── seven call actions written at once');
+{
+  const calls = [], stub = sheetStub(realGrid, 891, calls, { delay: 5 });
+  const app = lift(stub);
+  const seven = ['Confirm Delivery Policy: Review website delivery policy and share',
+    'Update Shopping Feed: Input new shipping handling attributes into', "Share Overlay Designs: Locate last year's overlay",
+    'Distribute Stock Logic: Recirculate the stock logic documentation', 'Update Project Plan: Document the meta custom number workflow in',
+    'Delete Catalog: Remove the DPA test catalog from the', 'Confirm Historical Designs: Search emails to verify and confirm'];
+  const outs = await Promise.all(seven.map((t) => app({ EDITS: { delete: async () => {} } }, SHEET, 'Project Plan', [{ task: t, owner: 'Ray Vu', status: 'Open', due: '' }], 'Monsoon')));
+  const rowsAt = outs.map((o) => o.atRow);
+  ok(outs.every((o) => o.ok === true), 'all seven answer ok', outs.map((o) => o.error));
+  ok(new Set(rowsAt).size === 7, 'each on a row of its own — not seven writes onto one', rowsAt);
+  const after = await stub('https://x/values/' + encodeURIComponent('Project Plan!A1:ZZ5000'));
+  const g = (await after.json()).values;
+  ok(seven.every((t) => g.some((r) => (r || [])[TC] === t)), 'and every one of them is in the sheet afterwards');
+}
+{
+  const calls = [], app = lift(sheetStub(realGrid, 891, calls, { clobber: true }));
+  const o = await app({ EDITS: { delete: async () => {} } }, SHEET, 'Project Plan', [{ task: 'Distribute Stock Logic: Recirculate the stock logic documentation', owner: '', status: 'Open', due: '' }], 'Monsoon');
+  ok(o.ok === false && /overwritten/.test(o.error), 'a row another write landed over is NOT reported as written', o);
+  ok(planFatal(o.error) === false, '— and the page hands it back to the retry pass rather than giving up');
+}
+ok(/planFetch\(opts\)/.test(P) && !/fetch\('\/api\/sheets\/append'/.test(P.replace("return fetch('/api/sheets/append',opts)", '')),
+  'every append on the page goes through planFetch, one at a time per workbook');
+ok(/planHeal\(\);\s+\/\/ a row the sheet confirmed/.test(P), 'and a confirmed row the live plan does not carry is written again');
+{
+  const heal = liftFrom(P, 'planHeal', 'FeedSpark_Workflow.html');
+  const st = { MANUAL: [
+      { client: 'Monsoon', task: 'Distribute Stock Logic: Recirculate the stock logic documentation', w: 1 },
+      { client: 'Monsoon', task: "Share Overlay Designs: Locate last year's overlay", w: 1 },
+      { client: 'Monsoon', task: 'Confirm Historical Designs: Search emails to verify and confirm', w: 1 },
+      { client: 'Monsoon', task: 'Already healed once', w: 1, hv: 1 }], resync: 0, saved: 0 };
+  const run = new Function('st', `var MANUAL=st.MANUAL, LIVE_CONN=true, _planTried={};
+    var LIVE={Monsoon:{tasks:[{t:"Share Overlay Designs: Locate last year's overlay"}]}};
+    var PLANSHEET={Monsoon:'x'}, DELETED={'Monsoon|Confirm Historical Designs: Search emails to verify and confirm':1};
+    function renameOverlay(){return {};} function normTask(s){return String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();}
+    function saveManual(){st.saved++;} function resyncPlanWrites(){st.resync++;}
+    ${heal}
+    return planHeal();`);
+  const n = run(st), M = st.MANUAL;
+  ok(n === 1 && !M[0].w && M[0].hv === 1, 'the lost Distribute Stock Logic row is handed back to the retry pass, once', M[0]);
+  ok(M[1].w === 1 && M[3].w === 1, 'a row the plan carries — or one already healed — is left alone');
+  ok(M[2].w === 1, 'a deleted row stays deleted');
+  ok(st.resync === 1 && st.saved === 1, 'and the retry pass runs straight away');
+  ok(run(st) === 0, 'a second live read hands nothing back twice');
+}
 
 /* ---------------------------------------------------------------- 5. a confirmed ticket closes
    its task (Ray, 15 Oct 2026: "When a ticket's status is changed to client confirm anywhere, the
