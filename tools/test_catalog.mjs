@@ -617,6 +617,23 @@ t('no FeedHero import URL (with its hash) is written into the code', !/import_fe
   t('the sweep counts every range-completion line, the other rules as set', JSON.stringify(sw.map((x) => x.held)) === '[1,1,2,3,3]');
   t('simValues lists a block\'s values biggest first', JSON.stringify(E.simValues(D, 'c1')) === '[["Women",2],["Bags",1],["Men",1]]');
   t('simHeld lists the products held back, with the rule and the style\'s range completion', E.simHeld(D, { rc: { v: 50 } }).map((h) => h.id + ':' + h.by + ':' + h.rc).join() === 'b1:rc:33.3');
+  // ---- CHECK A PRODUCT (Ray, 16 Nov 2026: "check the stock status for each individual ID … the range completion applied to
+  // it, how many stock sizes are in stock and how many are out of stock … whether it is impacted by an exclusion or stock levels")
+  const fA = E.productFind(D, ' A1 '), fS = E.productFind(D, 'b'), fN = E.productFind(D, 'tee'), f0 = E.productFind(D, 'zzz');
+  t('productFind: an id case-blind, else a style by its item_group_id, else what contains the words — never a guess', fA.kind === 'id' && fA.i === 0 && fS.kind === 'style' && D.rows.id[fS.i] === 'b1' && fN.kind === 'near' && fN.near.length === 3 && fN.near.every((n) => n.by === 'title') && f0.kind === 'none' && !f0.near.length);
+  const sA = E.styleOf(D, D.rows.g[0], 0), sC = E.styleOf(D, -1, 6);
+  t('styleOf: every size of the style — 2 of 3 in stock, 1 out, range completion 66.7%', sA.sizes.length === 3 && sA.in === 2 && sA.out === 1 && sA.made === 3 && sA.rc === 66.7 && sA.name === 'A');
+  t('…a product with no style is its own row, no range completion', sC.sizes.length === 1 && sC.rc === 100 && sC.name === '');
+  const RU = { rc: { on: true, v: 50 }, qty: { on: true, ml: 3 }, excl: { on: true, ml: 10, scope: 'Coat' } };
+  const pa1 = E.productCheck(D, 0, RU), pa2 = E.productCheck(D, 1, RU), pb1 = E.productCheck(D, 3, RU), pa3 = E.productCheck(D, 2, RU), pc1 = E.productCheck(D, 6, RU);
+  t('a1 (style 66.7%, 5 units, live): every check passes, the exclusion is scoped to Coat so it does not reach a tee → live', pa1.verdict === 'live' && pa1.checks.rc.state === 'pass' && pa1.checks.rc.rc === 66.7 && pa1.checks.qty.state === 'pass' && pa1.checks.excl.state === 'scope' && !pa1.by);
+  t('a2 (1 unit, live): the quantity threshold of 3 would hold it — live, the rule named', pa2.verdict === 'live' && pa2.checks.qty.state === 'hold' && pa2.by === 'qty');
+  t('b1 (coat style 33.3% under 50%, 9 units under the Coat exclusion\'s 10, sent out of stock): held back, first by range completion', pb1.verdict === 'held' && pb1.checks.rc.state === 'hold' && pb1.checks.excl.state === 'hold' && pb1.by === 'rc' && pb1.td === 2);
+  t('a3 is out of stock in the master — no rule involved', pa3.verdict === 'out');
+  t('c1 (no style, no quantity, not in the feed): range completion and quantity unread, held for a reason these rules do not explain', pc1.verdict === 'held' && pc1.checks.rc.state === 'unread' && pc1.checks.qty.state === 'unread' && pc1.checks.excl.state === 'scope' && !pc1.by && pc1.td === 3);
+  t('no rule running = none; a rule with no readable cut-off = noline', E.productCheck(D, 0, {}).checks.rc.state === 'none' && E.productCheck(D, 0, { qty: { on: true, ml: null } }).checks.qty.state === 'noline' && E.productCheck(D, 0, { rc: { on: true, v: null } }).checks.rc.state === 'noline');
+  const pf = E.productCheck(D, 0, RU, { src: { st: 'in', q: 5, rc: 25 } });
+  t('FeedHero\'s range_comp decides the range-completion check where the suppfeed carries it (25% < 50% → holds), the master\'s run kept beside it', pf.checks.rc.state === 'hold' && pf.checks.rc.from === 'feedhero' && pf.rc === 25 && pf.mrc === 66.7);
   const nf = E.stockRows(null); nf.onRow(['id', 'availability', 'item_group_id']); nf.onRow(['x', 'in stock', 'G']);
   const ND = nf.finish();
   t('with no feed it still simulates, and says it was not joined', ND.ok && !ND.join && ND.joinWhy === 'nofeed' && E.simulate(ND, { rc: { v: 50 } }).today === null);

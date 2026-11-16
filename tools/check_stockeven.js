@@ -106,7 +106,7 @@ const same = (xs, tol) => xs.every((x) => Math.abs(x - xs[0]) <= (tol == null ? 
     const { ctx, p, errs } = await open(browser, 1440);
     const top = await p.evaluate(() => ({ order: Array.from(document.querySelectorAll('main.wrap > section.card')).map((c) => c.id),
       gone: ['cov', 'cuts', 'heroes', 'setups', 'mechs', 'how', 'q', 'kpis'].filter((id) => document.getElementById(id)) }));
-    ok('the cards, in order: Stock health · suppfeed · where the catalogue goes · simulator · levers · hero-size mapping · how it’s read', top.order.join() === 'av-card,supp-card,wf-card,sim-card,lev-card,hmap-card,how-card', top.order);
+    ok('the cards, in order: Stock health · suppfeed · where the catalogue goes · simulator · check a product · levers · hero-size mapping · how it’s read', top.order.join() === 'av-card,supp-card,wf-card,sim-card,pid-card,lev-card,hmap-card,how-card', top.order);
     ok('the coverage matrix, cut-offs, hero-size runs, market setups, rule search and "how a rule is placed" table are gone', top.gone.length === 0, top.gone);
 
     console.log('· Stock health — five tiles, the sums of the markets measured');

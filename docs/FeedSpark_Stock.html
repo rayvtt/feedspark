@@ -146,6 +146,23 @@ window.addEventListener('load',restore);
   .sl .na{font-size:12px;font-weight:700;color:var(--muted)}
   .sim-out{min-width:0;display:flex;flex-direction:column;gap:12px}
   .sim-out .sv-sum{margin:0}
+  .pid-q{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}
+  .pid-q .q{max-width:520px}
+  .pid{display:flex;flex-direction:column;gap:12px}
+  .pid-vd{display:flex;align-items:flex-start;gap:12px;border:1px solid var(--line);border-left:5px solid var(--muted);border-radius:12px;padding:12px 14px;background:var(--wash)}
+  .pid-vd.ok{border-left-color:var(--good)}.pid-vd.hold{border-left-color:var(--orange-deep)}.pid-vd.out{border-left-color:var(--risk)}
+  .pid-vd b.vh{display:block;font-size:17px;font-weight:900;color:var(--ink);letter-spacing:-.01em}
+  .pid-vd .vs{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-top:3px}
+  .pid-vd .vm{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:6px;overflow-wrap:anywhere}
+  .pid-ck{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .pid-ck .ck{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper);min-width:0}
+  .pid-ck .ck h4{margin:0 0 4px;font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .pid-ck .ck p{margin:0;font-size:12px;font-weight:700;color:var(--ink-2);overflow-wrap:anywhere}
+  .pid-ck .ck p.rl{color:var(--muted);margin-top:4px}
+  .pid-near{display:flex;flex-wrap:wrap;gap:6px}
+  .pid-near button{font:inherit;font-size:12px;font-weight:800;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--ink-2);padding:4px 10px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pid-near button:hover{border-color:var(--orange);color:var(--orange-deep)}
+  table.t tr.me td{background:rgba(245,166,35,.12)}
   .sim-cmp{font-size:12.5px;font-weight:700;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
   .sim-cmp:empty{display:none}
   .sim-cmp .sch{display:flex;align-items:center;gap:10px;margin-bottom:6px}
@@ -760,6 +777,20 @@ window.addEventListener('load',restore);
     <p class="note" id="sim-foot">A what-if over the master as FeedHero last imported it — nothing is stored and no FeedHero rule changes.</p>
   </section>
 
+  <!-- CHECK A PRODUCT (Ray, 16 Nov 2026: "Create a new module within stock management to check the stock status for each
+       individual ID. When a product ID is entered, the dashboard will show the range completion applied to it, how many
+       stock sizes are in stock and how many are out of stock. It will display the range of completion percentage and
+       whether it is impacted by an exclusion or stock levels"). The simulator's read of the market (master joined to the
+       Google feed, kept in this tab) looked up by product ID or style, then read against the market's own stock rules. -->
+  <section class="card" id="pid-card">
+    <div class="chead"><div class="sp"><h3><button class="fold" type="button" aria-expanded="true" title="Fold or open this card"><span class="fch" aria-hidden="true"></span>Check a product<span class="fsum"></span></button></h3><p class="ch">Type a product ID or a style to see its range completion, its sizes in and out of stock, and whether a range-completion line, a stock level or an exclusion keeps it out of Google.</p></div>
+      <div class="tools"><select class="fld" id="pid-mkt" aria-label="Market to check" data-no-keep></select></div></div>
+    <form class="pid-q" id="pid-form" autocomplete="off"><input class="q" id="pid-in" type="search" placeholder="Product ID or style (item group ID)…" aria-label="Product ID or style" data-no-keep><button class="btn on" type="submit" id="pid-go">Check</button></form>
+    <div class="sim-st" id="pid-st"></div>
+    <div class="pid" id="pid" hidden></div>
+    <p class="note" id="pid-foot">Read in this browser from the master as FeedHero last imported it and the Google feed as it is now — nothing is stored and no FeedHero rule changes.</p>
+  </section>
+
   <!-- STOCK LEVERS — BAU ↔ SALE (Ray, 5 Oct 2026: "summarise a stock management dashboard for Superdry (specifically) eahc of
        those markets have got quite aan interesting mix of stock levers : 1 . Range Completion (20-40%, currently at 35%) - 2.
        Stock unit exclusion for Everest (previously >5 units per size, now N/A) - 3. Hero Sizes (current activated, follow the
@@ -1069,8 +1100,8 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       var d = a[1] || {};
       LV.err = d.ok ? '' : (d.error || 'could not read the stock levers');
       if (d.ok) { LV.store = d.store || {}; LV.brands = d.brands || []; lvReapply(); }
-      renderLev();
-    }).catch(function (e) { LV.err = String((e && e.message) || e); renderLev(); });
+      renderLev(); if (PID.q) pidDraw();
+    }).catch(function (e) { LV.err = String((e && e.message) || e); renderLev(); if (PID.q) pidDraw(); });
   }
   function lvReapply() { Object.keys(LV.pend).forEach(function (k) { if (LV.pend[k] === null) delete LV.store[k]; else LV.store[k] = LV.pend[k]; }); }
   // a change stays on screen until the server confirms it; `now` flushes at once (a brief that navigates away)
@@ -1763,7 +1794,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     fillBrands($('#brand'), d.rosterBrands, S.brand);
     statusText(d);
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.mks.length ? ' · ' + mkWord() : '');
-    renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderLev(); renderHmap(); renderHow();
+    renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderPid(); renderLev(); renderHmap(); renderHow();
     if (SV.key) svPanel(false);
     foldBar(); foldHash();
   }
@@ -2425,8 +2456,9 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function simFold(p) { return String(p || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/\s*(?:>|›|»)\s*/).filter(Boolean).join(' > '); }
   // which product is a hero size: its PT path (longest prefix on the census tree) finds its type's list, its size is
   // read the way the census read it (HS.sizeKey) — 1 a hero size, 0 a size the list does not name, -1 no list reaches it
-  function simHeroMark() {
-    var D = SIM.D, H = SIM.H, E = SIM.E; if (!D || !H || H.err || !H.cen || !HS) { if (D) { delete D.rows.hz; D.hrun = null; D.hero = null; } return; }
+  function simHeroMark() { heroMarkFor(SIM.D, SIM.H, SIM.E); }
+  function heroMarkFor(D, H, E) {
+    if (!D || !H || H.err || !H.cen || !HS) { if (D) { delete D.rows.hz; D.hrun = null; D.hero = null; } return; }
     var live = HM.d && HM.d.brand === H.brand ? HM.store : H.store, ver = live === HM.store ? HM.ver : 0;
     if (H.ver === ver && H.live === live && D.rows.hz) return;
     H.ver = ver; H.live = live;
@@ -2442,24 +2474,33 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     H.mapped = mapped;
     E.heroMark(D, function (i) { var L = listOf(D.rows.c[i]); if (!L) return -1; var k = HS.sizeKey(D.rows.s[i]); return k ? (L.has(k) ? 1 : 0) : -1; });
   }
-  function simLoad() {
-    var m = simMkt(); if (!m || SIM.busy) return;
-    var q = '?client=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.wk.g), cmpid = m.cmpid;
-    var say = function (t) { SIM.busy = t; $('#sim-load').textContent = t; $('#sim-st').textContent = 'Reading ' + m.client + ' ' + m.market + ' — ' + t; };
-    SIM.err = ''; say('Reading…'); renderSim();
-    Promise.all([engLoad('/catalog/engine.js', 'FeedCatalog'), engLoad('/feedlab/engine.js', 'FeedAudit')]).then(function (en) {
-      var E = en[0], FA = en[1]; SIM.E = E;
+  // ONE READ OF A MARKET, two cards: the simulator and Check a product both read the master joined to the Google feed
+  // through here, and the last read of each market is kept in this tab (RD) so the second card never reads it again
+  var RD = {};
+  function stockRead(m, say) {
+    var q = '?client=' + encodeURIComponent(m.client) + '&market=' + encodeURIComponent(m.wk.g), cmpid = m.cmpid, E = null, H = null;
+    return Promise.all([engLoad('/catalog/engine.js', 'FeedCatalog'), engLoad('/feedlab/engine.js', 'FeedAudit')]).then(function (en) {
+      E = en[0]; var FA = en[1];
       return hbFeed(q, say, E, FA).then(function (feed) {
         if (!feed.n) throw new Error('the Google feed carries no products');
         // The simulator reads the master only (Ray, 26 Oct 2026: "the supp feed is product quantity only so it
         // shouldn't impact the simulation at all") — no suppfeed stock and no range_comp here.
-        return Promise.all([hbInfo(q, 0, say), simHeroRead(m)]).then(function (a) { var info = a[0]; SIM.H = a[1]; return hbMaster(q, feed, say, E, FA, E.stockRows(feed)).then(function (D) { D.info = info; return D; }); });
+        return Promise.all([hbInfo(q, 0, say), simHeroRead(m)]).then(function (a) { var info = a[0]; H = a[1]; return hbMaster(q, feed, say, E, FA, E.stockRows(feed)).then(function (D) { D.info = info; return D; }); });
       });
     }).then(function (D) {
       if (!D.ok) throw new Error('the master carries no products');
       if (!D.rows.st.some(function (x) { return x === 1; })) throw new Error('the master states no product in stock (no availability, no quantity), so there is nothing to hold back');
-      D.cmpid = cmpid; D.at = Date.now(); SIM.D = D; SIM.rules.block.v = []; SIM.q = ''; SIM.all = false; simHeroMark();
-      SIM.busy = ''; renderSim();
+      D.cmpid = cmpid; D.at = Date.now();
+      return (RD[cmpid] = { D: D, E: E, H: H });
+    });
+  }
+  function simLoad() {
+    var m = simMkt(); if (!m || SIM.busy) return;
+    var say = function (t) { SIM.busy = t; $('#sim-load').textContent = t; $('#sim-st').textContent = 'Reading ' + m.client + ' ' + m.market + ' — ' + t; };
+    SIM.err = ''; say('Reading…'); renderSim();
+    stockRead(m, say).then(function (x) {
+      SIM.E = x.E; SIM.H = x.H; SIM.D = x.D; SIM.rules.block.v = []; SIM.q = ''; SIM.all = false; simHeroMark();
+      SIM.busy = ''; renderSim(); if (PID.cmpid === x.D.cmpid) renderPid();
     }).catch(function (e) { SIM.busy = ''; SIM.err = String((e && e.message) || e); renderSim(); });
   }
   function simCtl() {
@@ -2627,6 +2668,152 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
       ['product id', 'title', 'size', 'style (item group)', 'master quantity', 'category', 'held back by', 'style sizes in stock', 'style sizes made', 'style range completion %', 'hero size', 'style hero sizes in stock', 'style hero sizes made', 'style hero %', 'google feed today'],
       held.map(function (h) { return [h.id, h.t, h.s, h.g >= 0 ? (D.groups ? D.groups[h.g] : '') : '', h.q == null ? '' : h.q, h.cat, BY[h.by] || h.by, h.rcN ? h.rcIn : '', h.rcN || '', h.rc == null ? '' : h.rc, h.hz === 1 ? 'yes' : h.hz === 0 ? 'no' : '', h.hN ? h.hIn : '', h.hN || '', h.hp == null ? '' : h.hp, TD[h.td] || '']; }));
     toast(n0(held.length) + ' products these rules would hold back — CSV downloaded');
+  });
+
+  // ---- CHECK A PRODUCT (Ray, 16 Nov 2026: "check the stock status for each individual ID … the range completion applied
+  // to it, how many stock sizes are in stock and how many are out of stock … whether it is impacted by an exclusion or
+  // stock levels"). The market's read (stockRead, shared with the simulator) → FeedCatalog.productFind / styleOf /
+  // productCheck; the rules are the market's own as the Stock levers card reads them off FeedHero (Google channel), the
+  // range-completion line falling back to the one measured off the products; FeedHero's suppfeed stock and range_comp ride
+  // beside the master's where FeedHero carries them. The query typed is this device's (fcc-stock-pid).
+  var PID = { cmpid: '', q: recall('fcc-stock-pid'), busy: '', err: '', hit: null, src: {} };
+  function pidMarkets() { return simMarkets(); }
+  function pidMkt() { return mById(PID.cmpid); }
+  function pidRead() { var x = RD[PID.cmpid]; if (x) return x; return SIM.D && SIM.D.cmpid === PID.cmpid ? { D: SIM.D, E: SIM.E, H: SIM.H } : null; }
+  function pidRules(m) {
+    var R = { rc: { on: false, v: null }, qty: { on: false, ml: null }, excl: { on: false, ml: null, scope: '' }, hero: { on: false } }, M = null;
+    try { if (SL) M = SL.model(LV.store || {}, m.client, lvMarkets(m.client), [m.market], lvToday(), 'google'); } catch (e) { M = null; }
+    var cells = M && M.rows[0] ? M.rows[0].cells : {}, lev = function (k) { return (M ? M.levers : []).filter(function (l) { return l.k === k; })[0] || {}; };
+    var names = function (rd) { var a = []; (rd.rules || []).forEach(function (r) { if (r && r.n && a.indexOf(r.n) < 0) a.push(r.n); }); (rd.stated || []).forEach(function (x) { if (x.rule && a.indexOf(x.rule) < 0) a.push(x.rule); }); return a; };
+    var rc = cells.rc && cells.rc.rd, ln = m.av && m.av.held && m.av.held.line;
+    if (rc && rc.state === 'on') R.rc = { on: true, v: rc.val, how: rc.how, rules: names(rc), why: rc.why };
+    else if (ln && isFinite(+ln.x)) R.rc = { on: true, v: +ln.x, how: 'line', rules: [], why: 'The line measured from the products the Google feed is not sent' };
+    else if (rc) R.rc.why = rc.why;
+    [['thresh', 'qty'], ['excl', 'excl']].forEach(function (p) {
+      var rd = cells[p[0]] && cells[p[0]].rd; if (!rd) return;
+      R[p[1]] = { on: rd.state === 'on', ml: rd.ml == null ? null : rd.ml, cut: rd.cut || null, rules: names(rd), why: rd.why || '', scope: s0p(lev(p[0]).scope) };
+    });
+    var hr = cells.hero && cells.hero.rd;
+    if (hr && (hr.state === 'on' || hr.state === 'part')) R.hero = { on: true, rules: names(hr), why: hr.why };
+    R.read = !!M;
+    return R;
+  }
+  function s0p(v) { return v == null ? '' : String(v).trim(); }
+  // FeedHero's suppfeed stock, read once per market where FeedHero carries one (the Source stock card's own read)
+  function pidSrc(m, E) {
+    if (!m.av || !m.av.supp || PID.src[m.cmpid]) return;
+    PID.src[m.cmpid] = { busy: true };
+    hbSrc(m, function () {}, E).then(function (r) { PID.src[m.cmpid] = r || { why: 'no rows' }; if (PID.cmpid === m.cmpid) pidDraw(); });
+  }
+  function renderPid() {
+    var ms = pidMarkets(), sel = $('#pid-mkt');
+    if (!PID.cmpid || !ms.some(function (m) { return m.cmpid === PID.cmpid; })) {
+      var pick = ms.filter(function (m) { return m.cmpid === SIM.cmpid; })[0] || ms.filter(function (m) { return S.mks.length && m.market === S.mks[0]; })[0] || ms[0];
+      PID.cmpid = pick ? pick.cmpid : '';
+    }
+    sel.innerHTML = ms.map(function (m) { return '<option value="' + esc(m.cmpid) + '"' + (m.cmpid === PID.cmpid ? ' selected' : '') + '>' + esc(m.client + ' ' + m.market) + '</option>'; }).join('')
+      || '<option value="">No market with a Google feed in view</option>';
+    sel.disabled = !ms.length || !!PID.busy;
+    var inp = $('#pid-in'); if (document.activeElement !== inp && inp.value !== PID.q) inp.value = PID.q;
+    $('#pid-go').disabled = !PID.cmpid || !!PID.busy;
+    $('#pid-go').textContent = PID.busy || 'Check';
+    pidDraw();
+  }
+  function pidGo(q, force) {
+    var m = pidMkt(); if (!m || PID.busy) return;
+    PID.q = s0p(q); remember('fcc-stock-pid', PID.q); PID.err = '';
+    if (!PID.q) { PID.hit = null; renderPid(); return; }
+    if (pidRead() && !force) { pidFind(); renderPid(); return; }
+    var say = function (t) { PID.busy = t; $('#pid-go').textContent = t; $('#pid-st').textContent = 'Reading ' + m.client + ' ' + m.market + ' — ' + t; };
+    say('Reading…'); renderPid();
+    stockRead(m, say).then(function () { PID.busy = ''; pidFind(); renderPid(); })
+      .catch(function (e) { PID.busy = ''; PID.err = String((e && e.message) || e); renderPid(); });
+  }
+  function pidFind() { var x = pidRead(); PID.hit = x ? x.E.productFind(x.D, PID.q, 12) : null; if (x) PID.hit.cmpid = PID.cmpid; }
+  var PID_TD = { 0: 'not joined', 1: 'live', 2: 'sent out of stock', 3: 'not in the feed' };
+  var PID_ST = { 1: 'In stock', 0: 'Out of stock', '-1': 'Not stated' };
+  function pidPct(v) { return v == null ? '—' : (Math.round(v * 10) / 10) + '%'; }
+  function pidCk(k, c, R, p) {
+    var TAG = { hold: '<span class="tg or">Holds it back</span>', pass: '<span class="tg gr">Passes</span>', unread: '<span class="tg">Not stated</span>', scope: '<span class="tg">Outside its range</span>', noline: '<span class="tg">Cut-off not readable</span>', none: '<span class="tg">No such rule</span>' };
+    var x = R[k] || {}, rl = (x.rules || []).length ? '<p class="rl">' + esc((x.rules.length === 1 ? 'Rule: “' : 'Rules: “') + x.rules.slice(0, 3).join('”, “') + '”' + (x.rules.length > 3 ? ' +' + (x.rules.length - 3) : '')) + '</p>' : '';
+    var t, h;
+    if (k === 'rc') {
+      h = 'Range completion';
+      var fh = c.from === 'feedhero' ? 'FeedHero’s range_comp' : 'its style’s sizes in stock ÷ the sizes it is made in';
+      t = c.state === 'none' ? (x.why || 'No range-completion rule runs in this market') + '.'
+        : c.state === 'noline' ? 'A range-completion rule runs here, but its line is not in its name and cannot be read off the products' + (c.rc != null ? ' — this product reads ' + pidPct(c.rc) : '') + '.'
+        : c.state === 'unread' ? 'The line is ' + pidPct(c.v) + ', but this product has no style (item_group_id), so its range completion cannot be worked out.'
+        : 'This product reads ' + pidPct(c.rc) + ' (' + fh + ') against a line of ' + (R.rc.how === 'line' ? '≈' : '') + pidPct(c.v) + (R.rc.how === 'line' ? ' measured from the products' : R.rc.how === 'name' ? ' stated in a rule name' : '') + ' — ' + (c.state === 'hold' ? 'under it, so the rule holds it back' : 'at or over it, so the rule lets it through') + '.';
+    } else {
+      var lab = k === 'qty' ? 'Stock quantity threshold' : 'Stock-based exclusion', sc = x.scope ? ' · ' + x.scope : '';
+      h = lab + sc;
+      var need = c.ml != null ? 'at least ' + nw(c.ml, 'unit') : '';
+      t = c.state === 'none' ? (x.why || 'No ' + lab.toLowerCase() + ' holds products back in this market') + '.'
+        : c.state === 'scope' ? 'Scoped to ' + x.scope + ' — this product’s title, style and category do not name it, so the rule does not reach it.'
+        : c.state === 'noline' ? 'A ' + lab.toLowerCase() + ' runs here, but its cut-off is not in its name.'
+        : c.state === 'unread' ? 'A product needs ' + need + ' to stay live, but the master states no quantity for this product.'
+        : 'A product needs ' + need + ' to stay live; this one has ' + nw(c.q, 'unit') + ' — ' + (c.state === 'hold' ? 'so the rule holds it back' : 'enough to pass') + '.';
+    }
+    return '<div class="ck"><h4>' + esc(h) + ' ' + (TAG[c.state] || '') + '</h4><p>' + esc(t) + '</p>' + rl + '</div>';
+  }
+  function pidDraw() {
+    var m = pidMkt(), box = $('#pid'), st = $('#pid-st'), x = pidRead();
+    if (PID.busy) { fsum('pid-card', 'reading products…'); return; }
+    if (PID.err) { box.hidden = true; st.textContent = 'Could not read the products — ' + PID.err; fsum('pid-card', 'the read failed'); return; }
+    if (!m) { box.hidden = true; st.textContent = 'No market with a Google feed in view — pick a brand or market above.'; fsum('pid-card', 'no market in view'); return; }
+    if (!PID.q) { box.hidden = true; st.textContent = 'Type a product ID or a style for ' + m.client + ' ' + m.market + (x ? ' — its products are read (' + n0(x.D.n) + ')' : ' — the master and the Google feed are read in this browser on the first check') + '.'; fsum('pid-card', 'type a product ID'); return; }
+    if (!x) { box.hidden = true; st.textContent = 'Press Check to read ' + m.client + ' ' + m.market + '’s products and find “' + PID.q + '”.'; fsum('pid-card', 'press Check'); return; }
+    if (!PID.hit || PID.hit.cmpid !== PID.cmpid) pidFind();
+    var D = x.D, E = x.E, hit = PID.hit;
+    heroMarkFor(D, x.H, E);
+    st.textContent = m.client + ' ' + m.market + ' · ' + n0(D.n) + ' master products' + (D.join ? ', joined to the Google feed on ' + D.join.h : ', not joined to the Google feed') + ' · read ' + since(D.at) + ' · ';
+    st.insertAdjacentHTML('beforeend', '<button class="hb-dl" type="button" id="pid-re" title="Read the master and the Google feed again">⟳ Read again</button>');
+    if (hit.kind === 'none' || hit.kind === 'near') {
+      box.hidden = false;
+      box.innerHTML = '<div class="pid-vd"><div><b class="vh">“' + esc(PID.q) + '” is not a product ID or a style in ' + esc(m.client + ' ' + m.market) + '’s master</b>'
+        + '<span class="vs">' + (hit.near.length ? 'Closest matches — pick one:' : 'Nothing contains it either — check the market, or paste the ID exactly as the master writes it.') + '</span></div></div>'
+        + (hit.near.length ? '<div class="pid-near">' + hit.near.map(function (n) { var R0 = D.rows; return '<button type="button" data-pid="' + esc(R0.id[n.i]) + '" title="' + esc(R0.t[n.i]) + '">' + esc(R0.id[n.i]) + (R0.s[n.i] ? ' · ' + esc(R0.s[n.i]) : '') + ' — ' + esc(R0.t[n.i].slice(0, 48)) + '</button>'; }).join('') + '</div>' : '');
+      fsum('pid-card', m.client + ' ' + m.market + ' · “' + PID.q + '” not found');
+      return;
+    }
+    var srcR = PID.src[m.cmpid], srcM = srcR && srcR.ix ? srcR.ix.m : null;
+    pidSrc(m, E);
+    var i = hit.i, R = pidRules(m), sty = E.styleOf(D, hit.g, i, srcM), se = srcM ? srcM.get(E.idKey(D.rows.id[i])) : null;
+    var p = E.productCheck(D, i, R, { src: se });
+    if (HS) sty.sizes.sort(function (a, b) { return HS.cmpSize(HS.sizeKey(a.s), HS.sizeKey(b.s)); });
+    var feedW = PID_TD[p.td] || '', cls = 'pid-vd', head = '', sub = '';
+    var styN = hit.kind === 'style' ? 'Style ' + p.style + ' — checking its first size, ' + (p.s || p.id) + '; click any size below to check it · ' : '';
+    if (p.verdict === 'live') { cls += ' ok'; head = 'Live in Google'; sub = (p.kept ? 'Its style is under the range-completion line, but it is a hero size and ' + m.market + ' runs hero-size rules — kept live.' : p.by ? 'A rule below would hold it back, yet Google carries it — the rule may not reach it, or the feed has not caught up.' : 'In stock in the master and live in the Google feed.'); }
+    else if (p.verdict === 'out') { cls += ' out'; head = 'Out of stock in the master'; sub = 'The master states it out of stock, so no stock rule is involved — Google ' + (p.td === 1 ? 'still carries it as live' : feedW === 'not in the feed' ? 'does not carry it' : 'carries it ' + feedW) + '.'; }
+    else if (p.verdict === 'unstated') { head = 'The master states no stock for it'; sub = 'No availability word and no quantity — no rule can judge it. Google feed: ' + feedW + '.'; }
+    else if (p.verdict === 'unjoined') { head = 'Not matched to the Google feed'; sub = 'The master and the Google feed could not be joined on this product, so its Google state is unknown.'; }
+    else { cls += ' hold'; var BY = { rc: 'by range completion', qty: 'by the stock quantity threshold', excl: 'by the stock-based exclusion' + (R.excl.scope ? ' · ' + R.excl.scope : '') };
+      head = 'Held back from Google ' + (BY[p.by] || '— for a reason these rules do not explain');
+      sub = 'In stock in the master, ' + feedW + ' in Google' + (p.by ? '.' : ' — no range-completion line, quantity threshold or exclusion here reaches it. Check the market’s other rules on Rules.'); }
+    var meta = [p.id, p.s ? 'size ' + p.s : '', p.style ? 'style ' + p.style : '', p.br, p.cat].filter(Boolean).join(' · ');
+    var srcLine = !m.av || !m.av.supp ? '' : srcR && srcR.busy ? ' · reading FeedHero’s suppfeed stock…' : srcR && srcR.ix ? (se ? ' · FeedHero suppfeed: ' + (se.st === 'in' || se.st === 'pre' ? 'in stock' : 'out of stock') + (se.q != null ? ', ' + n0(se.q) + ' units' : '') + (se.rc != null ? ', range_comp ' + pidPct(+se.rc) : '') : ' · FeedHero’s suppfeed does not list this product') : srcR && srcR.why && !srcR.none ? ' · FeedHero’s suppfeed stock not read — ' + srcR.why : '';
+    var rcW = p.rc == null ? '—' : pidPct(p.rc);
+    var tiles = '<div class="it"><span>Range completion applied</span><b>' + rcW + '</b><span>' + (p.frc != null ? 'FeedHero’s range_comp' + (p.mrc != null ? ' · master ' + pidPct(p.mrc) : '') : sty.made ? n0(sty.in) + ' of ' + n0(sty.made) + ' sizes in stock' : 'no style to measure') + (R.rc.on && R.rc.v != null ? ' · line ' + (R.rc.how === 'line' ? '≈' : '') + pidPct(R.rc.v) : '') + '</span></div>'
+      + '<div class="it"><span>Sizes in stock</span><b>' + n0(sty.in) + '</b><span>of ' + nw(sty.made, 'size') + ' made' + (sty.src ? ' · FeedHero ' + n0(sty.src.in) + ' of ' + n0(sty.src.n) : '') + '</span></div>'
+      + '<div class="it"><span>Sizes out of stock</span><b>' + n0(sty.out) + '</b><span>' + (sty.none ? n0(sty.none) + ' not stated' : 'every size’s stock stated') + (sty.src ? ' · FeedHero ' + n0(sty.src.out) : '') + '</span></div>'
+      + '<div class="it"><span>This product</span><b>' + esc(PID_ST[p.st]) + '</b><span>' + (p.q == null ? 'no quantity stated' : nw(p.q, 'unit')) + ' · Google: ' + esc(feedW) + '</span></div>';
+    var hero = p.hz === 1 ? '<div class="ck"><h4>' + heroIcon() + 'Hero size <span class="tg or">Hero</span></h4><p>' + esc(p.s + ' is a hero size on ' + m.client + '’s map' + (sty.hero ? ' — the style has ' + sty.hero.in + ' of its ' + sty.hero.made + ' hero sizes in stock' : '') + '.' + (R.hero.on ? ' ' + m.market + ' runs hero-size rules' + (R.hero.why ? ' (' + R.hero.why.replace(/\.$/, '') + ')' : '') + '.' : ' No hero-size rule runs in ' + m.market + '.')) + '</p></div>'
+      : p.hz === 0 ? '<div class="ck"><h4>Hero size <span class="tg">Not a hero size</span></h4><p>' + esc((p.s || 'This size') + ' is not on the hero list for its product type.') + '</p></div>' : '';
+    var rows = sty.sizes.map(function (z) {
+      return '<tr class="cl' + (z.i === i ? ' me' : '') + '" data-pid="' + esc(z.id) + '"><td class="nm"><b>' + (z.hz === 1 ? heroIcon() : '') + esc(z.s || '—') + '</b><span class="sub2">' + esc(z.id) + '</span></td><td>' + esc(PID_ST[z.st]) + '</td><td class="num">' + (z.q == null ? '—' : n0(z.q)) + '</td><td>' + esc(PID_TD[z.td] || '') + '</td>' + (srcM ? '<td>' + (z.src ? esc((z.src.st === 'in' || z.src.st === 'pre' ? 'in' : 'out') + (z.src.q != null ? ' · ' + n0(z.src.q) : '')) : '—') + '</td>' : '') + '</tr>';
+    }).join('');
+    box.hidden = false;
+    box.innerHTML = '<div class="' + cls + '"><div><b class="vh">' + esc(head) + '</b><span class="vs">' + esc(sub) + '</span><span class="vm">' + esc(styN + p.t + ' · ' + meta + srcLine) + '</span></div></div>'
+      + '<div class="sv-sum">' + tiles + '</div>'
+      + '<div class="pid-ck">' + pidCk('rc', p.checks.rc, R, p) + pidCk('qty', p.checks.qty, R, p) + pidCk('excl', p.checks.excl, R, p) + hero + '</div>'
+      + '<div class="sim-box"><div class="sim-h"><b>Every size of ' + esc(p.style ? 'style ' + p.style : 'this product') + '</b><span class="lvc">the master’s stock and quantity, and the Google feed today · click a size to check it</span></div><div class="tw"><table class="t" id="pid-t"><thead><tr><th>Size</th><th>Master stock</th><th class="num">Quantity</th><th>Google feed</th>' + (srcM ? '<th>FeedHero suppfeed</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    fsum('pid-card', m.client + ' ' + m.market + ' · ' + p.id + ' · ' + head + (p.rc != null ? ' · range completion ' + rcW : ''));
+  }
+  $('#pid-mkt').addEventListener('change', function () { PID.cmpid = this.value; PID.hit = null; PID.err = ''; renderPid(); });
+  $('#pid-form').addEventListener('submit', function (e) { e.preventDefault(); pidGo($('#pid-in').value); });
+  $('#pid-card').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pid]'); if (b) { var v = b.getAttribute('data-pid'); $('#pid-in').value = v; pidGo(v); return; }
+    if (e.target.id === 'pid-re') pidGo(PID.q, true);
   });
 
   // ---- HERO SIZES BY PRODUCT TYPE (Ray, 30 Sep 2026: "bring in hero size mapping per brand as well and later allow

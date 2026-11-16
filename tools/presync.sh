@@ -493,6 +493,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: /stock, the stock-rule simulator (range completion, quantity, sizes, a category block — every count against an independent tally)"
   NODE_PATH=$(npm root -g) node tools/check_stocksim.js || {
     echo "✗ stock-simulator tripwire failed — a rule miscounted, a product was counted twice, a preset or the slider stopped re-counting, the comparison with the feed drifted, the CSV lost rows, or the phone scrolled sideways"; exit 1; }
+  echo "── validating: /stock, Check a product (an ID → its range completion, sizes in / out, the rule that holds it back — every figure against an independent tally)"
+  NODE_PATH=$(npm root -g) node tools/check_stockpid.js || {
+    echo "✗ check-a-product tripwire failed — an ID stopped resolving, a style's sizes miscounted, a verdict named the wrong rule, a near miss guessed, the market was read twice, or the phone scrolled sideways"; exit 1; }
   echo "── validating: the Catalogue, driven (hover → inspector, the pointer guard, before → after, exact ROAS placement)"
   NODE_PATH=$(npm root -g) node tools/check_catalog.js || {
     echo "✗ catalogue tripwire failed — the join, the inspector, the pointer guard, the stages, or a ROAS placement regressed"; exit 1; }
