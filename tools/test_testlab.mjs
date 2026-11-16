@@ -185,6 +185,9 @@ await KV.put('overlayidx', JSON.stringify({ 'Northwind|gb-fb': { ovl: 0 } }));
 await KV.put('voldobidx', JSON.stringify({ 'Northwind|gb': { m: { [new Date(NOW).toISOString().slice(0, 7)]: 120 } } }));
 await KV.put('briefs', JSON.stringify({ b1: { id: 'b1', client: 'Northwind', cat: 'test', task: 'A/B Test - Six product highlights per product - Northwind - 1026', stage: 'briefed' } }));
 await KV.put('clients', JSON.stringify({ Northwind: { dom: 'northwind.example' } }));
+// the route reads the clock; the fixtures are dated against NOW, so the route reads NOW too (the harness went red on main once real time ran
+// past the fixtures' 92-day 'recent' window and aged one of them out)
+Date.now = () => NOW;
 let res = await call('GET', '/api/testlab?client=Northwind');
 let d = await res.json();
 t('GET /api/testlab: three proposals, the rest, the counts, the evidence by family, the book, and which archives are still cold', d.ok && d.top.length === 3 && d.rest.length === TL.TESTS.length - 3 && d.evidence.img_lifestyle.recent === 2 && d.book.length === 2 && d.cold.join() === 'Linden' && d.ownArchive === true && d.industry === industryOf('Northwind'));
