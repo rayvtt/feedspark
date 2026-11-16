@@ -1152,6 +1152,98 @@
     return out.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc); });
   }
 
+  // ---- ONE PRODUCT'S STOCK (Ray, 16 Nov 2026: "check the stock status for each individual ID. When a product ID is
+  // entered, the dashboard will show the range completion applied to it, how many stock sizes are in stock and how many
+  // are out of stock … and whether it is impacted by an exclusion or stock levels"). Over the SAME read the simulator
+  // makes (stockRows — the master joined to the Google feed): productFind finds the product by its id (case-blind), else a
+  // STYLE by its item_group_id, else lists what contains the words typed — never a guess; styleOf is every size of its
+  // style; productCheck reads one product against the market's own stock rules as the page reads them off FeedHero:
+  //   rules.rc   {on, v}           the range-completion line (%)          rules.qty {on, ml}  the stock quantity threshold
+  //   rules.excl {on, ml, scope}   the stock-based exclusion (ml = the fewest units a product needs to stay live; scope =
+  //                                the range a scoped exclusion names, matched as whole words in title / style / category)
+  //   rules.hero {on}              the market runs hero-size rules
+  // and o.src = FeedHero's suppfeed entry for this product ({st, q, rc}) where FeedHero carries one: its range_comp is the
+  // figure FeedHero's range-completion rules read, so it decides the range-completion check when present. Each check reads
+  // hold / pass / unread (the fact is not stated) / scope (outside a scoped exclusion) / noline (a rule runs, its cut-off is
+  // not readable) / none (no such rule runs). The verdict explains the Google feed today: live, out of stock in the master,
+  // stock not stated, held back (by the first check that holds, in run order rc → qty → excl, else for a reason these rules
+  // do not explain), or not joined to the feed.
+  function idIndex(D) {
+    if (D.idx) return D.idx;
+    var R = D.rows, id = new Map(), g = new Map(), by = (D.groups || []).map(function () { return []; });
+    for (var i = 0; i < R.id.length; i++) {
+      var k = idKey(R.id[i]); if (k && !id.has(k)) id.set(k, i);
+      if (R.g[i] >= 0) by[R.g[i]].push(i);
+    }
+    (D.groups || []).forEach(function (n, j) { var k = idKey(n); if (k && !g.has(k)) g.set(k, j); });
+    return (D.idx = { id: id, g: g, by: by });
+  }
+  function productFind(D, q, lim) {
+    lim = lim || 12;
+    var k = idKey(q), X = idIndex(D), R = D.rows;
+    if (!k) return { kind: 'none', i: -1, g: -1, near: [] };
+    if (X.id.has(k)) { var i = X.id.get(k); return { kind: 'id', i: i, g: R.g[i], near: [] }; }
+    if (X.g.has(k)) { var gi = X.g.get(k), first = X.by[gi][0]; return { kind: 'style', i: first == null ? -1 : first, g: gi, near: [] }; }
+    var near = [], seen = {}, words = k.split(/\s+/).filter(Boolean);
+    for (var j = 0; j < R.id.length && near.length < lim; j++) if (idKey(R.id[j]).indexOf(k) >= 0) { near.push({ i: j, by: 'id' }); seen[j] = 1; }
+    (D.groups || []).forEach(function (n, gj) { if (near.length >= lim || idKey(n).indexOf(k) < 0) return; var f = X.by[gj][0]; if (f != null && !seen[f]) { near.push({ i: f, by: 'style' }); seen[f] = 1; } });
+    for (var t = 0; t < R.t.length && near.length < lim && words.length; t++) {
+      if (seen[t]) continue; var tl = R.t[t].toLowerCase();
+      if (words.every(function (w) { return tl.indexOf(w) >= 0; })) { near.push({ i: t, by: 'title' }); seen[t] = 1; }
+    }
+    return { kind: near.length ? 'near' : 'none', i: -1, g: -1, near: near };
+  }
+  // every size of style g (or product i alone when it has no style): the master's stock, quantity, the Google feed and the
+  // hero mark per size; made = sizes whose stock the master states; src = FeedHero's suppfeed counts over the sizes it lists
+  function styleOf(D, g, i, src) {
+    var R = D.rows, X = idIndex(D), list = g >= 0 ? X.by[g].slice() : i >= 0 ? [i] : [];
+    var c = { made: 0, in: 0, out: 0, none: 0 }, sc = null, hm = 0, hi = 0;
+    var sizes = list.map(function (j) {
+      var st = R.st[j], hz = R.hz ? R.hz[j] : -1, se = src ? src.get(idKey(R.id[j])) : null;
+      if (st === -1) c.none++; else { c.made++; if (st === 1) c.in++; else c.out++; }
+      if (hz === 1 && st !== -1) { hm++; if (st === 1) hi++; }
+      if (se) { if (!sc) sc = { n: 0, in: 0, out: 0 }; sc.n++; if (se.st === 'in' || se.st === 'pre') sc.in++; else sc.out++; }
+      return { i: j, id: R.id[j], s: R.s[j], st: st, q: R.q[j], td: R.td[j], hz: hz, src: se ? { st: se.st, q: se.q, rc: se.rc } : null };
+    });
+    var rc = c.made ? (c.in / c.made) * 100 : null;
+    return { g: g, name: g >= 0 && D.groups ? D.groups[g] : '', sizes: sizes, made: c.made, in: c.in, out: c.out, none: c.none,
+      rc: rc == null ? null : Math.round(rc * 10) / 10, hero: hm ? { made: hm, in: hi, pc: Math.round((hi / hm) * 1000) / 10 } : null, src: sc };
+  }
+  function inScopeOf(D, i, scope) {
+    var w = s0(scope).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); if (!w) return true;
+    var R = D.rows, g = R.g[i], hay = ' ' + [R.t[i], g >= 0 && D.groups ? D.groups[g] : '', R.c[i]].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+    return hay.indexOf(' ' + w + ' ') >= 0;
+  }
+  function productCheck(D, i, rules, o) {
+    rules = rules || {}; o = o || {};
+    var R = D.rows, st = R.st[i], q = R.q[i], td = R.td[i], hz = R.hz ? R.hz[i] : -1, se = o.src || null;
+    var mrc = styleRc(D, R.g[i]), frc = se && se.rc != null && isFinite(+se.rc) ? +se.rc : null, rc = frc != null ? frc : mrc;
+    function units(x, scoped) {
+      if (!x || !x.on) return { state: 'none' };
+      if (scoped && x.scope && !inScopeOf(D, i, x.scope)) return { state: 'scope', scope: x.scope };
+      if (x.ml == null || !isFinite(+x.ml)) return { state: 'noline', scope: x.scope || '' };
+      if (q == null) return { state: 'unread', ml: +x.ml, scope: x.scope || '' };
+      return { state: q < +x.ml ? 'hold' : 'pass', ml: +x.ml, q: q, scope: x.scope || '' };
+    }
+    var c = {};
+    var rr = rules.rc;
+    if (!rr || !rr.on) c.rc = { state: 'none', rc: rc };
+    else if (rr.v == null || !isFinite(+rr.v)) c.rc = { state: 'noline', rc: rc };
+    else if (rc == null) c.rc = { state: 'unread', v: +rr.v };
+    else c.rc = { state: rc < +rr.v ? 'hold' : 'pass', v: +rr.v, rc: Math.round(rc * 10) / 10 };
+    c.rc.from = frc != null ? 'feedhero' : 'master';
+    c.qty = units(rules.qty, false);
+    c.excl = units(rules.excl, true);
+    var by = ['rc', 'qty', 'excl'].filter(function (k) { return c[k].state === 'hold'; })[0] || '';
+    var v;
+    if (st === 0) v = 'out'; else if (st === -1) v = 'unstated';
+    else if (!td) v = 'unjoined'; else if (td === 1) v = 'live'; else v = 'held';
+    var kept = v === 'live' && by === 'rc' && hz === 1 && !!(rules.hero && rules.hero.on) ? 'hero' : '';
+    return { i: i, id: R.id[i], t: R.t[i], s: R.s[i], g: R.g[i], style: R.g[i] >= 0 && D.groups ? D.groups[R.g[i]] : '', cat: R.c[i], br: R.br[i],
+      st: st, q: q, td: td, hz: hz, rc: rc == null ? null : Math.round(rc * 10) / 10, mrc: mrc == null ? null : Math.round(mrc * 10) / 10, frc: frc,
+      src: se ? { st: se.st, q: se.q, rc: frc } : null, checks: c, by: by, verdict: v, kept: kept };
+  }
+
   // ---- what the table shows about one product, worked out once when it arrives -------------------------------------
   var DAY = 86400000;
   function depthOf(v) { var s = plain(v); if (!s) return 0; return s.split(/\s*(?:>|›|»)\s*/).filter(Boolean).length || 1; }
@@ -1412,7 +1504,7 @@
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
     availBucket: availBucket, stockTally: stockTally, feedIndex: feedIndex, heldBack: heldBack, srcIndex: srcIndex,
-    stockRows: stockRows, simulate: simulate, simSweep: simSweep, simHeld: simHeld, heroMark: heroMark, simValues: simValues, SIM_ORDER: SIM_ORDER, SIM_FIELDS: SIM_FIELDS, catTier: catTier,
+    stockRows: stockRows, simulate: simulate, productFind: productFind, productCheck: productCheck, styleOf: styleOf, idIndex: idIndex, simSweep: simSweep, simHeld: simHeld, heroMark: heroMark, simValues: simValues, SIM_ORDER: SIM_ORDER, SIM_FIELDS: SIM_FIELDS, catTier: catTier,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
     priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,

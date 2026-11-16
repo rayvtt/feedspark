@@ -16916,7 +16916,7 @@
     {
       "name": "Stock: the page renders health first, the levers after the simulator",
       "file": "docs/FeedSpark_Stock.html",
-      "pattern": "renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderLev(); renderHmap(); renderHow();",
+      "pattern": "renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderPid(); renderLev(); renderHmap(); renderHow();",
       "pr": 0
     },
     {
@@ -16965,6 +16965,48 @@
       "name": "Stock simulator: a hero list edited on the Hero sizes card reaches the simulator",
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "HM.ver = (HM.ver || 0) + 1; if (SIM.D && SIM.H) simLater();",
+      "pr": 0
+    },
+    {
+      "name": "Stock: Check a product \u2014 a card after the simulator",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "<section class=\"card\" id=\"pid-card\">",
+      "pr": 0
+    },
+    {
+      "name": "Stock: Check a product reads the market's own stock rules (range-completion line, threshold, exclusion)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function pidRules(m) {",
+      "pr": 0
+    },
+    {
+      "name": "Stock: one read of a market serves the simulator and Check a product",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function stockRead(m, say) {",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: productFind \u2014 an id, else a style, else near matches, never a guess",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function productFind(D, q, lim) {",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: productCheck \u2014 range completion, threshold and exclusion against one product",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function productCheck(D, i, rules, o) {",
+      "pr": 0
+    },
+    {
+      "name": "check_stockpid: every verdict against counts made from its own rows",
+      "file": "tools/check_stockpid.js",
+      "pattern": "const sty = (g) =>",
+      "pr": 0
+    },
+    {
+      "name": "presync runs check_stockpid",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_stockpid.js",
       "pr": 0
     },
     {

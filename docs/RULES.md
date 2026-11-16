@@ -1138,6 +1138,42 @@ Google feed today" carries three lines: *Held back: 2,315 today → 4,713 with t
 live today would be held back* and *60 products held back today would go live again*. **✕ Hide** folds it to one
 "▸ Show the comparison with today" line, remembered on this device (`fcc-stock-simcmp`). Harness: `tools/check_stocksim.js`.
 
+## 3p″. Check a product — one ID's stock, range completion and the rule that holds it back (`/stock`)
+
+Ray, 16 Nov 2026: *"Create a new module within stock management to check the stock status for each individual ID. When a
+product ID is entered, the dashboard will show the range completion applied to it, how many stock sizes are in stock and how
+many are out of stock. It will display the range of completion percentage and whether it is impacted by an exclusion or
+stock levels."*
+
+The **Check a product** card (`#pid-card`, after the simulator, folded on a fresh device) takes a market and a product ID.
+It reads the market's master joined to its Google feed in the browser — the SAME read the simulator makes (`stockRead`,
+kept per market in the tab, so one read serves both cards; ⟳ Read again re-reads) — nothing is stored.
+
+**Finding it** (`productFind`): the product id case-blind; else a **style** by its `item_group_id` (every size, starting
+from the first); else the ids, styles and titles that contain what was typed (≤12, one click to check) — never a guess.
+
+**What it shows**: a verdict, four tiles — *Range completion applied* (the style's sizes in stock ÷ the sizes it is made
+in, or FeedHero's own `range_comp` where FeedHero carries a suppfeed for the market, with the master's beside it, and the
+market's line) · *Sizes in stock* · *Sizes out of stock* (sizes whose stock the master does not state counted apart) · *This
+product* (stock, quantity, the Google feed today) — then one box per stock rule and the style's size table (master stock,
+quantity, Google feed, FeedHero suppfeed where read; the product marked; a click checks that size). A hero size says so.
+
+**The rules are the market's own** (`pidRules`): the Stock levers card's reading on the Google channel — the
+range-completion line (measured from the products, else stated in a rule name; the measured line is the fallback when the
+levers have not loaded), the stock quantity threshold (the fewest units to stay live, off the rule's cut-off) and the
+stock-based exclusion (its cut-off, and the range a scoped exclusion names). Each box reads *Holds it back* · *Passes* ·
+*Not stated* (the master does not state the fact) · *Outside its range* (a scoped exclusion whose word is not in the
+product's title, style or category) · *Cut-off not readable* · *No such rule*, with the rule names.
+
+**The verdict** (`productCheck`) explains the Google feed today: *Live in Google* (a rule that would hold it is named; a
+hero size under the line in a market running hero-size rules reads *kept live*) · *Held back from Google* by the first rule
+that holds it in run order (range completion → stock quantity threshold → stock-based exclusion), else *for a reason these
+rules do not explain* · *Out of stock in the master* · *The master states no stock for it* · *Not matched to the Google feed*.
+The query is this device's (`fcc-stock-pid`).
+
+Harness `tools/check_stockpid.js` (Playwright, presync) — an invented five-style catalogue on the rules stub, every verdict
+and count made by the test; the engine in `tools/test_catalog.mjs`.
+
 ## 3q. The source stock as FeedHero holds it — Superdry's suppfeed (`/stock`)
 
 Ray, 26 Oct 2026: *"Just for Superdry specifically … The source stock quantity is not accurate within the master
