@@ -1036,8 +1036,26 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   function foldHash() {
     if (!FOLD_HASH) return;
     var el = document.getElementById(FOLD_HASH); if (!el) return;
-    FOLD_HASH = ''; foldOpen(el);
+    FOLD_HASH = ''; foldOpen(el); FOLD_JUMP = el;
     setTimeout(function () { try { el.scrollIntoView({ block: 'start' }); } catch (e) {} }, 60);
+    foldHold(el);
+  }
+  // the first jump lands before the data paints and before the topbar's module row settles, and either can move the card
+  // off its mark after the scroll — so for a moment after a jump, anything above it changing size re-aligns it, until the
+  // reader scrolls, presses a key or touches the page; the jump is also made once more after the first render with the data
+  var FOLD_JUMP = null;
+  function foldJump() {
+    var el = FOLD_JUMP; if (!el || !S.d) return; FOLD_JUMP = null;
+    setTimeout(function () { try { el.scrollIntoView({ block: 'start' }); } catch (e) {} }, 60);
+  }
+  function foldHold(el) {
+    if (typeof ResizeObserver === 'undefined') return;
+    var stop = false, done = function () { stop = true; ro.disconnect(); ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (t) { removeEventListener(t, done, true); }); };
+    var ro = new ResizeObserver(function () { if (!stop) try { el.scrollIntoView({ block: 'start' }); } catch (e) {} });
+    var tb = document.querySelector('.topbar'); if (tb) ro.observe(tb);
+    var mn = document.querySelector('main'); if (mn) ro.observe(mn);
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (t) { addEventListener(t, done, true); });
+    setTimeout(done, 2500);
   }
   foldHash();
 
@@ -1796,7 +1814,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     $('#scopeline').textContent = (S.brand || (d.rosterBrands ? d.rosterBrands.length + ' brands' : '')) + (S.mks.length ? ' · ' + mkWord() : '');
     renderChips(); renderAv(); renderSupp(); renderWf(); renderSv(); renderSim(); renderPid(); renderLev(); renderHmap(); renderHow();
     if (SV.key) svPanel(false);
-    foldBar(); foldHash();
+    foldBar(); foldHash(); foldJump();
   }
   function renderChips() {
     var d = S.d || {}, el = $('#mkts');
