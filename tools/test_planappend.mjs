@@ -98,7 +98,7 @@ ok(/async function resolveTab\(id, tab, token\) \{ const i = await resolveTabInf
 const ap = liftFrom(W, 'appendPlanRowsNow', 'worker.js');
 ok(/const info = await resolveTabInfo\(id, tab, token\)/.test(ap), 'appendPlanRows resolves the tab through it');
 ok(/if \(!info\) return tabAmbiguous/.test(ap), 'an ambiguous workbook is still refused by name');
-ok(/const place = planAppendRow\(grid, tc, values\.length\)/.test(ap), 'and places its rows with planAppendRow');
+ok(/const place = planAppendRow\(grid, tc, values\.length \+ \(sep \? 1 : 0\)\)/.test(ap), 'and places its rows (plus any month row) with planAppendRow');
 ok(/const need = startRow \+ values\.length - 1/.test(ap), 'it works out the last row it will fill');
 ok(/appendDimension/.test(ap) && /dimension: 'ROWS'/.test(ap),
   'and adds rows to the grid when that row does not exist yet');
@@ -169,6 +169,8 @@ const SHEET = '1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w';
 // The stub is a SHEET, not a script: a PUT really changes the grid, a later read sees it, and the
 // worker's read-back reads the cells it wrote — so two appends racing for one row can be run.
 // `clobber` makes a write that lands be overwritten straight after (another isolate's append).
+const OCT = Date.UTC(2026, 9, 20), NOV = Date.UTC(2026, 10, 3);
+const ENV_OCT = { EDITS: { delete: async () => {} }, PLAN_NOW_MS: OCT }, ENV_NOV = { EDITS: { delete: async () => {} }, PLAN_NOW_MS: NOV };
 function sheetStub(grid, rowCount, calls, { clobber = false, delay = 0 } = {}) {
   const g = grid.map((r) => (r || []).slice());
   return async (url, init) => {
@@ -177,7 +179,10 @@ function sheetStub(grid, rowCount, calls, { clobber = false, delay = 0 } = {}) {
     const u = decodeURIComponent(String(url));
     if (delay) await new Promise((res) => setTimeout(res, delay));
     if (/fields=sheets\.properties/.test(u)) return { json: async () => ({ sheets: [{ properties: { sheetId: 7, title: 'Project Plan', gridProperties: { rowCount } } }] }) };
-    if (/:batchUpdate/.test(u)) return { json: async () => ({ replies: [{}] }) };
+    if (/:batchUpdate/.test(u)) { const b = JSON.parse(init.body);
+      (b.requests || []).forEach((q) => { if (q.updateCells) { const s0 = q.updateCells.start; g[s0.rowIndex] = g[s0.rowIndex] || [];
+        g[s0.rowIndex][s0.columnIndex] = q.updateCells.rows[0].values[0].userEnteredValue.stringValue; } });
+      return { json: async () => ({ replies: [{}] }) }; }
     if (/A1:ZZ5000/.test(u)) { const snap = g.map((r) => r.slice()); return { json: async () => ({ values: snap }) }; }
     const m = /!([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?/.exec(u);
     if (method === 'PUT' && m) {
@@ -193,27 +198,34 @@ function sheetStub(grid, rowCount, calls, { clobber = false, delay = 0 } = {}) {
 }
 function lift(fetchStub) {
   return new Function('deps', `
-    const { fetchStub, PB, PLAN_SHEETS, resolveCols, colLetter, permHint, tabAmbiguous, googleToken, env } = deps;
+    const { fetchStub, PB, PLAN_SHEETS, STATUS_TOK, normCell, resolveCols, colLetter, permHint, tabAmbiguous, googleToken, env } = deps;
     const fetch = fetchStub;
     const { brandsOnSheet, brandToken, rowBrands, appendToken, rowCovered, noteRow } = PB;
     const _planAppendQ = new Map();
     ${liftFrom(W, 'resolveTabInfo', 'worker.js')}
     ${liftFrom(W, 'planAppendRow', 'worker.js')}
+    ${liftFrom(W, 'isStatusTok', 'worker.js')}
+    ${liftFrom(W, 'monthOf', 'worker.js')}
+    ${liftFrom(W, 'planYm', 'worker.js')}
+    ${liftFrom(W, 'planLastSep', 'worker.js')}
+    ${liftFrom(W, 'monthLabelLike', 'worker.js')}
+    ${liftFrom(W, 'planMonthSep', 'worker.js')}
     ${liftFrom(W, 'appendPlanRows', 'worker.js')}
     ${liftFrom(W, 'appendPlanRowsNow', 'worker.js')}
     return appendPlanRows;`)({
-      fetchStub, PB, PLAN_SHEETS: { Monsoon: SHEET, Accessorize: SHEET, Reiss: 'other' },
+      fetchStub, PB, PLAN_SHEETS: { Monsoon: SHEET, Accessorize: SHEET, Reiss: 'other' }, STATUS_TOK: ['open', 'done', 'in progress', 'on hold', 'briefed'],
+      normCell: (v) => String(v == null ? '' : v).toLowerCase().replace(/\s+/g, ' ').trim(),
       resolveCols: () => ({ headerRow: 10, offset: 0, statusCol: SC, taskCol: TC, ownerCol: 3, dueCol: 6 }),
       colLetter: (n) => String.fromCharCode(65 + n), permHint: (m) => m,
       tabAmbiguous: () => ({ ok: false, error: 'ambiguous' }),
       googleToken: async () => 'tok', env: { EDITS: { delete: async () => {} } },
     });
 }
-async function runAppend(rows, client, { rowCount = 891 } = {}) {
+async function runAppend(rows, client, { rowCount = 891, env = null, grid = realGrid } = {}) {
   const calls = [];
-  const fetchStub = sheetStub(realGrid, rowCount, calls);
+  const fetchStub = sheetStub(grid, rowCount, calls);
   const sandbox = lift(fetchStub);
-  const out = await sandbox({ EDITS: { delete: async () => {} } }, SHEET, 'Project Plan', rows, client);
+  const out = await sandbox(env || ENV_OCT, SHEET, 'Project Plan', rows, client);
   return { out, calls };
 }
 const three = ['Share Black Friday Brief: Send the Black Friday brief to the Monsoon team',
@@ -251,7 +263,7 @@ console.log('\n── seven call actions written at once');
     'Update Shopping Feed: Input new shipping handling attributes into', "Share Overlay Designs: Locate last year's overlay",
     'Distribute Stock Logic: Recirculate the stock logic documentation', 'Update Project Plan: Document the meta custom number workflow in',
     'Delete Catalog: Remove the DPA test catalog from the', 'Confirm Historical Designs: Search emails to verify and confirm'];
-  const outs = await Promise.all(seven.map((t) => app({ EDITS: { delete: async () => {} } }, SHEET, 'Project Plan', [{ task: t, owner: 'Ray Vu', status: 'Open', due: '' }], 'Monsoon')));
+  const outs = await Promise.all(seven.map((t) => app(ENV_OCT, SHEET, 'Project Plan', [{ task: t, owner: 'Ray Vu', status: 'Open', due: '' }], 'Monsoon')));
   const rowsAt = outs.map((o) => o.atRow);
   ok(outs.every((o) => o.ok === true), 'all seven answer ok', outs.map((o) => o.error));
   ok(new Set(rowsAt).size === 7, 'each on a row of its own — not seven writes onto one', rowsAt);
@@ -261,9 +273,47 @@ console.log('\n── seven call actions written at once');
 }
 {
   const calls = [], app = lift(sheetStub(realGrid, 891, calls, { clobber: true }));
-  const o = await app({ EDITS: { delete: async () => {} } }, SHEET, 'Project Plan', [{ task: 'Distribute Stock Logic: Recirculate the stock logic documentation', owner: '', status: 'Open', due: '' }], 'Monsoon');
+  const o = await app(ENV_OCT, SHEET, 'Project Plan', [{ task: 'Distribute Stock Logic: Recirculate the stock logic documentation', owner: '', status: 'Open', due: '' }], 'Monsoon');
   ok(o.ok === false && /overwritten/.test(o.error), 'a row another write landed over is NOT reported as written', o);
   ok(planFatal(o.error) === false, '— and the page hands it back to the retry pass rather than giving up');
+}
+/* ---------- 5c. a new month opens with its own separator row (Ray, 17 Nov 2026: "when the date turns
+   over to a new month, a row similar to the screenshot is automatically added before the new task") ---------- */
+console.log('\n── a new month gets its own month row before the first task of it');
+{
+  const t = [{ task: 'Nov task: refresh the Christmas keyword themes', owner: 'Ray Vu', status: 'Open', due: '' }];
+  const a = await runAppend(t, 'Monsoon', { env: ENV_NOV });
+  ok(a.out.ok === true && a.out.monthRow && a.out.monthRow.label === 'Nov-26', 'November\'s first task brings a "Nov-26" row, in the tab\'s own pattern', a.out);
+  ok(a.out.monthRow.row === 516 && a.out.atRow === 517, '— on row 516, the task right under it on 517', a.out);
+  const bu = a.calls.find((c) => /:batchUpdate/.test(c.url) && c.body.requests.some((q) => q.copyPaste));
+  const cp = bu && bu.body.requests.find((q) => q.copyPaste).copyPaste;
+  ok(cp && cp.pasteType === 'PASTE_FORMAT' && cp.source.startRowIndex === 514 && cp.destination.startRowIndex === 515,
+    'its look is copied from the Oct-26 row (the grey fill), not invented', cp);
+  const uc = bu && bu.body.requests.find((q) => q.updateCells).updateCells;
+  ok(uc && uc.start.columnIndex === TC && uc.rows[0].values[0].userEnteredValue.stringValue === 'Nov-26',
+    'and the label sits in the task column as text, so the sheet cannot turn it into a date', uc);
+  const put = a.calls.find((c) => c.method === 'PUT');
+  ok(put && /A517/.test(decodeURIComponent(put.url)), 'the task itself is written below the month row', put && put.url);
+  const b = await runAppend(t, 'Monsoon', { env: ENV_OCT });
+  ok(b.out.ok === true && b.out.monthRow === null && b.out.atRow === 516, 'a task in the month already open adds no row', b.out);
+  // the tab after November's first write: the next November task must not add a second Nov-26
+  const g2 = realGrid.map((r) => r.slice()); g2[515] = ['', '', 'Nov-26', '', '', '', '']; g2[516] = ['', 'MON', 'Nov task one', 'Ray', '', 'Open', ''];
+  const c = await runAppend([{ task: 'Nov task two', owner: '', status: 'Open', due: '' }], 'Monsoon', { env: ENV_NOV, grid: g2 });
+  ok(c.out.ok === true && c.out.monthRow === null && c.out.atRow === 518, 'a second task in November adds no second month row', c.out);
+  // a tab that never used month rows is left alone
+  const g3 = realGrid.map((r) => r.slice()); g3[514] = ['', 'PPC', 'row 514 work', 'Gary', '', 'Done', ''];
+  const d = await runAppend(t, 'Monsoon', { env: ENV_NOV, grid: g3 });
+  ok(d.out.ok === true && d.out.monthRow === null, 'a plan with no month rows of its own gets none added', d.out);
+  // three seven-at-once writes in a new month: exactly one month row
+  const calls = [], stub = sheetStub(realGrid, 891, calls, { delay: 3 }); const app = lift(stub);
+  const outs = await Promise.all(['A one', 'B two', 'C three'].map((x) => app(ENV_NOV, SHEET, 'Project Plan', [{ task: x, owner: '', status: 'Open', due: '' }], 'Monsoon')));
+  ok(outs.filter((o) => o.monthRow).length === 1, 'three tasks filed at once in a new month bring ONE month row, not three', outs.map((o) => o.monthRow));
+}
+{
+  const lab = new Function(liftFrom(W, 'monthLabelLike', 'worker.js') + '\nreturn monthLabelLike;')();
+  ok(lab('Oct-26', '2026-11') === 'Nov-26' && lab('Dec-26', '2027-01') === 'Jan-27', 'Oct-26 → Nov-26, Dec-26 → Jan-27 across the year');
+  ok(lab('October 2026', '2026-11') === 'November 2026' && lab('OCT-26', '2026-11') === 'NOV-26' && lab('Sept-26', '2026-10') === 'Oct-26',
+    'the label keeps the tab\'s own pattern: a long name, upper case, a "Sept" short form');
 }
 ok(/planFetch\(opts\)/.test(P) && !/fetch\('\/api\/sheets\/append'/.test(P.replace("return fetch('/api/sheets/append',opts)", '')),
   'every append on the page goes through planFetch, one at a time per workbook');

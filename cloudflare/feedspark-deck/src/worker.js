@@ -7772,8 +7772,15 @@ async function appendPlanRowsNow(env, id, tab, rows, client) {
       return a; });
     // Write directly below the plan's own last task — the values:append API mis-detects the table
     // on multi-block plan layouts and drops rows at the top. planAppendRow picks the row.
-    const place = planAppendRow(grid, tc, values.length);
-    const startRow = place.startRow;
+    // A NEW MONTH OPENS WITH ITS OWN SEPARATOR ROW (Ray, 17 Nov 2026, over the grey "Oct-26" row
+    // of the Monsoon-Accessorize plan: "when the date turns over to a new month, a row similar to
+    // the screenshot is automatically added before the new task"). planMonthSep reads the tab's
+    // own last month row; when today's month is later, one row is inserted first, its FORMAT copied
+    // from that row and its label written in the same pattern. A tab with no month rows is left alone.
+    const sep = planMonthSep(grid, c, planYm(env));
+    const place = planAppendRow(grid, tc, values.length + (sep ? 1 : 0));
+    const sepRow = place.startRow;
+    const startRow = sepRow + (sep ? 1 : 0);
     // MAKE ROOM FIRST. values.update does not grow a sheet, so a range ending past the last grid
     // row is refused rather than appended. Add exactly the rows needed (plus a little slack, so
     // the next few writes do not each pay for a batchUpdate) before asking for that range.
@@ -7784,6 +7791,20 @@ async function appendPlanRowsNow(env, id, tab, rows, client) {
         body: JSON.stringify({ requests: [{ appendDimension: { sheetId: info.sheetId, dimension: 'ROWS', length: (need - info.rowCount) + 50 } }] }) });
       const gd = await gr.json();
       if (gd.error) return { ok: false, error: permHint(gd.error.message || 'could not add rows to ' + (realTab || 'the tab')) };
+    }
+    if (sep) {
+      const reqs = [];
+      if (info.sheetId != null) reqs.push({ copyPaste: { source: { sheetId: info.sheetId, startRowIndex: sep.row, endRowIndex: sep.row + 1 }, destination: { sheetId: info.sheetId, startRowIndex: sepRow - 1, endRowIndex: sepRow }, pasteType: 'PASTE_FORMAT' } });
+      let sd = {};
+      if (reqs.length) {
+        reqs.push({ updateCells: { start: { sheetId: info.sheetId, rowIndex: sepRow - 1, columnIndex: sep.col }, rows: [{ values: [{ userEnteredValue: { stringValue: sep.label } }] }], fields: 'userEnteredValue' } });
+        sd = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + ':batchUpdate', {
+          method: 'POST', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ requests: reqs }) })).json();
+      } else {
+        sd = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent((realTab ? realTab + '!' : '') + colLetter(sep.col) + sepRow) + '?valueInputOption=RAW', {
+          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[sep.label]] }) })).json();
+      }
+      if (sd.error) return { ok: false, error: permHint(sd.error.message || 'could not add the month row') };
     }
     const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
     const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
@@ -7805,7 +7826,7 @@ async function appendPlanRowsNow(env, id, tab, rows, client) {
         if (lost) return { ok: false, error: 'overwritten by another plan write on row ' + startRow + ' — will retry', lost, atRow: startRow };
       }
     } catch (e) {}
-    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut, brand: brandTok || null, anchor: place.anchor };
+    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut, brand: brandTok || null, anchor: place.anchor, monthRow: sep ? { row: sepRow, label: sep.label } : null };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }
 
@@ -7911,6 +7932,47 @@ function planAppendRow(grid, taskCol, n) {
   if (lastTask < 0 || lastTask >= lastAny) return { startRow: after, anchor: 'content' };
   for (let r = lastTask + 1; r <= lastTask + want; r++) if (used(r)) return { startRow: after, anchor: 'content' };
   return { startRow: lastTask + 2, anchor: 'task' };
+}
+// The month a plan write belongs to — today in London, "YYYY-MM". PLAN_NOW_MS pins the clock for the harness.
+function planYm(env) {
+  const t = (env && env.PLAN_NOW_MS) ? +env.PLAN_NOW_MS : Date.now();
+  try { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit' }).formatToParts(new Date(t));
+    return p.find(x => x.type === 'year').value + '-' + p.find(x => x.type === 'month').value; } catch (e) { return new Date(t).toISOString().slice(0, 7); }
+}
+// A month SEPARATOR row on a plan tab: below the header, no status in any cell, at most two cells
+// filled, and one short cell naming a month ("Oct-26", "October 2026"). Returns the LAST one's
+// 0-based row, the column its label sits in, its label and its month.
+function planLastSep(grid, c) {
+  const rows = grid || [], from = (c && c.headerRow >= 0) ? c.headerRow + 1 : 0;
+  for (let r = rows.length - 1; r >= from; r--) {
+    const row = rows[r] || [];
+    const filled = row.map((v, i) => [String(v == null ? '' : v).trim(), i]).filter(x => x[0]);
+    if (!filled.length || filled.length > 2) continue;
+    if (filled.some(x => isStatusTok(x[0]))) continue;
+    const lab = filled.find(x => x[0].length <= 20 && monthOf(x[0]));
+    if (lab) return { row: r, col: lab[1], label: lab[0], ym: monthOf(lab[0]).slice(0, 7) };
+  }
+  return null;
+}
+// Write a month in the SAME pattern as an existing label: "Oct-26" -> "Nov-26", "October 2026" -> "November 2026", "OCT-26" -> "NOV-26".
+function monthLabelLike(prev, ym) {
+  const MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1;
+  const re = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)([a-z]*)(['\s\-\/,.]*)((?:20)?\d{2})\b/i;
+  const mm = re.exec(String(prev || ''));
+  if (!mm) return MO[m].slice(0, 3) + '-' + String(y).slice(2);
+  const long = mm[2].length > 1;               // "Sept" reads as short, "October" as long
+  let name = long ? MO[m] : MO[m].slice(0, 3);
+  if (mm[1] === mm[1].toUpperCase()) name = name.toUpperCase();
+  else if (mm[1] === mm[1].toLowerCase()) name = name.toLowerCase();
+  const yr = mm[4].length === 4 ? String(y) : String(y).slice(2);
+  return String(prev).replace(re, name + mm[3] + yr);
+}
+// When today's month is later than the tab's last month row, the separator to add before the new task.
+function planMonthSep(grid, c, ym) {
+  const last = planLastSep(grid, c);
+  if (!last || !ym || !(ym > last.ym)) return null;
+  return { row: last.row, col: last.col, label: monthLabelLike(last.label, ym), ym, from: last.label };
 }
 function tabAmbiguous(id, tab) { return { ok: false, error: 'Could not find a single "' + tab + '"-like tab in this sheet (' + id + ') — it has several tabs and none match by name or contain "plan". Rename the intended tab to include "Plan", or the write risks landing on the wrong one.' }; }
 function permHint(m) { return /permission|forbidden/i.test(String(m)) ? (m + ' — the service account can read but not write: open the sheet\u2019s Share dialog and change its access from Viewer to Editor') : m; }
