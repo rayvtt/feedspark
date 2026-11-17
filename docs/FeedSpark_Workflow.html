@@ -3035,13 +3035,14 @@ aside.ck[hidden]{display:none}
     renderAll(); ti.focus();
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
+      var atk=client+'|'+task; _planTried[atk]=1;   // in flight, and a refusal the sheet will repeat stays tried — no retry pass re-sends it this session
       planFetch({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,client:client,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
         .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):(client+'’s sheet refused it · saved here — see the Intake heading')); if(d&&d.ok){ markWritten(client,task); planWriteOk(client); planWarn(); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); }
           // ＋ Add task's own refusal used to be a toast and nothing else — the row stayed in
           // Intake unwritten with the only word about it already faded. Same reporting as every
           // other way a task reaches a plan.
-          else planWriteFailed(client,(d&&d.error)||'write failed'); })
-        .catch(function(){ planWriteFailed(client,'network'); toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
+          else { var ae=(d&&d.error)||'write failed'; if(!planFatal(ae))delete _planTried[atk]; planWriteFailed(client,ae); } })
+        .catch(function(){ delete _planTried[atk]; planWriteFailed(client,'network'); toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
   /* THE VIEW THE BOARD OPENS ON (Ray, 29 Sep 2026: "default view is (plan: all history)
