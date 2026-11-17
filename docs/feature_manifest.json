@@ -16968,6 +16968,36 @@
       "pr": 0
     },
     {
+      "name": "Stock simulator: How the rules meet \u2014 overlapping / independent / cascading switch",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "function modeCtl() {",
+      "pr": 0
+    },
+    {
+      "name": "Stock simulator: the mode reaches the engine",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "res = E.simulate(D, hz, { cat: SIM.cat, mode: SIM.mode }),",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: cascading \u2014 product rules take sizes out before the style rules read the runs",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function cascade(D, rules, blk) {",
+      "pr": 0
+    },
+    {
+      "name": "Catalogue engine: one holder() for every mode",
+      "file": "docs/catalog_engine.js",
+      "pattern": "function holder(D, rules, mode) {",
+      "pr": 0
+    },
+    {
+      "name": "check_stocksim: cascading counted from the rows",
+      "file": "tools/check_stocksim.js",
+      "pattern": "function heldByC(p, R) {",
+      "pr": 0
+    },
+    {
       "name": "Stock: Check a product \u2014 a card after the simulator",
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "<section class=\"card\" id=\"pid-card\">",

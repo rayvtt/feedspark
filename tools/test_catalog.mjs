@@ -617,6 +617,23 @@ t('no FeedHero import URL (with its hash) is written into the code', !/import_fe
   t('the sweep counts every range-completion line, the other rules as set', JSON.stringify(sw.map((x) => x.held)) === '[1,1,2,3,3]');
   t('simValues lists a block\'s values biggest first', JSON.stringify(E.simValues(D, 'c1')) === '[["Women",2],["Bags",1],["Men",1]]');
   t('simHeld lists the products held back, with the rule and the style\'s range completion', E.simHeld(D, { rc: { v: 50 } }).map((h) => h.id + ':' + h.by + ':' + h.rc).join() === 'b1:rc:33.3');
+  // ---- HOW THE RULES MEET (Ray, 17 Nov 2026: "rules running independent of each other, overlapping each other, or
+  // cascading from each other") — style A: a1 in (5 units), a2 in (1 unit), a3 out; style B: b1 in, b2 + b3 out
+  const RQ = { rc: { v: 50 }, qty: { v: 2 } };
+  const mo = E.simulate(D, RQ), mc = E.simulate(D, RQ, { mode: 'casc' }), mi = E.simulate(D, RQ, { mode: 'ind' });
+  t('overlapping (the default): every rule reads the master as it is — qty holds a2, RC under 50% holds b1 (A is 2 of 3 = 66.7%)', mo.mode === 'over' && mo.held === 2 && mo.take.qty === 1 && mo.take.rc === 1 && !mo.casc);
+  t('cascading: quantity runs first and a2 counts as OUT in its style, so A falls to 1 of 3 (33.3%) and RC now holds a1 too', mc.mode === 'casc' && mc.held === 3 && mc.take.qty === 1 && mc.take.rc === 2 && mc.casc.extra === 1 && mc.casc.by.rc === 1 && mc.casc.took.qty === 1);
+  t('…the rows still add up to the total, and "on its own" is still each rule alone on the master', mc.take.rc + mc.take.qty === mc.held && mc.own.rc === 1 && mc.own.qty === 1);
+  t('independent: the same products as overlapping (the union), each rule judged alone', mi.mode === 'ind' && mi.held === mo.held && mi.own.rc === 1 && mi.own.qty === 1 && mi.shared.qty === 0);
+  const RB = { rc: { v: 50 }, qty: { v: 2 }, block: { f: 'c1', v: ['Women'] } }, mib = E.simulate(D, RB, { mode: 'ind' });
+  t('…a product two rules hold alone is counted in both rows and named shared (a2: quantity AND the Women block)', mib.held === 3 && mib.own.block === 2 && mib.own.qty === 1 && mib.shared.qty === 1 && mib.shared.block === 1 && mib.shared.rc === 0);
+  t('an unknown mode reads as overlapping', E.simulate(D, RQ, { mode: 'zzz' }).mode === 'over');
+  const swc = E.simSweep(D, { qty: { v: 2 } }, 25, 'casc');
+  t('the sweep cascades too: under 50% holds 3 (a2 by quantity, then a1 + b1 at 33.3%)', JSON.stringify(swc.map((x) => x.held)) === '[1,1,3,3,3]' && JSON.stringify(E.simSweep(D, { qty: { v: 2 } }, 25).map((x) => x.held)) === '[1,1,2,3,3]');
+  const hc = E.simHeld(D, RQ, 'casc'), ha1 = hc.find((h) => h.id === 'a1');
+  t('simHeld cascading: a1 held by range completion at its style\'s run AFTER quantity (1 of 3, 33.3%), the master\'s 66.7% kept beside it', hc.length === 3 && ha1 && ha1.by === 'rc' && ha1.rc === 33.3 && ha1.rc0 === 66.7 && ha1.rcIn === 1 && ha1.all.length === 0);
+  t('…independent: every rule that would hold it alone', E.simHeld(D, RB, 'ind').find((h) => h.id === 'a2').all.join() === 'qty,block');
+  t('a cascade never touches the master\'s own runs', D.run[D.rows.g[0]].join() === '3,2');
   // ---- CHECK A PRODUCT (Ray, 16 Nov 2026: "check the stock status for each individual ID … the range completion applied to
   // it, how many stock sizes are in stock and how many are out of stock … whether it is impacted by an exclusion or stock levels")
   const fA = E.productFind(D, ' A1 '), fS = E.productFind(D, 'b'), fN = E.productFind(D, 'tee'), f0 = E.productFind(D, 'zzz');

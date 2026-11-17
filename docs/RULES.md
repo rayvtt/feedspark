@@ -1138,6 +1138,28 @@ Google feed today" carries three lines: *Held back: 2,315 today → 4,713 with t
 live today would be held back* and *60 products held back today would go live again*. **✕ Hide** folds it to one
 "▸ Show the comparison with today" line, remembered on this device (`fcc-stock-simcmp`). Harness: `tools/check_stocksim.js`.
 
+### 3p‴. How the rules meet — overlapping, independent, cascading
+
+Ray, 17 Nov 2026: *"inside simulation allows logic to be dependent / cascading from one another as well — a product currently
+has five sizes, with two sizes out of stock, but two other sizes are under five units. After the stock quantity logic is run
+through, the product now has four sizes that are out of stock, and then the range completion percentage would take place on
+top of that. The dashboard can have either rules running independent of each other, overlapping each other, or cascading
+from each other."*
+
+A **How the rules meet** switch heads the simulator's controls (remembered with the rules, `fcc-stock-sim` `mode`):
+
+| Mode | What each rule reads | The table |
+|---|---|---|
+| **Overlapping** (default) | the master as it is | a product counts ONCE, against the first rule in run order that holds it; rows add up to the total |
+| **Independent** | the master as it is | each rule's row is what it holds **on its own**, with *Also held by another*; the total is every product held by any rule (the union — the same products as overlapping), so the rows add to more than it |
+| **Cascading** | stock quantity and the category block run first; every size they hold back counts as **out of stock in its style** before range completion, sizes in stock and hero sizes read the runs | quantity and the block first, then the style rules, each style rule naming how many it holds *only because the rules above took sizes out*; the KPI adds "+N from the cascade" |
+
+The sweep chart and the CSV follow the mode (the CSV adds *rules that would hold it on their own*, *how the rules meet*, and
+the style's range completion in the master beside the cascaded one). FeedHero's own `range_comp` is never read by the
+simulator, so nothing un-cascadable is mixed in. Engine: `simulate(D, rules, {mode})`, `simSweep(…, mode)`,
+`simHeld(…, mode)` over one `holder()` in `docs/catalog_engine.js`; unit tests in `tools/test_catalog.mjs`, the page in
+`tools/check_stocksim.js` (each mode counted from the invented rows).
+
 ## 3p″. Check a product — one ID's stock, range completion and the rule that holds it back (`/stock`)
 
 Ray, 16 Nov 2026: *"Create a new module within stock management to check the stock status for each individual ID. When a

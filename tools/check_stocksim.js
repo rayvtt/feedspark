@@ -96,6 +96,18 @@ const HERO_RESP = (() => {
   return { ok: true, brand: 'Superdry', market: 'GB', census: Object.assign({ client: 'Superdry', market: 'GB', cmpid: 'superdry_gb', t: Date.now() }, c.finish()), store, markets: [{ market: 'GB', census: true }] };
 })();
 const todayHeld = IN.filter((p) => p.feed !== 'in stock').length;
+// cascading (Ray, 17 Nov 2026): quantity takes its sizes out first, then a style's range completion / sizes in stock are
+// read off the sizes LEFT in stock — counted here from the rows, never from the engine
+function heldByC(p, R) {
+  if (R.qty && p.q < R.qty) return 'qty';
+  if (R.block && R.block.indexOf(p.cat.split(' > ')[0]) >= 0) return 'block';
+  if (p.k == null) return '';
+  const left = P.filter((x) => x.g === p.g && x.inS && !(R.qty && x.q < R.qty)).length;
+  if (R.rc && (left / 10) * 100 < R.rc) return 'rc';
+  if (R.sz && left < R.sz) return 'sz';
+  return '';
+}
+const countC = (R) => IN.filter((p) => heldByC(p, R)).length;
 
 // ---- FeedHero's suppfeed stock is NOT the simulator's (Ray, 26 Oct 2026: "the supp feed is product quantity only so it
 // shouldn't impact the simulation at all"). A suppfeed read that disagrees with the master everywhere is served, and every
@@ -226,6 +238,35 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('switching a rule off takes it out: ' + count({ rc: 20 }), k[1] === count({ rc: 20 }), k[1]);
     const fsum = await p.$eval('#sim-card .fsum', (e) => e.textContent);
     ok('folded, the card keeps its reading (market · held back of in stock)', /Superdry GB · \d+ of \d+ in stock held back/.test(fsum), fsum);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+
+    console.log('· how the rules meet — overlapping, independent, cascading');
+    ({ ctx, p, errs } = await open(browser, 1440, 1000, null, null, 'localStorage.setItem("fcc-stock-sim",JSON.stringify({rc:{on:true,v:30},qty:{on:true,v:5}}));'));
+    await read(p);
+    const RM = { rc: 30, qty: 5 };
+    let md = await p.$eval('#sim-ctl .sim-mode', (e) => ({ on: (e.querySelector('[data-sm].on') || {}).getAttribute && e.querySelector('[data-sm].on').getAttribute('data-sm'), btn: Array.from(e.querySelectorAll('[data-sm]')).map((b) => b.textContent) }));
+    k = await kpi(p);
+    ok('a "How the rules meet" switch heads the controls — Overlapping on a fresh device: RC < 30% + quantity < 5 hold ' + count(RM), md.on === 'over' && md.btn.join() === 'Overlapping,Independent,Cascading' && k[1] === count(RM), [md, k[1], count(RM)]);
+    await p.click('#sim-ctl [data-sm="casc"]'); await p.waitForTimeout(100);
+    k = await kpi(p);
+    const extra = countC(RM) - count(RM);
+    const sumTxt = await p.$eval('#sim-sum', (e) => e.textContent);
+    ok('Cascading: quantity takes its sizes out first and range completion reads what is left — ' + countC(RM) + ' held (+' + extra + ')', k[1] === countC(RM) && countC(RM) > count(RM) && new RegExp('\\+' + extra + ' from the cascade').test(sumTxt), [k[1], countC(RM), sumTxt]);
+    let mrows = await p.$$eval('#sim-rules tbody tr', (t) => t.map((r) => Array.from(r.cells).map((c) => c.textContent)));
+    const cq = IN.filter((pp) => heldByC(pp, RM) === 'qty').length, crc = IN.filter((pp) => heldByC(pp, RM) === 'rc').length;
+    ok('…the table runs stock quantity first, then range completion with the products the cascade added named (' + cq + ' + ' + crc + ')', /^Stock quantity/.test(mrows[0][0]) && +mrows[0][1].replace(/\D/g, '') === cq && /^Range completion/.test(mrows[1][0]) && +mrows[1][1].replace(/\D/g, '') === crc && new RegExp(extra + ' only because the rules above took sizes out').test(mrows[1][0]) && (await p.$eval('#sim-rh', (e) => e.textContent)) === 'By rule, cascading', mrows);
+    const swc = await p.$$eval('#sim-sweep .bar', (b) => b.map((x) => +x.getAttribute('data-sx') === 50 ? x.getAttribute('data-tip') : null).filter(Boolean)[0]);
+    ok('…the sweep cascades: under 50% holds ' + countC({ rc: 50, qty: 5 }), new RegExp('>' + countC({ rc: 50, qty: 5 }) + ' products held back').test(swc), swc);
+    const [cdl] = await Promise.all([p.waitForEvent('download'), p.click('#sim-csv')]);
+    const ccsv = fs.readFileSync(await cdl.path(), 'utf8').replace(/^\uFEFF/, '').trim().split('\n');
+    ok('…the CSV lists the ' + countC(RM) + ' and says how the rules met', ccsv.length - 1 === countC(RM) && /how the rules meet/.test(ccsv[0]) && ccsv.slice(1).every((l) => /,cascading,/.test(l)), [ccsv.length - 1, ccsv[0]]);
+    await p.click('#sim-ctl [data-sm="ind"]'); await p.waitForTimeout(100);
+    k = await kpi(p);
+    mrows = await p.$$eval('#sim-rules tbody tr', (t) => t.map((r) => Array.from(r.cells).map((c) => c.textContent)));
+    const aloneRc = count({ rc: 30 }), aloneQ = count({ qty: 5 }), both = IN.filter((pp) => heldBy(pp, { rc: 30 }) && heldBy(pp, { qty: 5 })).length;
+    ok('Independent: each rule alone (RC ' + aloneRc + ', quantity ' + aloneQ + ', ' + both + ' held by both) and the total is every product held by any (' + count(RM) + ')', k[1] === count(RM) && +mrows[0][1].replace(/\D/g, '') === aloneRc && +mrows[0][2].replace(/\D/g, '') === both && +mrows[1][1].replace(/\D/g, '') === aloneQ && /Held by any rule/.test(mrows[mrows.length - 1][0]) && (await p.$eval('#sim-c1', (e) => e.textContent)) === 'Holds on its own', mrows);
+    ok('the mode is remembered on this device', JSON.parse(await p.evaluate(() => localStorage.getItem('fcc-stock-sim'))).mode === 'ind');
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
 
