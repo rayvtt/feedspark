@@ -553,9 +553,16 @@ window.addEventListener('load',restore);
     var q = new URLSearchParams(); if (S.brand) q.set('brand', S.brand); if (S.mkt) q.set('market', S.mkt);
     var s = q.toString(); history.replaceState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
   }
-  function mq() { return '?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt); }
-  function entry() { var ms = (S.roster && S.roster[S.brand]) || []; for (var i = 0; i < ms.length; i++) if (ms[i].mkt === S.mkt) return ms[i]; return null; }
-  function mktLabel(m) { return m.mkt.replace(/-fb$/, '').toUpperCase() + (m.meta ? ' · Meta' : ''); }
+  // SOURCE FEED (Ray, 17 Nov 2026: "allow selection for the source feeds of each client as well, next to either
+  // shopping & meta"): a market's third chip is the client's MASTER as FeedHero last imported it — the same file the
+  // Catalogue reads. It is picked as "<mkt>~src"; every request still names the market itself.
+  var SRC = '~src';
+  function isSrc() { return S.mkt.slice(-SRC.length) === SRC; }
+  function baseMkt() { return isSrc() ? S.mkt.slice(0, -SRC.length) : S.mkt; }
+  function mq() { return '?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(baseMkt()); }
+  function entry() { var ms = (S.roster && S.roster[S.brand]) || [], b = baseMkt(); for (var i = 0; i < ms.length; i++) if (ms[i].mkt === b && (!isSrc() || ms[i].src)) return ms[i]; return null; }
+  function mktLabel(m) { return m.mkt.replace(/-fb$/, '').toUpperCase() + (isSrc() && m.mkt === baseMkt() ? ' · Source' : m.meta ? ' · Meta' : ''); }
+  function chipLabel(m) { return m.mkt.replace(/-fb$/, '').toUpperCase() + (m.meta ? ' · Meta' : ''); }
 
   // ---- folds (Ray's standing rule): the head is the toggle, the device keeps the choice, a jump opens what it points at
   var FOLD_DEF = { 'sec-panes': 1, 'sec-pivot': 1, 'sec-cuts': 0, 'sec-fields': 0, 'sec-how': 0 };
@@ -618,13 +625,13 @@ window.addEventListener('load',restore);
   function renderChips() {
     var ms = (S.roster && S.roster[S.brand]) || [];
     $('#mkts').innerHTML = ms.map(function (m) {
-      return '<button type="button" class="chip' + (m.mkt === S.mkt ? ' on' : '') + '" data-mkt="' + esc(m.mkt) + '" data-no-keep title="' + esc((m.meta ? 'Meta catalogue' : 'Google Shopping') + ' · ' + (m.kind === 'xml' ? 'FeedHero XML' : 'Google Sheet')) + '">' + esc(mktLabel(m)) + '</button>';
+      return '<button type="button" class="chip' + (m.mkt === S.mkt ? ' on' : '') + '" data-mkt="' + esc(m.mkt) + '" data-no-keep title="' + esc((m.meta ? 'Meta catalogue' : 'Google Shopping') + ' · ' + (m.kind === 'xml' ? 'FeedHero XML' : 'Google Sheet')) + '">' + esc(chipLabel(m)) + '</button>'
+        + (m.src ? '<button type="button" class="chip' + (m.mkt + SRC === S.mkt ? ' on' : '') + '" data-mkt="' + esc(m.mkt + SRC) + '" data-no-keep title="Source feed · the client’s master file as FeedHero last imported it, before any FeedSpark rule">' + esc(m.mkt.toUpperCase()) + ' · Source</button>' : '');
     }).join('') || '<span class="cnt">No feed wired for this brand.</span>';
   }
   $('#brand').onchange = function () {
     S.brand = this.value; var ms = (S.roster && S.roster[S.brand]) || [];
-    var keep = ms.filter(function (m) { return m.mkt === S.mkt; })[0];
-    if (!keep) { var g = ms.filter(function (m) { return !m.meta; })[0] || ms[0]; S.mkt = g ? g.mkt : ''; }
+    if (!entry()) { var g = ms.filter(function (m) { return !m.meta; })[0] || ms[0]; S.mkt = g ? g.mkt : ''; }
     renderChips(); load();
   };
   $('#mkts').onclick = function (e) { var b = e.target.closest('[data-mkt]'); if (!b || b.getAttribute('data-mkt') === S.mkt) return; S.mkt = b.getAttribute('data-mkt'); renderChips(); load(); };
@@ -642,6 +649,7 @@ window.addEventListener('load',restore);
     renderAll();
     if (meas() !== 'n') loadAds();   // the Ads read runs beside the feed's, joined once both are in
     var st = B.createStore();
+    if (isSrc()) { loadSource(g, st, 0); return; }
     fetch('/api/feed/proxy' + mq(), S.ctl ? { signal: S.ctl.signal } : {}).then(function (res) {
       if (g !== S.gen) return;
       if (!res.ok || !res.body) return res.text().then(function (t) { var m = ''; try { m = JSON.parse(t).error; } catch (e) {} fail(g, m || ('HTTP ' + res.status)); });
@@ -664,6 +672,68 @@ window.addEventListener('load',restore);
       }
       return pump();
     }).catch(function (e) { if (g === S.gen && !(e && e.name === 'AbortError')) fail(g, String((e && e.message) || e)); });
+  }
+  // the source feed: FeedHero's own import file through the Catalogue's lane (the URL never reaches the browser),
+  // unzipped + sniffed (XML / TSV / CSV) + decoded (UTF-8, Windows-1252 at the first bad byte) by the Catalogue's engine
+  var E = null;
+  function loadCatEngine() {
+    if (window.FeedCatalog) return Promise.resolve(window.FeedCatalog);
+    return fetch('/catalog/engine.js').then(function (r) { if (!r.ok) throw new Error('/catalog/engine.js unavailable'); return r.text(); })
+      .then(function (s) { if (!s) throw new Error('/catalog/engine.js is empty'); (new Function(s))(); if (!window.FeedCatalog) throw new Error('engines not ready'); return window.FeedCatalog; });
+  }
+  function loadSource(g, st, tries) {
+    var sig = S.ctl ? { signal: S.ctl.signal } : {};
+    loadCatEngine().then(function (m) { E = m; return fetch('/api/catalog/master/file' + mq(), sig); }).then(function (res) {
+      if (g !== S.gen) return;
+      if (res.status === 202) {
+        S.feed.note = 'FeedHero is preparing this source feed'; renderStatus();
+        if (tries < 12) setTimeout(function () { if (g === S.gen) loadSource(g, st, tries + 1); }, 7000);
+        else fail(g, 'FeedHero is still preparing this source feed — try again in a few minutes');
+        return;
+      }
+      if (!res.ok || !res.body) return res.text().then(function (t) { var m = ''; try { m = JSON.parse(t).error; } catch (e) {} fail(g, m || ('HTTP ' + res.status)); });
+      S.feed.note = ''; S.feed.total = +(res.headers.get('x-feed-bytes') || 0); S.feed.file = res.headers.get('x-master-file') || '';
+      var rd = res.body.getReader(), parts = [], got = 0;
+      function pull() {
+        return rd.read().then(function (x) {
+          if (g !== S.gen) { try { rd.cancel(); } catch (e) {} return null; }
+          if (x.done) { var u = new Uint8Array(got), o = 0; parts.forEach(function (p) { u.set(p, o); o += p.length; }); return u; }
+          parts.push(x.value); got += x.value.length; S.feed.bytes = got; tick(); return pull();
+        });
+      }
+      return pull().then(function (u8) { if (u8 && g === S.gen) parseSource(g, st, u8); });
+    }).catch(function (e) { if (g === S.gen && !(e && e.name === 'AbortError')) fail(g, String((e && e.message) || e)); });
+  }
+  function parseSource(g, st, u8) {
+    var stream;
+    try {
+      if (E.isZip(u8)) {
+        var ent = E.zipMain(E.zipEntries(u8) || []); if (!ent) throw new Error('the zip is empty');
+        var data = E.zipData(u8, ent); if (!data) throw new Error('an unreadable zip entry');
+        stream = new Blob([data]).stream();
+        if (ent.method === 8) { if (typeof DecompressionStream === 'undefined') throw new Error('this browser cannot unzip it'); stream = stream.pipeThrough(new DecompressionStream('deflate-raw')); }
+        else if (ent.method !== 0) throw new Error('zip method ' + ent.method + ' is not supported');
+      } else stream = new Blob([u8]).stream();
+    } catch (e) { fail(g, 'the source file could not be opened: ' + e.message); return; }
+    var rd = stream.getReader(), dec = new TextDecoder('utf-8', { fatal: true }), parser = null, hdr = null;
+    function onRow(row, h) { if (!hdr) { hdr = (h && h.length ? h : row); return; } B.addRow(st, row, (h && h.length ? h : hdr)); S.feed.rows = st.n; }
+    function pump() {
+      return rd.read().then(function (x) {
+        if (g !== S.gen) { try { rd.cancel(); } catch (e) {} return; }
+        if (x.done) { var tl = ''; try { tl = dec.decode(); } catch (e) {} if (parser) { if (tl) parser.push(tl); parser.end(); } done(g, st); return; }
+        var t;
+        try { t = dec.decode(x.value, { stream: true }); } catch (er) { dec = new TextDecoder('windows-1252'); t = dec.decode(x.value, { stream: true }); }
+        if (!parser) {
+          var t0 = t.replace(/^\uFEFF/, ''); if (!t0.trim()) return pump();
+          var sn = E.sniff(t0.slice(0, 20000));
+          parser = sn.fmt === 'xml' ? FA.createXmlParser(onRow) : E.delimParser(sn.delim, function (r) { onRow(r); }, sn);
+          t = t0;
+        }
+        parser.push(t); tick();
+        return pump();
+      });
+    }
+    pump().catch(function (e) { if (g === S.gen) fail(g, 'reading the source feed failed: ' + ((e && e.message) || e)); });
   }
   var TK = 0;
   function tick() { if (!TK) TK = setTimeout(function () { TK = 0; renderStatus(); }, 350); }
@@ -689,6 +759,7 @@ window.addEventListener('load',restore);
     if (!S.roster) { ms.textContent = 'Loading the roster…'; return; }
     if (!S.brand) { ms.textContent = 'Pick a brand.'; pr.innerHTML = ''; return; }
     if (F.st === 'loading') {
+      if (F.note) { ms.textContent = name + ' — ' + F.note + '…'; pr.innerHTML = '<span class="prog ind"><i></i></span>'; return; }
       ms.textContent = 'Reading ' + name + ' — ' + n0(F.rows) + ' products · ' + mb(F.bytes) + (F.total ? ' of ' + mb(F.total) : '');
       var w = F.total ? Math.min(100, F.bytes / F.total * 100) : 0;
       pr.innerHTML = '<span class="prog' + (F.total ? '' : ' ind') + '"><i style="width:' + w.toFixed(1) + '%"></i></span>';
@@ -698,7 +769,7 @@ window.addEventListener('load',restore);
     if (F.st === 'error') { ms.textContent = name + ' — the feed could not be read: ' + F.err; return; }
     if (F.st === 'done') {
       var nf = S.fields.filter(function (f) { return f.slot && f.filled; }).length;
-      ms.textContent = name + ' · ' + n0(S.st.n) + ' products · ' + nf + ' fields carry a value · read ' + mb(F.bytes) + ' in ' + ((F.t1 - F.t0) / 1000).toFixed(1) + 's';
+      ms.textContent = name + (isSrc() ? ' · the master file as FeedHero last imported it' + (F.file ? ' (' + F.file + ')' : '') : '') + ' · ' + n0(S.st.n) + ' products · ' + nf + ' fields carry a value · read ' + mb(F.bytes) + ' in ' + ((F.t1 - F.t0) / 1000).toFixed(1) + 's';
       return;
     }
     ms.textContent = name;

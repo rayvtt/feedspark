@@ -611,7 +611,11 @@
     Object.keys(rows || {}).forEach(function (k) { idx.set(String(k).trim().toLowerCase(), rows[k]); });
     var cand = [];
     S.cols.forEach(function (c, i) { var nm = c.name.replace(/^(g|c|fs):/i, '').toLowerCase(); if (nm === 'id' || nm === 'fs_data_original_id') cand.push(i); });
-    var best = -1, bestN = -1;
+    // a client's SOURCE feed names its id its own way (sku, product_id, variant_id …): every such column is tried
+    // and the one carrying the most of the report's ids wins — none carrying any = no join, never a guess
+    var loose = !cand.length;
+    if (loose) S.cols.forEach(function (c, i) { if (/(^|[_ :.-])(id|sku)$/i.test(c.name) || /^(sku|id)([_ -]|$)/i.test(c.name)) cand.push(i); });
+    var best = -1, bestN = loose ? 0 : -1;
     cand.forEach(function (ci) {
       var c = S.cols[ci], hit = 0;
       for (var r = 0; r < S.n; r++) { var v = c.vals[c.ids[r]]; if (v && idx.has(v.toLowerCase())) hit++; }

@@ -17122,6 +17122,10 @@
   {"name": "Workflow: a confirmed row the live plan does not carry is written again", "file": "docs/FeedSpark_Workflow.html", "pattern": "function planHeal(){"},
   {"name": "Worker: plan appends queue per workbook", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const _planAppendQ = new Map();"},
   {"name": "Worker: an append reads its rows back and reports an overwrite", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "overwritten by another plan write on row"},
-  {"name": "Workflow: no direct append fetch bypasses the queue", "file": "docs/FeedSpark_Workflow.html", "pattern": "fetch('/api/sheets/append',{method:'POST'", "forbidden": true}
+  {"name": "Workflow: no direct append fetch bypasses the queue", "file": "docs/FeedSpark_Workflow.html", "pattern": "fetch('/api/sheets/append',{method:'POST'", "forbidden": true},
+  {"name": "Breakdown: the source feed is a third chip per market", "file": "docs/FeedSpark_Breakdown.html", "pattern": "function loadSource(g, st, tries) {"},
+  {"name": "Breakdown: the roster says which markets carry a source feed", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "src: !/-fb$/.test(r.mkt) && !!catCmpid(r.src)"},
+  {"name": "Results Lab: an archive card is titled by its batch name", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labArcName(t){"},
+  {"name": "Results Lab: a result on the register and in the archive is one card", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labDedupe(rows){"}
  ]
 }

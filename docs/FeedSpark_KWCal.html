@@ -3598,11 +3598,30 @@ function saveTests(){ try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS)
       var ab=/^a\/?b\b/i.test(String(t.method||'')), mets={};
       Object.keys(t.metrics||{}).forEach(function(k){ var v=t.metrics[k]; if(typeof v==='number'&&isFinite(v))mets[labKey(k)]=v; });
       var st=(t.winner&&t.winner.group)||labCall(mets)||'none';
-      rows.push({id:'a'+i+'|'+b, src:'arc', brand:b, name:(t.typeName||t.type||'Test')+(t.country?(' · '+t.country):''), attr:t.attr||'', hypo:'', cohort:'',
+      rows.push({id:'a'+i+'|'+b, src:'arc', brand:b, name:labArcName(t), named:!!labBatchName(t.batch), type:t.typeName||t.type||'', attr:t.attr||'', hypo:'', cohort:'',
         kind:ab?'ab':'single', method:t.method||'', groups:t.groups||null, mets:mets, state:st,
         how:t.winner?t.winner.how:(Object.keys(mets).length?'figures':null), winLabel:t.winner?t.winner.label:'',
         live:t.live||'', reportDate:t.reportDate||'', report:t.report||'', batch:t.batch||''}); }); });
-    return rows; }
+    return labDedupe(rows); }
+  // THE TEST'S OWN NAME (Ray, 17 Nov 2026: "the names … should be replaced with the actual names inside FeedHero
+  // instead of just 'standard keyword optimization'"): the archive's batch cell holds the batch as FeedHero names it
+  // ("Keywords Optimisation - Vans x SZA - Marketing Planner - 1026"); the card was titled off the Test Type column
+  // instead, so every keyword batch read "Keyword Optimisation · UK". A bare link or an empty cell is not a name —
+  // those keep the type, never a guess.
+  function labBatchName(v){ var t=String(v||'').replace(/\s+/g,' ').trim();
+    if(!t||/^(https?:\/\/|www\.)\S+$/i.test(t)||!/[a-z]{3}/i.test(t)||/^(n\/?a|none|tbc|-+)$/i.test(t))return ''; return t.slice(0,140); }
+  function labArcName(t){ var n=labBatchName(t.batch), c=String(t.country||'').trim();
+    if(!n)return (t.typeName||t.type||'Test')+(c?(' · '+c):'');
+    return n+(c&&n.toUpperCase().split(/[^A-Z]+/).indexOf(c.toUpperCase())<0?(' · '+c):''); }
+  // ONE TEST, ONE CARD: a result filed on the register AND written up in the brand's archive is the same test met
+  // twice (same brand, the same two-or-more figures to the decimal). The archive's card stays — it carries the live
+  // date, the method and the write-up — and takes the register's name where its own batch cell gave none.
+  function labFigs(m){ return Object.keys(m||{}).filter(function(k){return k!=='result';}).sort().map(function(k){return k+'='+m[k];}); }
+  function labDedupe(rows){ var arc={};
+    rows.forEach(function(r){ if(r.src!=='arc')return; var f=labFigs(r.mets); if(f.length<2)return; var k=r.brand.toLowerCase()+'|'+f.join(','); if(!arc[k])arc[k]=r; });
+    return rows.filter(function(r){ if(r.src!=='reg')return true; var f=labFigs(r.mets); if(f.length<2)return true;
+      var a=arc[String(r.brand).toLowerCase()+'|'+f.join(',')]; if(!a)return true;
+      a.reg=r.name; a.ri=r.ri; if(!a.named&&r.name){ a.name=r.name; a.named=true; } return false; }); }
   function labSummary(rows){ var s={n:rows.length,test:0,control:0,none:0,running:0,fig:0};
     rows.forEach(function(r){ s[r.state]=(s[r.state]||0)+1; if(Object.keys(r.mets).length)s.fig++; }); return s; }
   // a symmetric square-root scale: +126% and +4% both readable on one axis, zero dead centre
@@ -3699,7 +3718,7 @@ function saveTests(){ try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS)
     dl.push(done?'<span class="dn">✓ Completed <b>'+esc(labFmtD(done)||done)+'</b></span>'
       :(r.state==='running'?'<span>Not completed yet</span>':'<span>Completed date not recorded</span>'));
     var h='<article class="lab-card" id="lab-'+esc(r.id)+'"><div class="lab-ch"><div class="lab-meta">'+meta.join(' · ')+' <span class="lab-verd '+vc[0]+'">'+vc[1]+'</span></div>'
-      +'<div class="lab-nm">'+esc(r.name)+'</div>'+(r.attr?'<div class="lab-at">Tested · <b>'+esc(r.attr)+'</b></div>':'')
+      +'<div class="lab-nm">'+esc(r.name)+'</div>'+(r.src==='arc'&&r.named&&r.type&&r.name.toLowerCase().indexOf(String(r.type).toLowerCase())<0?'<div class="lab-at lab-ty">'+esc(r.type)+'</div>':'')+(r.reg&&r.reg!==r.name?'<div class="lab-at" title="This result is also on the test register under this name — shown once">Register · <b>'+esc(r.reg)+'</b></div>':'')+(r.attr?'<div class="lab-at">Tested · <b>'+esc(r.attr)+'</b></div>':'')
       +'<div class="lab-dt">'+dl.join('')+'</div>'+(r.hypo?'<div class="lab-hy">'+esc(r.hypo)+'</div>':'')+(r.cohort?'<div class="lab-hy">Cohort · '+esc(r.cohort)+'</div>':'')+'</div>';
     var lane=function(g){ var won=r.state===g; return '<div class="lab-lane '+(g==='test'?'t':'c')+(won?' won':'')+'"><div class="g">'+(r.kind==='single'?(g==='control'?'Baseline':'Measured'):(g==='control'?'Control group':'Test group'))+'</div><div class="d">'+esc(labGroupName(r,g))+'</div>'+(won?'<span class="won-tag">won</span>':'')+'</div>'; };
     h+='<div class="lab-lanes">'+lane('control')+lane('test')+'</div>';

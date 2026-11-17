@@ -3037,7 +3037,8 @@ async function route(request, env, ctx) {
       const acc = await accessOf(env, request);
       const out = {};
       (await feedRoster(env)).filter((r) => acc.owner || clientMatch(acc.clients, r.client)).forEach((r) => {
-        (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, kind: r.src && r.src.xml ? 'xml' : 'sheet', meta: /-fb$/.test(r.mkt) });
+        // src: the market's SOURCE feed can be picked too — FeedHero holds a master behind a wired Google XML feed
+        (out[r.client] = out[r.client] || []).push({ mkt: r.mkt, kind: r.src && r.src.xml ? 'xml' : 'sheet', meta: /-fb$/.test(r.mkt), src: !/-fb$/.test(r.mkt) && !!catCmpid(r.src) });
       });
       return json({ ok: true, clients: out });
     }

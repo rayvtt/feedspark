@@ -471,6 +471,23 @@ const ready = (pg) => pg.waitForFunction(() => window.__FCCBreakdown && window._
     const meta2 = await pg.evaluate(() => ({ reads: window.__bdReads, panes: window.__FCCBreakdown.state().L.panes.length, view: document.querySelector('#views').textContent }));
     ok('the Meta market reads its own feed, and the fields come with it', /market=gb-fb$/.test(meta2.reads[meta2.reads.length - 1]) && meta2.panes === 5, meta2);
     ok('the saved view is listed', /Merch view/.test(meta2.view), meta2.view);
+    // THE SOURCE FEED (Ray, 17 Nov 2026): a third chip beside Shopping and Meta reads the client's master file
+    const chips = await pg.evaluate(() => [...document.querySelectorAll('#mkts [data-mkt]')].map((x) => x.getAttribute('data-mkt') + '=' + x.textContent.trim()));
+    ok('a market offers its source feed beside Shopping and Meta', chips.join('|') === 'gb=GB|gb~src=GB · Source|gb-fb=GB · Meta', chips);
+    await pg.click('#mkts [data-mkt="gb~src"]'); await ready(pg);
+    const csvRows = STUBS.build().csv.trim().split(/\r?\n/), csvHead = csvRows[0].split(',').map((h) => h.replace(/"/g, ''));
+    const src1 = await pg.evaluate(() => { const S = window.__FCCBreakdown.state(); return { n: S.st.n, cols: S.st.cols.map((c) => c.name), reads: window.__bdReads, on: document.querySelector('#mkts .chip.on').textContent.trim(), line: document.getElementById('mstate').textContent, url: location.search, tables: document.querySelectorAll('#panes table').length }; });
+    ok('…picking it reads the master file for THAT market, never the output feed', /master\/file\?client=Northwind&market=gb$/.test(src1.reads[src1.reads.length - 1]) && src1.on === 'GB · Source', src1);
+    ok('…every master row is a row of the store (counted off the file itself)', src1.n === csvRows.length - 1, { n: src1.n, want: csvRows.length - 1 });
+    ok('…and the master\'s own columns are the fields', csvHead.every((h) => src1.cols.indexOf(h) >= 0), { cols: src1.cols, csvHead });
+    ok('…the status line says it is the master file, and the address carries the pick', /Source/.test(src1.line) && /master file/.test(src1.line) && /market=gb(~|%7E)src/.test(src1.url), src1);
+    ok('…a remembered layout naming fields the master lacks does not break the page', errs.length === 0, errs);
+    await pg.reload(); await ready(pg);
+    const src2 = await pg.evaluate(() => ({ on: document.querySelector('#mkts .chip.on').textContent.trim(), n: window.__FCCBreakdown.state().st.n }));
+    ok('…the source pick survives a reload', src2.on === 'GB · Source' && src2.n === csvRows.length - 1, src2);
+    await pg.click('#mkts [data-mkt="gb"]'); await ready(pg);
+    const backG = await pg.evaluate(() => ({ r: window.__bdReads, n: window.__FCCBreakdown.state().st.n }));
+    ok('…and Shopping reads the output feed again', /feed\/proxy\?client=Northwind&market=gb$/.test(backG.r[backG.r.length - 1]), backG.r.slice(-2));
     await pg.goto('file://' + tmp + '#sec-how'); await ready(pg);
     ok('a #hash opens the section it names', (await fold()).indexOf('sec-how:1') >= 0, await fold());
     ok('no console error', errs.length === 0, errs);
