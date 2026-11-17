@@ -15273,7 +15273,7 @@
     {
       "name": "Plan append: the rows land under the plan's last TASK, not past a stray cell",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "const place = planAppendRow(grid, tc, values.length);",
+      "pattern": "const place = planAppendRow(grid, tc, values.length + (sep ? 1 : 0));",
       "pr": 0
     },
     {
@@ -15699,7 +15699,7 @@
     {
       "name": "Workflow: + Add task's own refusal is reported like every other plan write",
       "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "else planWriteFailed(client,(d&&d.error)||'write failed'); })",
+      "pattern": "else { var ae=(d&&d.error)||'write failed'; if(!planFatal(ae))delete _planTried[atk]; planWriteFailed(client,ae); } })",
       "pr": 0
     },
     {
