@@ -677,13 +677,13 @@ window.addEventListener('load',restore);
   // unzipped + sniffed (XML / TSV / CSV) + decoded (UTF-8, Windows-1252 at the first bad byte) by the Catalogue's engine
   var E = null;
   function loadCatEngine() {
-    if (E || (E = window.FeedCatalog)) return Promise.resolve(E);
+    if (window.FeedCatalog) return Promise.resolve(window.FeedCatalog);
     return fetch('/catalog/engine.js').then(function (r) { if (!r.ok) throw new Error('/catalog/engine.js unavailable'); return r.text(); })
-      .then(function (s) { if (!s) throw new Error('/catalog/engine.js is empty'); (new Function(s))(); E = window.FeedCatalog; if (!E) throw new Error('engines not ready'); return E; });
+      .then(function (s) { if (!s) throw new Error('/catalog/engine.js is empty'); (new Function(s))(); if (!window.FeedCatalog) throw new Error('engines not ready'); return window.FeedCatalog; });
   }
   function loadSource(g, st, tries) {
     var sig = S.ctl ? { signal: S.ctl.signal } : {};
-    loadCatEngine().then(function () { return fetch('/api/catalog/master/file' + mq(), sig); }).then(function (res) {
+    loadCatEngine().then(function (m) { E = m; return fetch('/api/catalog/master/file' + mq(), sig); }).then(function (res) {
       if (g !== S.gen) return;
       if (res.status === 202) {
         S.feed.note = 'FeedHero is preparing this source feed'; renderStatus();
