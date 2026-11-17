@@ -160,6 +160,23 @@ const srv = http.createServer((q, r) => {
   ok('the old rules crush Test — so the width check above can really fail', NW < 180, NW);
 
   await b.close(); srv.close();
+  // THE TEST'S OWN NAME, AND ONE CARD PER TEST (Ray, 17 Nov 2026) — the engine lifted between its markers
+  console.log('\n-- the batch name, and a result met twice --');
+  { const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'docs', 'FeedSpark_KWCal.html'), 'utf8');
+    const eng = src.slice(src.indexOf('/* TESTLAB-VIZ:ENGINE-START */'), src.indexOf('/* TESTLAB-VIZ:ENGINE-END */'));
+    const labRows = new Function(eng + '; return labRows;')();
+    const rows = labRows(
+      [{ client: 'Northwind', name: 'Keywords Optimisation - Spring Planner - 1026', readout: '2026-11-06', result: 'Impressions: 15.75% Increase / Clicks: 18.64% Increase' },
+       { client: 'Northwind', name: 'A different test', result: 'Impressions: 2% Increase / Clicks: 3% Increase' }],
+      { Northwind: { tests: [
+        { country: 'UK', method: 'Single Group', type: 'Keyword Optimisation', typeName: 'Keyword Optimisation', batch: 'https://app.example.invalid/batch/42', metrics: { impressions: 15.75, clicks: 18.64 }, live: '23/10/2026', reportDate: '05/11/2026' },
+        { country: 'UK', method: 'A/B Test', type: 'Keyword Optimisation', typeName: 'Keyword Optimisation', batch: 'Oct I - Keyword Optimisation - Boots', metrics: { impressions: 5.46, clicks: 6.98 } },
+        { country: 'IE', method: 'A/B Test', type: 'Keyword Optimisation', typeName: 'Keyword Optimisation', batch: 'Keywords IE batch 7', metrics: { impressions: 1, clicks: 2 } }] } });
+    const names = rows.map((r) => r.src + ':' + r.name);
+    ok('a card is titled by the batch\'s own name, the market added where the name lacks it', names.indexOf('arc:Oct I - Keyword Optimisation - Boots · UK') >= 0 && names.indexOf('arc:Keywords IE batch 7') >= 0, names);
+    ok('a result on the register AND in the archive is one card, not two', rows.length === 4 && names.indexOf('reg:Keywords Optimisation - Spring Planner - 1026') < 0, names);
+    ok('…the archive card takes the register\'s name where its batch cell is only a link', names.indexOf('arc:Keywords Optimisation - Spring Planner - 1026') >= 0, names);
+    ok('…and a register test with other figures stays its own card', names.indexOf('reg:A different test') >= 0, names); }
   console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' assertions passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('✗ ' + e.stack); process.exit(1); });
