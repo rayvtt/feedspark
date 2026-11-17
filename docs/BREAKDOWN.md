@@ -244,3 +244,23 @@ takes the products with NO value in that field out of the pivot — not just its
 grand total still adds up to what is on screen (engine `dropBlank`, a new mask; the filters are untouched). The note
 says how many products each switch hid; Columns is disabled with no column field; the spend chart drops its (blank) bar
 with it. Per device (fcc-bd-layout › pivot.nbR / nbC). Harness tools/check_breakdown.js.
+
+## The source feed (17 Nov 2026)
+
+Ray: "allow selection for the source feeds of each client as well, next to either shopping & meta."
+
+Every Google market whose wired feed is a FeedHero XML carries a third chip, **`<MKT> · Source`**: the client's
+MASTER file as FeedHero last imported it, before any FeedSpark rule. The roster marks those markets `src: true`
+(a FeedHero company id can be read off the wired output URL); a sheet-backed or Meta market has no source chip.
+
+- Picked as `<mkt>~src` (remembered in `fcc-bd-mkt`, carried in `?market=`); every request names the market itself.
+- Read through the Catalogue's lane, `GET /api/catalog/master/file` — FeedHero's URL never reaches the browser.
+  The file is unzipped, sniffed (XML / TSV / CSV) and decoded (UTF-8, Windows-1252 at the first bad byte) by the
+  Catalogue's engine, loaded on first use, then streamed into the same column store as any feed.
+- The fields are the master's OWN columns, named as the client names them. A saved view or layout naming a field
+  the master lacks says so, as on any feed.
+- Google Ads joins by product id: with no `id` / `fs_data_original_id` column, every column named like an id or
+  sku is tried and the one carrying the most of the report's ids wins; none carrying any = no join.
+- A 202 from FeedHero ("preparing") is retried for ~80 s and says so on the status line.
+
+Harness: `tools/check_breakdown.js` (the three chips, the read, every master row counted off the file, reload).
