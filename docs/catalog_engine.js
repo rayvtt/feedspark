@@ -1087,27 +1087,70 @@
     if (blk && blk.has(simVal(D, i, rules.block.f))) return 'block';
     return '';
   }
+  // HOW THE RULES MEET (Ray, 17 Nov 2026: "inside simulation allows logic to be dependent / cascading from one another as
+  // well — a product currently has five sizes, with two sizes out of stock, but two other sizes are under five units. After
+  // the stock quantity logic is run through, the product now has four sizes that are out of stock, and then the range
+  // completion percentage would take place on top of that. The dashboard can have either rules running independent of each
+  // other, overlapping each other, or cascading from each other"). Three ways, one engine (SIM_MODES):
+  //   'over' OVERLAPPING (the default) — every rule reads the master as it is; a product counts ONCE, against the first rule
+  //          in run order that holds it, so the rows add up to the total
+  //   'ind'  INDEPENDENT — every rule reads the master as it is and is judged ALONE: its row is everything it would hold on
+  //          its own, so a product two rules hold counts in both rows (`shared` says how many) and the rows add to MORE than
+  //          the total, which is the union — the same products as overlapping, told rule by rule
+  //   'casc' CASCADING — the product rules run first (stock quantity, then the category block) and every size they hold back
+  //          counts as OUT OF STOCK in its style before the style rules run (range completion, sizes in stock, hero sizes);
+  //          so a style the quantity rule thinned can fall under the range-completion line, and the total grows. `casc.extra`
+  //          is what the cascade adds over overlapping, `casc.by` which style rule took it. FeedHero's own range_comp (rows.rc,
+  //          never read by the simulator) cannot be cascaded and is left as it is.
+  var SIM_MODES = ['over', 'ind', 'casc'];
+  function simMode(m) { return SIM_MODES.indexOf(m) >= 0 ? m : 'over'; }
+  function cascade(D, rules, blk) {
+    var R = D.rows, n = R.st.length, pre = new Array(n), took = { qty: 0, block: 0 };
+    var run = D.run.map(function (c) { return [c[0], c[1]]; }), hrun = D.hrun ? D.hrun.map(function (c) { return [c[0], c[1]]; }) : null;
+    var qOn = simOn(rules, 'qty');
+    for (var i = 0; i < n; i++) {
+      if (R.st[i] !== 1) continue;
+      var k = qOn && R.q[i] != null && R.q[i] < +rules.qty.v ? 'qty' : blk && blk.has(simVal(D, i, rules.block.f)) ? 'block' : '';
+      if (!k) continue;
+      pre[i] = k; took[k]++;
+      var g = R.g[i];
+      if (g >= 0) { run[g][1]--; if (hrun && R.hz && R.hz[i] === 1) hrun[g][1]--; }
+    }
+    return { D: { rows: R, run: run, hrun: hrun, groups: D.groups, n: D.n }, pre: pre, took: took };
+  }
+  function styleRules(rules) { var o = {}; ['rc', 'sz', 'hero'].forEach(function (k) { if (rules && rules[k]) o[k] = rules[k]; }); return o; }
+  // hold(i) → the rule that holds product i back under this mode, or ''; D is the master as the style rules read it
+  function holder(D, rules, mode) {
+    var blk = simOn(rules, 'block') ? new Set(rules.block.v) : null;
+    if (simMode(mode) !== 'casc') return { D: D, blk: blk, hold: function (i) { return holdOf(D, i, rules, blk); } };
+    var c = cascade(D, rules, blk), sr = styleRules(rules);
+    return { D: c.D, blk: blk, c: c, hold: function (i) { return c.pre[i] || holdOf(c.D, i, sr, null); } };
+  }
   // simulate(D, rules, {cat}) → what these rules would hold back of the master's in-stock products
   function simulate(D, rules, o) {
     o = o || {}; rules = rules || {};
-    var R = D.rows, ct = o.cat || 'c1', blk = simOn(rules, 'block') ? new Set(rules.block.v) : null;
+    var mode = simMode(o.mode), R = D.rows, ct = o.cat || 'c1', blk = simOn(rules, 'block') ? new Set(rules.block.v) : null;
+    var H = holder(D, rules, mode), shared = { rc: 0, qty: 0, sz: 0, hero: 0, block: 0 }, cx = 0, cby = { rc: 0, sz: 0, hero: 0 };
     var take = { rc: 0, qty: 0, sz: 0, hero: 0, block: 0 }, own = { rc: 0, qty: 0, sz: 0, hero: 0, block: 0 };
     var inS = 0, held = 0, qU = 0, noS = 0, hU = 0, cats = new Map();
     var tj = 0, tNow = 0, tBoth = 0, tNew = 0, tRel = 0;
     var heroOn = !!(D.rows.hz && simOn(rules, 'hero')), keepM = heroOn && rules.hero.m === 'keep', noHero = null;
     var solo = {}; SIM_ORDER.forEach(function (k) { if (simOn(rules, k) && !(k === 'hero' && (!heroOn || keepM))) { solo[k] = {}; solo[k][k] = rules[k]; } });
     // the exception's own figure is what it lets back in: what the other rules hold back without it, minus with it
-    if (keepM) { noHero = {}; for (var rk in rules) if (rk !== 'hero') noHero[rk] = rules[rk]; }
+    if (keepM) { noHero = {}; for (var rk in rules) if (rk !== 'hero') noHero[rk] = rules[rk]; noHero = holder(D, noHero, mode); }
     for (var i = 0; i < R.st.length; i++) {
       if (R.st[i] !== 1) continue;
       inS++;
       if (R.q[i] == null) qU++;
       if (R.g[i] < 0) noS++;
       if (heroOn && (keepM ? R.hz[i] === -1 : heroPc(D, R.g[i]) == null)) hU++;
-      var h = holdOf(D, i, rules, blk);
-      if (keepM && !h && holdOf(D, i, noHero, blk)) own.hero++;
+      var h = H.hold(i);
+      if (keepM && !h && noHero.hold(i)) own.hero++;
       if (h) { held++; take[h]++; }
-      for (var k in solo) if (holdOf(D, i, solo[k], k === 'block' ? blk : null)) own[k]++;
+      if (mode === 'casc' && h && h !== 'qty' && h !== 'block' && !holdOf(D, i, rules, blk)) { cx++; cby[h]++; }
+      var sk = [];
+      for (var k in solo) if (holdOf(D, i, solo[k], k === 'block' ? blk : null)) { own[k]++; sk.push(k); }
+      if (sk.length > 1) sk.forEach(function (x) { shared[x]++; });
       var cv = simVal(D, i, ct), ce = cats.get(cv); if (!ce) cats.set(cv, ce = [cv, 0, 0]); ce[1]++; if (h) ce[2]++;
       if (R.td[i]) {
         tj++; var now = R.td[i] !== 1;
@@ -1115,21 +1158,24 @@
         if (now && h) tBoth++; else if (h) tNew++; else if (now) tRel++;
       }
     }
-    return { inStock: inS, held: held, live: inS - held, take: take, own: own, qtyUnread: qU, noStyle: noS, heroUnread: heroOn ? hU : 0, heroKeep: keepM,
+    return { mode: mode, inStock: inS, held: held, live: inS - held, take: take, own: own, shared: shared, qtyUnread: qU, noStyle: noS, heroUnread: heroOn ? hU : 0, heroKeep: keepM,
+      casc: mode === 'casc' ? { extra: cx, by: cby, took: H.c.took } : null,
       today: tj ? { joined: tj, held: tNow, both: tBoth, newly: tNew, released: tRel, sim: tBoth + tNew } : null,
       cats: Array.from(cats.values()).sort(function (a, b) { return b[2] - a[2] || b[1] - a[1]; }) };
   }
   // the held-back total at every range-completion line from 0 to 100% (step 5), the other rules as set — the sweep chart
-  function simSweep(D, rules, step) {
+  function simSweep(D, rules, step, mode) {
     step = step || 5;
-    var R = D.rows, blk = simOn(rules, 'block') ? new Set(rules.block.v) : null, base = 0, rcs = [];
+    var R = D.rows, base = 0, rcs = [];
     var rest = {}; ['block', 'qty', 'sz', 'hero'].forEach(function (k) { if (rules && rules[k]) rest[k] = rules[k]; });
     var keepM = !!(R.hz && simOn(rules, 'hero') && rules.hero.m === 'keep');
+    // cascading, the line reads each style's run AFTER the product rules have taken their sizes out
+    var H = holder(D, rest, mode);
     for (var i = 0; i < R.st.length; i++) {
       if (R.st[i] !== 1) continue;
-      if (holdOf(D, i, rest, blk)) { base++; continue; }
+      if (H.hold(i)) { base++; continue; }
       if (keepM && R.hz[i] === 1) continue;   // a hero size the exception keeps live is never held by any line
-      var rc = rcAt(D, i); if (rc != null) rcs.push(rc);
+      var rc = rcAt(H.D, i); if (rc != null) rcs.push(rc);
     }
     var out = [];
     for (var x = 0; x <= 100; x += step) {
@@ -1139,14 +1185,18 @@
     return out;
   }
   // every product these rules hold back, for the CSV — lowest range completion first
-  function simHeld(D, rules) {
-    var R = D.rows, blk = simOn(rules, 'block') ? new Set(rules.block.v) : null, out = [];
+  // `by` is the rule that holds it under the mode; `all` every rule that would hold it on its own (independent reading);
+  // cascading, rc / rcIn are the style's run AFTER the product rules took their sizes out, rc0 the master's own
+  function simHeld(D, rules, mode) {
+    var R = D.rows, H = holder(D, rules, mode), out = [], solo = [];
+    SIM_ORDER.forEach(function (k) { if (simOn(rules, k) && !(k === 'hero' && (!R.hz || rules.hero.m === 'keep'))) { var o = {}; o[k] = rules[k]; solo.push([k, o]); } });
     for (var i = 0; i < R.st.length; i++) {
       if (R.st[i] !== 1) continue;
-      var h = holdOf(D, i, rules, blk); if (!h) continue;
-      var g = R.g[i], c = g >= 0 ? D.run[g] : null, rc = rcAt(D, i);
-      var hp = heroPc(D, g), hh = g >= 0 && D.hrun ? D.hrun[g] : null;
-      out.push({ id: R.id[i], t: R.t[i], s: R.s[i], g: g >= 0 ? g : -1, q: R.q[i], cat: R.c[i], by: h, rc: rc == null ? null : Math.round(rc * 10) / 10, rcIn: c ? c[1] : 0, rcN: c ? c[0] : 0, td: R.td[i],
+      var h = H.hold(i); if (!h) continue;
+      var g = R.g[i], c = g >= 0 ? H.D.run[g] : null, rc = rcAt(H.D, i), rc0 = rcAt(D, i);
+      var hp = heroPc(H.D, g), hh = g >= 0 && H.D.hrun ? H.D.hrun[g] : null;
+      var all = solo.filter(function (x) { return holdOf(D, i, x[1], x[0] === 'block' ? H.blk : null); }).map(function (x) { return x[0]; });
+      out.push({ id: R.id[i], t: R.t[i], s: R.s[i], g: g >= 0 ? g : -1, q: R.q[i], cat: R.c[i], by: h, all: all, rc: rc == null ? null : Math.round(rc * 10) / 10, rc0: rc0 == null ? null : Math.round(rc0 * 10) / 10, rcIn: c ? c[1] : 0, rcN: c ? c[0] : 0, td: R.td[i],
         hz: R.hz ? R.hz[i] : -1, hp: hp == null ? null : Math.round(hp * 10) / 10, hIn: hh ? hh[1] : 0, hN: hh ? hh[0] : 0 });
     }
     return out.sort(function (a, b) { return (a.rc == null ? 101 : a.rc) - (b.rc == null ? 101 : b.rc); });
@@ -1504,7 +1554,7 @@
     tally: tally, wordDiff: wordDiff, isZip: isZip, zipEntries: zipEntries, zipData: zipData, zipMain: zipMain, sniff: sniff,
     delimParser: delimParser, matrixAdd: matrixAdd, qtyCol: qtyCol, stockOf: stockOf, runAdd: runAdd, runBucket: runBucket,
     availBucket: availBucket, stockTally: stockTally, feedIndex: feedIndex, heldBack: heldBack, srcIndex: srcIndex,
-    stockRows: stockRows, simulate: simulate, productFind: productFind, productCheck: productCheck, styleOf: styleOf, idIndex: idIndex, simSweep: simSweep, simHeld: simHeld, heroMark: heroMark, simValues: simValues, SIM_ORDER: SIM_ORDER, SIM_FIELDS: SIM_FIELDS, catTier: catTier,
+    stockRows: stockRows, simulate: simulate, productFind: productFind, productCheck: productCheck, styleOf: styleOf, idIndex: idIndex, simSweep: simSweep, simHeld: simHeld, SIM_MODES: SIM_MODES, heroMark: heroMark, simValues: simValues, SIM_ORDER: SIM_ORDER, SIM_FIELDS: SIM_FIELDS, catTier: catTier,
     SEG_FIELD: SEG_FIELD, AGE_BUCKETS: AGE_BUCKETS, segKey: segKey, segUnlisted: segUnlisted, mergeSegRows: mergeSegRows,
     unsortedOnly: unsortedOnly, ageBucket: ageBucket, groupBirth: groupBirth, birthOf: birthOf, segValue: segValue,
     priceGroupRange: priceGroupRange, priceGroupBands: priceGroupBands, priceGroupOf: priceGroupOf, priceGroupBasis: priceGroupBasis,
