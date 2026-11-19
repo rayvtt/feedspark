@@ -50,9 +50,11 @@ for (let i = 0; i < 44; i++) {
       feed: k >= 3 && inS ? 'in stock' : k >= 1 && k <= 2 ? 'out of stock' : null });
   });
 }
+// a backorder size (Ray, 19 Nov 2026: "Masterfeed instock today would be 27568" — the 607 backorder rows are not in stock)
+P.push({ id: 'BO-1', t: 'Boot on backorder', s: '', g: '', inS: false, bo: true, q: 0, cat: 'Kids > Shoes', br: 'Linden', k: null, feed: null });
 P.push({ id: 'BAG-1', t: 'Tote bag', s: '', g: '', inS: true, q: 3, cat: 'Accessories > Bags', br: 'Northwind', k: null, feed: 'in stock' });
 const MASTER = ['id,title,size,item_group_id,availability,quantity,product_type,brand']
-  .concat(P.map((p) => [p.id, p.t, p.s, p.g, p.inS ? 'in stock' : 'out of stock', p.q, 'Master type', p.br].join(','))).join('\n');
+  .concat(P.map((p) => [p.id, p.t, p.s, p.g, p.inS ? 'in stock' : p.bo ? 'backorder' : 'out of stock', p.q, 'Master type', p.br].join(','))).join('\n');
 const FEED = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>'
   + P.filter((p) => p.feed).map((p) => '<item><g:id>' + p.id + '</g:id><g:title>' + p.t + '</g:title><g:availability>' + p.feed + '</g:availability><g:product_type>' + p.cat.replace(/>/g, '&gt;') + '</g:product_type><g:item_group_id>' + p.g + '</g:item_group_id></item>').join('')
   + '</channel></rss>';
@@ -171,6 +173,8 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('⚡ Read products reads the market\'s own Google feed', reads.length === 1 && /client=Superdry&market=gb/.test(reads[0]), reads);
     let k = await kpi(p);
     ok('in stock in the master = ' + IN.length + ' (counted here)', k[0] === IN.length, k);
+    const bo = await p.$eval('#sim-sum .it', (e) => e.textContent);
+    ok('…the backorder row is not counted, and the tile says so', /\+ 1 on backorder \/ pre-order, not counted/.test(bo), bo);
     ok('a fresh device starts on range completion under 20%: held back ' + count({ rc: 20 }), k[1] === count({ rc: 20 }) && k[2] === IN.length - count({ rc: 20 }), k);
     ok('held back today = the in-stock products the feed does not carry live (' + todayHeld + ')', k[3] === todayHeld, k);
     for (const v of [5, 10, 15, 20, 40, 50]) {
@@ -318,6 +322,19 @@ async function read(p) { await p.$eval('#sim-load', (b) => { b.scrollIntoView({ 
     ok('⬇ CSV names the hero rule and every product\'s hero size (' + countH(RC) + ' rows)', hcsv.length - 1 === countH(RC) && /hero size,style hero sizes in stock,style hero sizes made,style hero %/.test(hcsv[0]) && hcsv.filter((l) => /,hero sizes,/.test(l)).length === IN.filter((pp) => heldByH(pp, RC) === 'hero').length, [hcsv.length - 1, countH(RC), hcsv[0]]);
     const hm = await p.evaluate(() => JSON.parse(localStorage.getItem('fcc-stock-sim') || '{}').hero);
     ok('the hero rule is remembered on this device (on, hold, 100%)', hm && hm.on && hm.m === 'hold' && hm.v === 100, hm);
+
+    // A READ NEVER OUTLIVES ITS MARKET (Ray, 19 Nov 2026: Reiss US's simulator drew GB's 28,795 — "but this is US not GB"):
+    // narrowing the page to another market moves the simulator with it, and another market's read is never drawn
+    console.log('· switching market');
+    const other = await p.evaluate(() => Array.from(document.querySelectorAll('#sim-mkt option')).map((o) => o.textContent).filter((t) => t !== 'Superdry GB')[0]);
+    const om = other && other.replace(/^Superdry /, '');
+    await p.$eval('#mkts [data-m="' + om + '"]', (b) => b.click()); await p.waitForTimeout(200);
+    st = await p.evaluate(() => ({ hidden: document.getElementById('sim').hidden, txt: document.getElementById('sim-st').textContent, sel: document.getElementById('sim-mkt').selectedOptions[0] && document.getElementById('sim-mkt').selectedOptions[0].textContent }));
+    ok('narrowed to ' + other + ', the simulator moves to it and draws no GB read under its name', om && st.hidden && st.sel === other && new RegExp('Read ' + other).test(st.txt), [other, st]);
+    await p.$eval('#mkts [data-m="' + om + '"]', (b) => b.click()); await p.waitForTimeout(150);
+    await p.selectOption('#sim-mkt', { label: 'Superdry GB' }); await p.waitForTimeout(150);
+    st = await p.evaluate(() => ({ hidden: document.getElementById('sim').hidden, txt: document.getElementById('sim-st').textContent, reads: (window.__simReads || []).length }));
+    ok('back on GB, its own read is drawn again without reading twice', !st.hidden && /^Superdry GB · /.test(st.txt) && st.reads === 1, st);
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
     ({ ctx, p, errs } = await open(browser, 1440, 1000, null, null, 'window.__NOHERO=1;localStorage.setItem("fcc-stock-sim",JSON.stringify({rc:{on:true,v:20},hero:{on:true,m:"hold",v:100}}));'));

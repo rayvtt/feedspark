@@ -1160,6 +1160,28 @@ simulator, so nothing un-cascadable is mixed in. Engine: `simulate(D, rules, {mo
 `simHeld(…, mode)` over one `holder()` in `docs/catalog_engine.js`; unit tests in `tools/test_catalog.mjs`, the page in
 `tools/check_stocksim.js` (each mode counted from the invented rows).
 
+### 3p⁗. What "in stock in the master" counts — and a read that follows its market
+
+Ray, 19 Nov 2026, over the Reiss US simulator reading "In stock in the master 28,795": *"Masterfeed instock today would
+be 27568 skus"* — *"but this is US not GB"*. Two faults, each read off the live masters that day:
+
+1. **Another market's read under this one's name.** 28,795 is Reiss **GB**'s master (28,246 `in_stock` + 549
+   `backorder`), not US's (27,568 `in_stock` + 607 `backorder`). Narrowing the page to US left `SIM.cmpid` on GB — no
+   longer in the dropdown, so the select fell back to showing "Reiss US" — and the GB read stayed drawn. `simUse` now moves
+   the simulator with the market in view, taking that market's own read from the page's cache (`RD`) when it has one, and
+   another market's products are never drawn under this one's name.
+2. **A backorder is not in stock.** `stockOf` read `preorder` / `backorder` as in stock, so the simulator, Check a product
+   and the held-back join counted them. It is now its own state `'pre'` (`stockRows` row state `2`) — the In stock card's
+   `stockTally` word table already kept it apart: a size the style is made in, never one counted in stock, held back or
+   live by the master. The simulator's tile says how many sit on backorder; Check a product reads "On backorder /
+   pre-order"; a style counts them apart. The **feed's** pre-order is still live in Google.
+
+Applies to every brand and market. The In stock card's "In stock, not live" (the master-stock agent's join) follows on
+each market's next master import. Harness: `tools/test_catalog.mjs` (the state, the run, the simulator count, the style,
+the verdict) + `tools/check_stocksim.js` (a backorder row never counted and named on the tile; narrowing to another
+market moves the simulator and draws nothing of GB; back on GB its read is drawn without reading twice — 21 fail on the
+code before).
+
 ## 3p″. Check a product — one ID's stock, range completion and the rule that holds it back (`/stock`)
 
 Ray, 16 Nov 2026: *"Create a new module within stock management to check the stock status for each individual ID. When a

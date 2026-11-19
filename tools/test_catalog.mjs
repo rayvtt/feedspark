@@ -434,6 +434,17 @@ console.log('· size runs read off the master (a feed that drops out-of-stock si
   t('NOT_AVAILABLE reads as out of stock', E.stockOf('NOT_AVAILABLE', 'n/a') === 'out');
   t('the master run of 278158 is 3 of 7 in stock — under half, not "all in stock"', m.get('278158')[0] === 7 && m.get('278158')[1] === 3 && E.runBucket(m.get('278158')) === 'few');
   t('no availability word: the quantity decides; neither: no guess', E.stockOf('', '0') === 'out' && E.stockOf('', '4') === 'in' && E.stockOf('', '') === null);
+  // Ray, 19 Nov 2026 (Reiss US: 27,568 in_stock + 607 backorder in the master; the simulator read 28,795 off GB's)
+  t('a backorder / pre-order is its own state — made in the run, never in stock', E.stockOf('backorder', '') === 'pre' && E.stockOf('preorder', '5') === 'pre' && E.stockOf('in stock', '') === 'in'
+    && (() => { const x = new Map(); E.runAdd(x, 'G', 'pre'); E.runAdd(x, 'G', 'in'); return x.get('G')[0] === 2 && x.get('G')[1] === 1; })());
+  {
+    const sr = E.stockRows(null); sr.onRow(['id', 'availability', 'item_group_id']);
+    [['a', 'in_stock', 'G'], ['b', 'backorder', 'G'], ['c', 'out_of_stock', 'G'], ['d', 'in_stock', 'H']].forEach((r) => sr.onRow(r));
+    const D = sr.finish(), res = E.simulate(D, {}), sty = E.styleOf(D, D.rows.g[1], 1);
+    t('the simulator counts in_stock only, and says how many sit on backorder', D.pre === 1 && res.inStock === 2 && res.pre === 1 && D.rows.st[1] === 2, JSON.stringify({ pre: D.pre, inS: res.inStock }));
+    t('a style counts its backorder sizes apart: made, never in stock, never out', sty.made === 3 && sty.in === 1 && sty.out === 1 && sty.pre === 1);
+    t('a backorder product reads "pre" in Check a product — never held, never live', E.productCheck(D, 1, {}).verdict === 'pre');
+  }
   t('a row with no readable stock never joins a run', (() => { const x = new Map(); E.runAdd(x, 'G', null); return !x.has('G'); })());
   t('the quantity column is found by name', E.qtyCol(['product_id', 'availability', 'quantity']) === 2 && E.qtyCol(['id', 'g:quantity']) === 1 && E.qtyCol(['id', 'title']) === -1);
   t('the card, its filter and the Variants column all read one count (grpC) — the master run when it matches the feed', /function grpC\(g\) \{ return \(S\.run && S\.run\.get\(g\)\)/.test(PG) && /case 'var': var gr = x\.grp \? grpC\(x\.grp\)/.test(PG) && /function runB\(i\) \{[^}]*grpC\(/.test(PG));
