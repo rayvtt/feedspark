@@ -144,6 +144,45 @@ const NEXT = '﻿"Name: AI shopping terms, product attributes and search intents
     await pg.waitForFunction(() => /500%/.test((document.querySelector('#dem-terms') || {}).innerText || ''), null, { timeout: 8000 });
     await pg.click('#dem-flds [data-dfld="*"]');
     ok('All fields puts every field back and the counts with it', (await chips()).length === 6 && /^3 /.test((await row(pg, 'wool coat'))[4]), await chips());
+    console.log('· every column sorts');
+    const col = (i) => pg.evaluate((i) => [...document.querySelectorAll('#dem-terms tr[data-term]')].map((tr) => tr.children[i].innerText.replace(/\s+/g, ' ').trim()), i);
+    const numOf = (t) => { const m = /-?[\d,]+(\.\d+)?/.exec(t); return m && !/^—/.test(t) && !/not reported/i.test(t) ? Number(m[0].replace(/,/g, '')) : null; };
+    const shape = (vals, dir) => {            // measured values run one way, every blank after them
+      const n = vals.map(numOf), k = n.findIndex((v) => v == null), body = k < 0 ? n : n.slice(0, k);
+      return (k < 0 || n.slice(k).every((v) => v == null)) && body.every((v, i) => !i || (dir < 0 ? body[i - 1] >= v : body[i - 1] <= v));
+    };
+    const head = (k) => pg.getAttribute('#dem-terms th[data-dsrt="terms:' + k + '"]', 'aria-sort');
+    ok('all eight heads of the terms table sort', await pg.evaluate(() => { const th = [...document.querySelectorAll('#dem-terms thead th')]; return th.length === 8 && th.every((x) => x.matches('.srt[data-dsrt^="terms:"]')); }));
+    ok('it opens most asked first', (await head('f')) === 'descending' && shape(await col(1), -1), await col(1));
+    await pg.click('#dem-terms th[data-dsrt="terms:ps"]');
+    ok('Google shows: highest first', (await head('ps')) === 'descending' && (await head('f')) === 'none' && shape(await col(3), -1), await col(3));
+    await pg.click('#dem-terms th[data-dsrt="terms:ps"]');
+    ok('a second click reverses it', (await head('ps')) === 'ascending' && shape(await col(3), 1), await col(3));
+    await pg.click('#dem-terms th[data-dsrt="terms:sov"]');
+    const sv1 = await col(2);
+    await pg.click('#dem-terms th[data-dsrt="terms:sov"]');
+    const sv2 = await col(2);
+    ok('Share of voice sorts both ways, and a share Google did not report stays last in both', shape(sv1, -1) && shape(sv2, 1) && numOf(sv1[sv1.length - 1]) == null && numOf(sv2[sv2.length - 1]) == null, [sv1, sv2]);
+    for (const [k, i, nm] of [['n', 4, 'In the catalogue'], ['ti', 5, 'In the title'], ['roas', 6, 'ROAS']]) {
+      await pg.click('#dem-terms th[data-dsrt="terms:' + k + '"]');
+      ok(nm + ': highest first', (await head(k)) === 'descending' && shape(await col(i), -1), await col(i));
+    }
+    await pg.click('#dem-terms th[data-dsrt="terms:t"]');
+    const names = await col(0);
+    ok('Search term sorts A to Z', (await head('t')) === 'ascending' && names.join('|') === names.slice().sort((x, y) => x.localeCompare(y)).join('|'), names);
+    await pg.click('#dem-terms th[data-dsrt="terms:score"]');
+    ok('Verdict sorts by priority, and the rows are all still there', (await head('score')) === 'descending' && (await col(0)).slice().sort().join('|') === names.slice().sort().join('|'));
+    for (const [tab, id, n] of [['intents', 'dem-intents', 6], ['attrs', 'dem-attrs', 6]]) {
+      await pg.click('#dem-tabs [data-dtab="' + tab + '"]');
+      await pg.waitForSelector('#' + id + ' tbody tr');
+      const before = await pg.evaluate((id) => [...document.querySelectorAll('#' + id + ' tbody tr')].map((tr) => tr.children[0].innerText.trim()), id);
+      await pg.click('#' + id + ' th[data-dsrt="' + tab + ':t"]');
+      const after = await pg.evaluate((id) => [...document.querySelectorAll('#' + id + ' tbody tr')].map((tr) => tr.children[0].innerText.trim()), id);
+      ok('the ' + tab + ' table: ' + n + ' sortable heads, and its first column sorts A to Z', (await pg.$$('#' + id + ' th.srt')).length === n && after.length === before.length && after.join('|') === before.slice().sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase())).join('|'), after);
+    }
+    await pg.click('#dem-tabs [data-dtab="terms"]');
+    ok('the sort is kept when you come back to the tab', (await head('score')) === 'descending');
+    await pg.click('#dem-terms th[data-dsrt="terms:f"]');
     await pg.click('#dem-terms tr[data-term="wool coat"]');
     if (process.env.AIDEMAND_SHOT) await (await pg.$('#dem-card')).screenshot({ path: path.join(process.env.AIDEMAND_SHOT, 'aidemand_terms.png') });   // a visual pass, on request
     console.log('· activation');
@@ -181,6 +220,9 @@ const NEXT = '﻿"Name: AI shopping terms, product attributes and search intents
     ok('a UTF-16 tab-separated export is read: kind, period, country, rows', put.kind === 'terms' && put.from === '2026-11-16' && put.to === '2026-11-22' && put.country === 'GB' && put.rows.length === 3, put);
     ok('a blank share of voice is stored as null, not zero', put.rows[2].sov === null && put.rows[0].sov === 0.4, put.rows);
     await pg.click('#dem-tabs [data-dtab="time"]');
+    await pg.click('#dem-time th[data-dsrt="time:delta"]');
+    const mv = await pg.evaluate(() => [...document.querySelectorAll('#dem-time tbody tr')].map((tr) => tr.children[3].innerText.trim()));
+    ok('Over time: five sortable heads, Move sorts biggest gain first with no-move rows last', (await pg.$$('#dem-time th.srt')).length === 5 && /\+18 pts/.test(mv[0]) && mv[mv.length - 1] === '—', mv);
     const time = await pg.evaluate(() => [...document.querySelectorAll('#dem-time tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim())));
     const tw = time.filter((r) => r[0] === 'wool coat')[0], ts = time.filter((r) => r[0] === 'ski suit')[0];
     ok('Over time: wool coat 22% → 40% across three readings, +18 pts', tw && /^22%/.test(tw[1]) && /^40%/.test(tw[2]) && /\+18 pts/.test(tw[3]) && tw[4] === '3', tw);

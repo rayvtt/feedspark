@@ -17522,6 +17522,16 @@
       "name": "KWCal: a batch ties on the day a moment goes live, not its brief-by",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "var mk=evMkt(brand,e), t=new Date(e.date+'T12:00:00Z').getTime(), out=null;"
+    },
+    {
+      "name": "AI demand: every column of every demand table sorts, blanks last either way",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "function sorted(tb, list, val) {"
+    },
+    {
+      "name": "AI demand: a header click sorts its own table, a second click reverses it",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "srtSet(sk[0], sk[1]); render(); return;"
     }
   ]
 }
