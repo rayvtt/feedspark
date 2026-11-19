@@ -85,6 +85,7 @@ function stubLines() {
     + "  if(url.indexOf('/api/feed/proxy')>=0)" + txt(JSON.stringify(d.csv), 'text/csv') + "\n"
     + "  if(url.indexOf('/api/ptypes/snapshot')>=0)return j(" + JSON.stringify(d.pt) + ");\n"
     + "  if(url.indexOf('/aivis/demand.js')>=0)" + txt(src('aidemand_engine.js'), 'application/javascript') + "\n"
+    + "  if(url.indexOf('/xlsx/engine.js')>=0)" + txt(src('xlsx_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/api/aivis/demand')>=0)return j(" + JSON.stringify(d.demand) + ");\n"
     + "  if(url.indexOf('/api/breakdown/ads')>=0)return j({ok:true,done:true,cur:'GBP',range:'Last 30 days',rows:{nw100:[900,40,60,3,420],NW200:[500,20,50,1,90]}});\n"
     + "  if(url.indexOf('/api/aivis?client=')>=0&&url.indexOf('run=')>=0){var R=" + JSON.stringify(d.runs) + ";var id=(url.match(/run=([^&]+)/)||[])[1];return j({ok:true,run:R.filter(function(x){return x.id===id;})[0]||R[1]});}\n"

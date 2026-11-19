@@ -122,7 +122,24 @@ const NEXT = '﻿"Name: AI shopping terms, product attributes and search intents
     console.log('· a term’s products');
     await pg.click('#dem-terms tr[data-term="wool coat"]');
     const det = await pg.evaluate(() => { const x = document.querySelector('#dem-terms tr.dm-x'); return { act: x.querySelector('.dm-act').innerText, rows: [...x.querySelectorAll('table.t > tbody > tr')].map((tr) => [...tr.children].map((c) => c.innerText.trim())) }; });
-    ok('its three products, the one NOT saying it in the title first', det.rows.length === 3 && det.rows[0][1] === 'N3' && /no/.test(det.rows[0][2]) && /yes/.test(det.rows[1][2]), det.rows);
+    ok('its three products, the one NOT saying it in the title first', det.rows.length === 3 && det.rows[0][1] === 'N3' && /Not in title/.test(det.rows[0][2]) && /^✓ Title/.test(det.rows[1][2]), det.rows);
+    const hl = await pg.evaluate(() => [...document.querySelectorAll('#dem-terms tr.dm-x table.t > tbody > tr')].map((tr) => ({
+      found: [...tr.children[2].querySelectorAll('.dm-fi')].map((c) => c.textContent.trim()),
+      marks: [...tr.children[0].querySelectorAll('mark.dm-hit')].map((m) => m.textContent),
+      ex: [...tr.children[0].querySelectorAll('.dm-ex')].map((d) => [d.querySelector('.dm-exf').textContent, [...d.querySelectorAll('mark.dm-hit')].map((m) => m.textContent).join('|'), d.innerText.replace(/\s+/g, ' ').trim()]) })));
+    ok('Found in: the overcoat says it in its description only, the two coats in their title only', hl[0].found.join('|') === '✗ Not in title|Description' && hl[1].found.join('|') === '✓ Title' && hl[2].found.join('|') === '✓ Title', hl.map((h) => h.found));
+    ok('the description is quoted with the term itself marked', hl[0].ex.length === 1 && hl[0].ex[0][0] === 'Description' && hl[0].ex[0][1] === 'wool coat' && /A long wool coat cut from a heavy blend/.test(hl[0].ex[0][2]), hl[0].ex);
+    ok('a title that says it has the term marked in the title, as the feed writes it', hl[1].marks.join('|') === 'Wool Coat' && hl[2].marks.join('|') === 'Wool Coat' && hl[1].ex.length === 0, hl.map((h) => h.marks));
+    const mk = await pg.evaluate(() => { const m = document.querySelector('#dem-terms tr.dm-x mark.dm-hit'), c = getComputedStyle(m); return [c.backgroundColor, c.fontWeight]; });
+    ok('the mark is coloured and bold', /rgba?\(245, 166, 35/.test(mk[0]) && +mk[1] >= 700, mk);
+    const [xd] = await Promise.all([pg.waitForEvent('download'), pg.click('#dem-terms tr.dm-x [data-skus="wool coat"]')]);
+    const xb = fs.readFileSync(await xd.path());
+    const XL = require('../docs/xlsx_engine.js');
+    const xr = await XL.readXlsx(xb.buffer.slice(xb.byteOffset, xb.byteOffset + xb.byteLength));
+    const xml = xb.toString('utf8');
+    ok('⬇ These SKUs is an Excel file: a header and one row per product', /\.xlsx$/.test(xd.suggestedFilename()) && xr.length === 4 && xr[0].slice(0, 6).join('|') === 'ID|Title|Search term|Found in|In the title|Description', [xd.suggestedFilename(), xr[0]]);
+    ok('each row names where the term was found and carries the words', xr[1][0] === 'N3' && xr[1][3] === 'Description' && xr[1][4] === 'no' && xr[1][5] === 'A long wool coat cut from a heavy blend' && xr[2][3] === 'Title' && !xr[2][5], xr.slice(1).map((r) => r.slice(0, 6)));
+    ok('the term is coloured in the file: three coloured runs, each the term as written', (xml.match(/<rPr><b\/><sz val="11"\/><color rgb="FFED6F0B"\/>/g) || []).length === 3 && /<color rgb="FFED6F0B"\/><rFont val="Calibri"\/><family val="2"\/><\/rPr><t xml:space="preserve">wool coat<\/t>/.test(xml) && /<t xml:space="preserve">Wool Coat<\/t>/.test(xml));
     ok('the action is said in words and names the label', /Protect it/.test(det.act) && /AI_Hero_Terms/.test(det.act), det.act);
 
     console.log('· Match on — the fields the AM picks');

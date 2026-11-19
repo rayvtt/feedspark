@@ -103,6 +103,22 @@ const tp = E.termProducts(wool, cat, 0);
 ok('a term’s products lead with the ones not saying it in the title, then by what they earn', tp.map((p) => p.id).join() === 'N3,N1,N2' && tp[0].inTi === false && tp[1].value === 400, tp);
 ok('the list can be capped for the screen and whole for the download', E.termProducts(wool, cat, 2).length === 2 && tp.length === 3);
 
+// where a value says the term — the words on screen are found exactly as the match is made
+{
+  const sp = (t, q) => E.hitSpans(t, q).map((x) => t.slice(x[0], x[1]));
+  ok('a span is the term as the feed wrote it: case, plural and hyphen kept', sp('A Long WOOL-COATS story', 'wool coat').join('|') === 'WOOL-COATS');
+  ok('every occurrence is marked, never an overlap', sp('rain jacket, rain jackets and a Rain Jacket', 'rain jacket').join('|') === 'rain jacket|rain jackets|Rain Jacket');
+  ok('a word that only contains the term is not marked', sp('woollen coating', 'wool coat').length === 0);
+  const texts = ['Northwind Wool Coat Navy', 'A long wool coat cut from a heavy blend', 'woolcoat', 'coat of wool', '', 'Wool  &amp; <b>coat</b>'];
+  ok('a span is found exactly where the match says yes', texts.every((t) => { const c = E.cleanText(t); return (E.hitSpans(c, 'wool coat').length > 0) === E.says(E.normText(t), E.termForms('wool coat')); }));
+  const long = 'x '.repeat(200) + 'a heavy wool coat for winter ' + 'y '.repeat(200);
+  const ex = E.excerpt(long, 'wool coat', 80), txt = ex.segs.map((g) => g.t).join('');
+  ok('a long value is cut to the words round the term, with the cut shown', ex.found && ex.n === 1 && txt.length <= 90 && /^… /.test(txt) && / …$/.test(txt) && ex.segs.filter((g) => g.hi).map((g) => g.t).join() === 'wool coat', txt);
+  ok('tags and entities never reach the excerpt', E.excerpt('<p>A <b>wool</b>&nbsp;coat</p>', 'wool coat', 0).segs.map((g) => g.t).join('') === 'A wool coat');
+  ok('a value that does not say it comes back whole and unmarked', E.excerpt('Linen shirt', 'wool coat', 0).found === false && E.excerpt('Linen shirt', 'wool coat', 0).segs.every((g) => !g.hi));
+  ok('each product says which fields carry the term, and its row in the feed read', tp[0].id === 'N3' && tp[0].in.de && !tp[0].in.ti && tp[1].in.ti && typeof tp[0].ri === 'number');
+}
+
 // ---- 5. intents and attributes --------------------------------------------------------------------------------
 ok('an intent’s key words drop the filler', E.intentKey('dressing for weddings') === 'weddings' && E.intentKey('shopping for hot weather clothing') === 'hot weather' && E.intentKey('other special occasion attire') === 'special occasion');
 ok('an intent too general to match by words has no key', E.intentKey('finding items with specific features') === '' && E.intentKey('shopping for items with specific sizing') === '');

@@ -17601,6 +17601,26 @@
       "name": "Market reads: KWCal sync writes the brand it read",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='"
+    },
+    {
+      "name": "AI demand: a term's products name the fields that say it, the term marked",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "function foundIn(p) {"
+    },
+    {
+      "name": "AI demand: the words on screen are found exactly as the match is made",
+      "file": "docs/aidemand_engine.js",
+      "pattern": "function hitSpans(text, term) {"
+    },
+    {
+      "name": "AI demand: the SKU download is an Excel file with the term coloured",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "X.download([{ name: t, cols: cols, rows: rows }], base + '.xlsx');"
+    },
+    {
+      "name": "XLSX writer: a rich-text cell draws its marked runs bold and coloured",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "if (typeof v === 'object' && v.runs) {"
     }
   ]
 }

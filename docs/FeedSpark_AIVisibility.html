@@ -414,6 +414,13 @@ window.addEventListener('load',restore);
   .dm-in b{font-variant-numeric:tabular-nums}
   .dm-in.z{color:var(--muted)}
   .dm-xw{padding:6px 2px 4px}
+  mark.dm-hit{background:rgba(245,166,35,.34);color:inherit;font-weight:800;border-radius:3px;padding:0 2px}
+  .dm-ex{margin-top:4px;font-size:11.5px;line-height:1.5;color:var(--muted);white-space:normal;max-width:640px}
+  .dm-exf{display:inline-block;min-width:74px;margin-right:6px;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+  .dm-fi{display:inline-block;margin:0 4px 3px 0;padding:1px 7px;border-radius:100px;border:1px solid var(--line);font-size:10.5px;font-weight:700;white-space:nowrap}
+  .dm-fi.t{border-color:#1B8A4B;color:#1B8A4B}
+  .dm-fi.no{border-style:dashed;color:var(--muted)}
+  .dm-pt td{vertical-align:top;white-space:normal}
   .dm-xw h5{margin:12px 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .dm-sec{margin:18px 0 4px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .dm-sec:first-child{margin-top:4px}
@@ -1648,6 +1655,14 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     if (!list.length) h += '<tr><td colspan="8" class="empty">No term carries this verdict in this reading.</td></tr>';
     return h + '</tbody></table></div><p class="note">Click a column to sort by it, again to reverse; click a term for its products. “Google shows” is Google’s own count; “In the catalogue” counts the products whose picked fields say the term.</p>';
   }
+  // where each product says the term — the words themselves, the term marked (Ray, 19 Nov 2026)
+  var EX_FIELDS = [['de', 'Description'], ['pt', 'Product type'], ['hl', 'Highlights'], ['pd', 'Details'], ['at', 'Attributes']];
+  function hiHtml(x) { return (x && x.segs ? x.segs : []).map(function (g) { return g.hi ? '<mark class="dm-hit">' + esc(g.t) + '</mark>' : esc(g.t); }).join(''); }
+  function foundList(p) { var o = p['in'].ti ? ['Title'] : []; EX_FIELDS.forEach(function (f) { if (p['in'][f[0]]) o.push(f[1]); }); return o; }
+  function foundIn(p) {
+    return (p['in'].ti ? '<span class="dm-fi t">✓ Title</span>' : '<span class="dm-fi no">✗ Not in title</span>')
+      + EX_FIELDS.filter(function (f) { return p['in'][f[0]]; }).map(function (f) { return '<span class="dm-fi">' + f[1] + '</span>'; }).join('');
+  }
   function termDetail(r, x) {
     if (!x) return '<p class="dm-act">Press <b>⚡ Match the catalogue</b> to see which products say “' + esc(r.t) + '”, where, and what they earn.</p>';
     var h = '<div class="dm-xw"><p class="dm-act">' + esc(x.v.act) + '</p>';
@@ -1658,9 +1673,14 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
         + (x.v.cmp === 'above' ? '<p class="note" style="margin:4px 0 0">These products return more than the catalogue average — worth their own budget.</p>' : x.v.cmp === 'below' ? '<p class="note" style="margin:4px 0 0">These products return less than the catalogue average — fix the listing before adding budget.</p>' : '')
         + '<h5>Products</h5>';
       var ps = E.termProducts(x, D.cat, 8), ads = D.ads && D.ads.st === 'ready';
-      h += '<div class="tw"><table class="t"><thead><tr><th>Product</th><th>ID</th><th>In the title</th>' + (ads ? '<th class="num">Spend</th><th class="num">Conv. value</th>' : '') + '</tr></thead><tbody>'
-        + ps.map(function (p) { return '<tr><td>' + esc(p.ti || '—') + '</td><td><span class="mono">' + esc(p.id) + '</span></td><td>' + (p.inTi ? '✓ yes' : '✗ no') + '</td>' + (ads ? '<td class="num">' + money(p.cost) + '</td><td class="num">' + money(p.value) + '</td>' : '') + '</tr>'; }).join('')
-        + '</tbody></table></div>' + (x.m.n > ps.length ? '<p class="note">' + ps.length + ' of ' + n0(x.m.n) + ' shown — the ones not saying it in the title first. The download carries them all.</p>' : '');
+      h += '<div class="tw"><table class="t dm-pt"><thead><tr><th>Product · where it says “' + esc(r.t) + '”</th><th>ID</th><th>Found in</th>' + (ads ? '<th class="num">Spend</th><th class="num">Conv. value</th>' : '') + '</tr></thead><tbody>'
+        + ps.map(function (p) {
+          var raw = (D.rows && D.rows[p.ri]) || {};
+          var ex = EX_FIELDS.filter(function (f) { return p['in'][f[0]]; }).map(function (f) { return '<div class="dm-ex"><span class="dm-exf">' + f[1] + '</span>' + hiHtml(E.excerpt(raw[f[0]], r.t, 120)) + '</div>'; }).join('');
+          return '<tr><td><b style="font-weight:700">' + (hiHtml(E.excerpt(raw.ti || p.ti, r.t, 0)) || '—') + '</b>' + ex + '</td><td><span class="mono">' + esc(p.id) + '</span></td><td>' + foundIn(p) + '</td>'
+            + (ads ? '<td class="num">' + money(p.cost) + '</td><td class="num">' + money(p.value) + '</td>' : '') + '</tr>';
+        }).join('')
+        + '</tbody></table></div>' + (x.m.n > ps.length ? '<p class="note">' + ps.length + ' of ' + n0(x.m.n) + ' shown — the ones not saying it in the title first. The download carries them all, the term coloured in every field that says it.</p>' : '');
     }
     return h + '<div class="toolbar" style="margin:12px 0 4px">' + (x.m.n ? '<button class="btn" type="button" data-skus="' + esc(r.t) + '">⬇ These SKUs</button>' : '') + (x.v.kind !== 'range' ? '<button class="btn" type="button" data-tbrief="' + esc(r.t) + '">→ Brief this term</button>' : '') + '</div></div>';
   }
@@ -1755,11 +1775,31 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   // ---- exits ----
   function findX(t) { return (D.res || []).filter(function (x) { return x.row.t === t; })[0] || null; }
   function stamp() { var t = cur('terms'); return D.brand.replace(/[^A-Za-z0-9]+/g, '_') + '_' + D.mkt.toUpperCase() + (t ? '_' + t.to : ''); }
+  // ⬇ These SKUs — an Excel file, because a CSV cannot colour a word: every field that says the term is a
+  // column carrying the words round it, the term itself bold and orange. The CSV stays as the fallback.
   function skusCsv(t) {
     var x = findX(t); if (!x) return;
-    var ps = E.termProducts(x, D.cat, 0);
-    A.csv('AI_demand_' + t.replace(/[^A-Za-z0-9]+/g, '_') + '_' + stamp() + '.csv', ['id', 'title', 'search_term', 'in_title', 'verdict', 'matched_on', 'spend_30d', 'conversion_value_30d'],
-      ps.map(function (p) { return [p.id, p.ti, t, p.inTi ? 'yes' : 'no', E.KIND_LABEL[x.v.kind], E.fieldNames(D.flds).join(' | '), p.cost || 0, p.value || 0]; }));
+    var ps = E.termProducts(x, D.cat, 0), base = 'AI_demand_' + t.replace(/[^A-Za-z0-9]+/g, '_') + '_' + stamp();
+    var rawOf = function (p) { return (D.rows && D.rows[p.ri]) || {}; };
+    var plain = function () {
+      A.csv(base + '.csv', ['id', 'title', 'search_term', 'found_in', 'in_title', 'verdict', 'matched_on', 'spend_30d', 'conversion_value_30d'],
+        ps.map(function (p) { return [p.id, p.ti, t, foundList(p).join(' | '), p.inTi ? 'yes' : 'no', E.KIND_LABEL[x.v.kind], E.fieldNames(D.flds).join(' | '), p.cost || 0, p.value || 0]; }));
+    };
+    A.load('/xlsx/engine.js', 'FeedXlsx').then(function (X) {
+      if (!X || !X.download) throw new Error('no writer');
+      var runs = function (raw, w) { var e = E.excerpt(raw, t, w); return e.segs.length ? { runs: e.segs } : ''; };
+      var cols = [{ k: 'id', l: 'ID', w: 16 }, { k: 'ti', l: 'Title', w: 60 }, { k: 'term', l: 'Search term', w: 18 }, { k: 'found', l: 'Found in', w: 34 }, { k: 'inti', l: 'In the title', w: 12 }]
+        .concat(EX_FIELDS.map(function (f) { return { k: f[0], l: f[1] === 'Highlights' ? 'Product highlights' : f[1] === 'Details' ? 'Product details' : f[1], w: f[0] === 'at' ? 30 : 56 }; }))
+        .concat([{ k: 'verdict', l: 'Verdict', w: 14 }, { k: 'on', l: 'Matched on', w: 30 }, { k: 'cost', l: 'Spend · 30 days', t: 'num', w: 15 }, { k: 'value', l: 'Conv. value · 30 days', t: 'num', w: 19 }]);
+      var rows = ps.map(function (p) {
+        var raw = rawOf(p), o = { id: p.id, ti: runs(raw.ti || p.ti, 0), term: t, found: foundList(p).join(' · '), inti: p.inTi ? 'yes' : 'no',
+          verdict: E.KIND_LABEL[x.v.kind], on: E.fieldNames(D.flds).join(' · '), cost: p.cost || 0, value: p.value || 0 };
+        EX_FIELDS.forEach(function (f) { o[f[0]] = p['in'][f[0]] ? runs(raw[f[0]], f[0] === 'de' ? 220 : 0) : ''; });
+        return o;
+      });
+      X.download([{ name: t, cols: cols, rows: rows }], base + '.xlsx');
+      A.toast(n0(ps.length) + (ps.length === 1 ? ' product' : ' products') + ' · “' + t + '” coloured in every field that says it');
+    }).catch(plain);
   }
   function labelsCsv() {
     if (!D.res) return;

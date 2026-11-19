@@ -180,10 +180,10 @@
   function indexProducts(rows, ads) {
     var A = null, k;
     if (ads) { A = {}; for (k in ads) if (Object.prototype.hasOwnProperty.call(ads, k)) A[String(k).toLowerCase()] = ads[k]; }
-    var P = [], tot = { n: 0, adv: 0, impr: 0, clicks: 0, cost: 0, conv: 0, value: 0 }, groups = {};
+    var P = [], tot = { n: 0, adv: 0, impr: 0, clicks: 0, cost: 0, conv: 0, value: 0 }, groups = {}, skipped = 0;
     (rows || []).forEach(function (r) {
-      if (!r || r.id == null || r.id === '') return;
-      var p = { id: String(r.id), gid: String(r.gid || r.id), ti: String(r.ti || ''),
+      if (!r || r.id == null || r.id === '') { skipped++; return; }      // ri keeps each product's place in the rows it was read from
+      var p = { id: String(r.id), gid: String(r.gid || r.id), ti: String(r.ti || ''), ri: P.length + skipped,
         n: { ti: normText(r.ti), hl: normText(r.hl), de: normText(String(r.de || '').slice(0, 2000)), pt: normText(r.pt), pd: normText(r.pd), at: normText(r.at) },
         pd: normText(r.pd), has: r.has || {}, a: A ? A[String(r.id).toLowerCase()] || null : null };
       P.push(p); tot.n++; groups[p.gid] = 1;
@@ -280,10 +280,56 @@
     return { rows: out, hero: h, growth: out.length - h };
   }
   // the products of one term, the ones NOT saying it in the title first, then by what they earn
+  // WHERE A VALUE SAYS THE TERM (Ray, 19 Nov 2026: "showing the search term found in which field … put that
+  // term in color so I can easily spot it"). The match is made on stemmed words, so the words on screen are
+  // found the same way: the value's own words, stemmed, against the term's accepted spellings — a span is
+  // marked exactly where says() would answer yes, never by a looser search.
+  function cleanText(s) { return String(s == null ? '' : s).replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim(); }
+  function hitSpans(text, term) {
+    var forms = termForms(term).map(function (f) { return f.trim().split(' '); }), tk = [], re = /[a-z0-9À-ɏ]+/gi, m, out = [];
+    if (!forms.length) return out;
+    text = String(text == null ? '' : text);
+    while ((m = re.exec(text))) tk.push({ s: m.index, e: m.index + m[0].length, w: stem(m[0].toLowerCase()) });
+    for (var i = 0; i < tk.length; i++) {
+      for (var j = 0; j < forms.length; j++) {
+        var f = forms[j], ok = i + f.length <= tk.length;
+        for (var k = 0; ok && k < f.length; k++) if (tk[i + k].w !== f[k]) ok = false;
+        if (ok) { out.push([tk[i].s, tk[i + f.length - 1].e]); i += f.length - 1; break; }
+      }
+    }
+    return out;
+  }
+  // a value cut to the words round the term: { found, n, segs:[{ t, hi }] } — hi marks the term itself
+  function excerpt(raw, term, width) {
+    var text = cleanText(raw), sp = hitSpans(text, term), W = width > 0 ? width : 1e9, segs = [];
+    if (!text) return { found: false, n: 0, segs: segs };
+    if (!sp.length) return { found: false, n: 0, segs: [{ t: text.length > W ? text.slice(0, W).replace(/\s+\S*$/, '') + '…' : text, hi: 0 }] };
+    var a = 0, b = text.length;
+    if (text.length > W) {
+      a = Math.max(0, sp[0][0] - Math.floor((W - (sp[0][1] - sp[0][0])) / 2)); b = Math.min(text.length, a + W); a = Math.max(0, b - W);
+      if (a > 0) { var sa = text.indexOf(' ', a); if (sa >= 0 && sa < sp[0][0]) a = sa + 1; }
+      if (b < text.length) { var sb = text.lastIndexOf(' ', b); if (sb >= sp[0][1]) b = sb; }
+    }
+    var at = a;
+    if (a > 0) segs.push({ t: '… ', hi: 0 });
+    sp.forEach(function (x) {
+      if (x[0] < a || x[1] > b) return;
+      if (x[0] > at) segs.push({ t: text.slice(at, x[0]), hi: 0 });
+      segs.push({ t: text.slice(x[0], x[1]), hi: 1 }); at = x[1];
+    });
+    if (at < b) segs.push({ t: text.slice(at, b), hi: 0 });
+    if (b < text.length) segs.push({ t: ' …', hi: 0 });
+    return { found: true, n: sp.length, segs: segs };
+  }
+
+  // the products behind one term: `in` says which fields carry it, `ri` is the product's row in the feed read
   function termProducts(x, cat, max) {
-    var P = cat.P, list = x.m.idx.map(function (i, k) { var p = P[i]; return { id: p.id, ti: p.ti, inTi: !!x.m.inTi[k], cost: p.a ? +p.a[2] || 0 : 0, value: p.a ? +p.a[4] || 0 : 0 }; });
+    var P = cat.P, forms = termForms(x.row ? x.row.t : '');
+    var list = x.m.idx.map(function (i, k) { var p = P[i]; return { id: p.id, ti: p.ti, ri: p.ri, inTi: !!x.m.inTi[k], cost: p.a ? +p.a[2] || 0 : 0, value: p.a ? +p.a[4] || 0 : 0, _n: p.n }; });
     list.sort(function (a, b) { return (a.inTi - b.inTi) || (b.value - a.value) || (b.cost - a.cost); });
-    return max ? list.slice(0, max) : list;
+    if (max) list = list.slice(0, max);
+    list.forEach(function (o) { var w = {}; FIELD_KEYS.forEach(function (k) { w[k] = says(o._n[k], forms); }); o['in'] = w; delete o._n; });
+    return list;
   }
 
   // ---- intents: a use-case is answered in words, not matched to a column --------------------------
@@ -370,7 +416,7 @@
     decode: decode, num: num, frac: frac, parsePeriod: parsePeriod, parseExport: parseExport,
     stem: stem, toks: toks, normText: normText, termForms: termForms, says: says,
     indexProducts: indexProducts, matchOne: matchOne, verdict: verdict, matchTerms: matchTerms,
-    labelSets: labelSets, termProducts: termProducts,
+    labelSets: labelSets, termProducts: termProducts, cleanText: cleanText, hitSpans: hitSpans, excerpt: excerpt,
     intentKey: intentKey, intentPlay: intentPlay, matchIntents: matchIntents, attrPlan: attrPlan,
     trend: trend, periods: periods, headline: headline };
 });
