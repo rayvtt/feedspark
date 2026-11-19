@@ -1895,8 +1895,8 @@ function stChip(brand,e,wf,st){
 /* ---- results: the loop closes back onto the moment (Ray: "including result") ----
  * Dino's scheduled result emails are archived per brand × market × HALF-MONTH period
  * (/api/kwresults, subject "<Brand> <MKT> x Feedspark - <Mon I/II> - Keyword Optimisation") —
- * they carry no moment id, so a batch is tied to every optimisation whose live-by date falls
- * inside its period window. That is the real relationship: one batch reports the work that
+ * they carry no moment id, so a batch is tied to every optimisation that WENT LIVE inside its
+ * period window (the moment's own date, never its brief-by). That is the real relationship: one batch reports the work that
  * went live in that fortnight. The batch label is always shown so the join stays honest. */
 var KWRES={};
 var MONI={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
@@ -1959,7 +1959,14 @@ function roundRes(brand,e){
      ticket onto its moment by hand, and from that moment the round answers. */
   if(!wfFor(brand,e))return null;
   var rs=KWRES[brand]; if(!rs||!rs.length)return null;
-  var mk=evMkt(brand,e), t=schedDate(e).getTime(), out=null;
+  /* ON THE DAY IT GOES LIVE, NEVER THE DAY IT WAS BRIEFED (Ray, 19 Nov 2026, over Reiss's
+     Black Friday US/CA card — live 20 Nov, reading a GB batch for 21 Oct – 17 Nov: "why would
+     Reiss Black Friday US/CA have result alrd ?"). A round reports THE WORK THAT WENT LIVE in
+     its fortnight, which is what the card, the caveat and the client PDF all say; the join
+     tested schedDate, the day the BRIEF was due — three weeks earlier — so an optimisation
+     briefed inside the window but not yet live claimed figures measured before it existed.
+     The tie is the moment's own `date`. */
+  var mk=evMkt(brand,e), t=new Date(e.date+'T12:00:00Z').getTime(), out=null;
   for(var i=0;i<rs.length;i++){ var r=rs[i];
     if(r.mkt&&String(r.mkt).toLowerCase()!==mk)continue;   // a batch whose subject named no market rides the board's
     var w=r.__w; if(!w)continue;
@@ -2575,7 +2582,8 @@ function renderPdfDoc(){
    * wrong, and the wrong one is the number a client reads (Festive knitwear printed on 15 Oct
    * when it goes live on 5 Nov). The board is a work schedule and rightly files by brief-by; this
    * is the client's copy and the client's question is when it lands. Only the GRID and its agenda
-   * move — the result tie, the KPI band and every on-screen surface still read schedDate. */
+   * move — the KPI band and every other on-screen surface still read schedDate (the result tie
+   * reads the LIVE date too, since 19 Nov 2026 — see roundRes). */
   var byMon={};
   E.forEach(function(e){ var ld=new Date(e.date+'T12:00:00Z'), k=ld.getUTCFullYear()*12+ld.getUTCMonth();
     (byMon[k]=byMon[k]||[]).push({e:e,day:ld.getUTCDate()}); });

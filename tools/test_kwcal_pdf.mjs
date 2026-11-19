@@ -41,14 +41,14 @@ const briefs = {
     comms: [{ when: Date.parse('2026-09-11T10:00:00Z'), note: 'Result: +4.63% impressions · +5.18% clicks' }],
   },
 };
-// the round's own moments each hold a ticket: since 11 Nov 2026 a batch reports the work that
-// went LIVE in its fortnight, so a moment nobody briefed is not part of it and is not covered
-[['rflex', 'R-Flex'], ['atel1', 'Atelier 1'], ['tailor', 'Tailoring']].forEach(([id, name], i) => {
+// the round's own moments each hold a ticket: a batch reports the work that went LIVE in its
+// fortnight (its own date, since 19 Nov 2026), so a moment nobody briefed is not part of it
+[['rflex', 'R-Flex'], ['denim', 'Denim']].forEach(([id, name], i) => {
   briefs['REIS-2026080' + (i + 1)] = { id: 'REIS-2026080' + (i + 1), client: 'Reiss', cat: 'keyword',
     status: 'running', updated: 2, kw: id,
     task: 'Keywords Optimisation - ' + name + ' - Marketing Planner - 0826' };
 });
-const rounds = { results: [{ client: 'Reiss', mkt: 'gb', period: 'Aug I', id: 'r1',
+const rounds = { results: [{ client: 'Reiss', mkt: 'gb', period: 'Aug II', id: 'r1',
   when: Date.parse('2026-08-20T09:00:00Z'), verdict: 'positive', metrics: ['Impressions +12.4%', 'Clicks +8.1%'] }] };
 const INIT = 'window.__B=' + JSON.stringify(briefs) + ';window.__R=' + JSON.stringify(rounds) + ';'
   + "window.fetch=function(url){var u=String(url);var j=function(o){return Promise.resolve(new Response(JSON.stringify(o),{status:200,headers:{'content-type':'application/json'}}))};"
@@ -125,11 +125,11 @@ ok('exactly one Covers line, for the one shared round', (await page.evaluate(() 
 ok('it names every moment whose live-by date falls in that fortnight, and only those',
   await page.evaluate(() => {
     const named = document.querySelector('#pdf-doc .pd-rc').textContent.replace(/^\s*Covers:\s*/, '').split(',').map((s) => s.trim());
-    // recomputed independently of the page: a moment dated D goes live D-21, and Aug I is 1–15 Aug
-    const live = (d) => { const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() - 21); return t.getTime(); };
+    // recomputed independently of the page: a moment goes live on its OWN date, and Aug II is 16–31 Aug
+    const live = (d) => new Date(d + 'T12:00:00Z').getTime();
     const seed = { 'R-Flex': '2026-08-30', 'Atelier 1': '2026-09-02', Tailoring: '2026-09-04', Silk: '2026-08-30',
       Denim: '2026-08-21', Jewellery: '2026-08-03', 'Cashmere/Merino': '2026-09-28' };
-    const a = Date.UTC(2026, 7, 1), b = Date.UTC(2026, 7, 15, 23, 59, 59);
+    const a = Date.UTC(2026, 7, 16), b = Date.UTC(2026, 7, 31, 23, 59, 59);
     const inWin = Object.keys(seed).filter((k) => live(seed[k]) >= a && live(seed[k]) <= b && k !== 'Silk');
     return inWin.every((k) => named.includes(k)) && named.every((n) => inWin.includes(n)) && named.length > 0;
   }), covers.named);
