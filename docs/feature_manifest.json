@@ -4908,8 +4908,22 @@
     {
       "name": "KWCal: a ticket two moments fit EQUALLY is claimed by neither — ambiguity is surfaced, never guessed",
       "file": "docs/kwcal_engine.js",
-      "pattern": "if(top&&topS>=floor&&topS>second) assign(top,b,'words');",
+      "pattern": "if(!(top&&topS>=floor&&topS>second))return;",
       "pr": 376,
+      "min": 1
+    },
+    {
+      "name": "KWCal: a words claim needs a word SOLE to the winner, or a ticket accounting for its whole name (Ray, 19 Nov 2026: \"this team overtook the ticket that was assigned to gifting or accessories\")",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "var sole=mw.some(function(w){ return has[w]&&owners[w]===1; });",
+      "pr": 0,
+      "min": 1
+    },
+    {
+      "name": "KWCal: a number in a moment's name is a word — only a four-digit date stamp is dropped",
+      "file": "docs/kwcal_engine.js",
+      "pattern": "if(w.length<3||/^\\d{4}$/.test(w)",
+      "pr": 0,
       "min": 1
     },
     {
