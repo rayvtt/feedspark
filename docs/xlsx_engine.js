@@ -19,6 +19,7 @@
  *
  * Sheet: { name, cols:[{k, l, t, w}], rows:[object], note }
  *   t: 'text' (default) | 'num' | 'hours' | 'int' | 'pct' | 'date' | 'money'
+ *   A text cell may be { runs:[{ t, hi }] } — rich text, the hi runs bold and coloured (a term to spot).
  *   A null/undefined/'' value writes an EMPTY cell, never a zero — "not recorded" and "none" are
  *   different facts and a spreadsheet that blurs them produces wrong averages.
  */
@@ -95,6 +96,15 @@
       for (j = 0; j < cols.length; j++) {
         var c = cols[j], v = r[c.k], ref = colName(j) + rn, kind = c.t || 'text';
         if (v == null || v === '') continue;                       // absent stays absent
+        if (typeof v === 'object' && v.runs) {                     // rich text: { runs:[{ t, hi }] } — hi is drawn bold, in colour
+          var rr = '';
+          v.runs.forEach(function (x) {
+            if (!x || x.t == null || x.t === '') return;
+            rr += '<r>' + (x.hi ? '<rPr><b/><sz val="11"/><color rgb="FFED6F0B"/><rFont val="Calibri"/><family val="2"/></rPr>' : '') + '<t xml:space="preserve">' + xesc(x.t) + '</t></r>';
+          });
+          if (rr) body += '<c r="' + ref + '" t="inlineStr"><is>' + rr + '</is></c>';
+          continue;
+        }
         if (kind === 'date') {
           if (noDate(v)) continue;                                 // absence, not a date we failed to read
           var sv = serial(v);
@@ -306,7 +316,7 @@
         var ref = (attr.match(/r="([A-Z]+)\d+"/) || [])[1] || '';
         var ty = (attr.match(/t="([^"]+)"/) || [])[1] || 'n';
         var v = '';
-        if (ty === 'inlineStr') { var im = body.match(/<t[^>]*>([\s\S]*?)<\/t>/); v = im ? unesc(im[1]) : ''; }
+        if (ty === 'inlineStr') { var im, tre = /<t\b[^>]*>([\s\S]*?)<\/t>/g; while ((im = tre.exec(body))) v += unesc(im[1]); }   // every run of a rich cell
         else {
           var vm = body.match(/<v>([\s\S]*?)<\/v>/);
           v = vm ? unesc(vm[1]) : '';
