@@ -110,8 +110,8 @@ const is = (name, got, want) => {
 
 // ---------- the tie ----------
 const ev = (id, name, date, mkt) => ({ id, name, date, ...(mkt ? { mkt } : {}) });
-const aw26 = ev('aw26', 'AW26 Campaign (renamed)', '2026-09-09');
-const coats = ev('coats', 'Coats', '2026-10-12');
+const aw26 = ev('aw26', 'AW26 Campaign (renamed)', '2026-08-20');   // live 20 Aug
+const coats = ev('coats', 'Coats', '2026-09-21');                   // live 21 Sep
 const coatsj = ev('coatsj', 'Coats & Jackets', '2026-10-19');
 
 BRIEFS = {
@@ -170,13 +170,13 @@ KWRES = { Reiss: [
   { id: 'r2', client: 'Reiss', mkt: 'gb', period: 'Sep II', when: Date.UTC(2026, 8, 30), verdict: 'mixed' },
   { id: 'r3', client: 'Reiss', mkt: 'us', period: 'Sep II', when: Date.UTC(2026, 8, 30), verdict: 'negative' },
 ].map((r) => ({ ...r, __w: api.periodWin(r) })) };
-is('a moment lands in the batch covering its live-by date', resFor('Reiss', aw26)?.id, 'r1');   // live-by 19 Aug
-is('a later moment lands in the later batch', resFor('Reiss', coats)?.id, 'r2');                 // live-by 21 Sep
+is('a moment lands in the batch it went LIVE in', resFor('Reiss', aw26)?.id, 'r1');             // live 20 Aug
+is('a later moment lands in the later batch', resFor('Reiss', coats)?.id, 'r2');                // live 21 Sep
 // x and y need a ticket of their own, or the gate below answers before the window is tested
-const xEv = ev('x', 'X', '2026-08-21'), yEv = ev('y', 'Y', '2026-10-12', 'us');
+const xEv = ev('x', 'X', '2026-07-10'), yEv = ev('y', 'Y', '2026-09-20', 'us');
 BRIEFS.x = { id: 'x1', client: 'Reiss', kw: 'x', task: 'Keywords Optimisation - X', status: 'done' };
 BRIEFS.y = { id: 'y1', client: 'Reiss', kw: 'y', task: 'Keywords Optimisation - Y', status: 'done' };
-is('a moment outside every window gets nothing', resFor('Reiss', xEv), null);                    // live-by 31 Jul
+is('a moment outside every window gets nothing', resFor('Reiss', xEv), null);                   // live 10 Jul
 is('a market-pinned moment takes its own market’s batch', resFor('Reiss', yEv)?.id, 'r3');
 is('a brand with no archive gets nothing', resFor('Schuh', aw26), null);
 
@@ -185,7 +185,7 @@ is('a brand with no archive gets nothing', resFor('Schuh', aw26), null);
    always relocate a brief/ticket back directly with Keywords Calendar - otherwise it doesnt
    exists". The window join is a date test, so an unbriefed moment inside a reported fortnight
    used to pick the round up and print its figures as its own. */
-const croc = ev('croc', 'Crocs', '2026-09-09');          // live-by 19 Aug -> inside batch r1
+const croc = ev('croc', 'Crocs', '2026-08-20');          // live 20 Aug -> inside batch r1
 is('an unbriefed moment inside a reported fortnight gets nothing', resFor('Reiss', croc), null);
 BRIEFS.croc = { id: 'REIS-CROC-01', client: 'Reiss', kw: 'croc', status: 'running',
   task: 'Keywords Optimisation - Crocs - Marketing Planner - 0826' };
@@ -194,10 +194,25 @@ is('…which is exactly the ticket the strip would place', wfFor('Reiss', croc)?
 delete BRIEFS.croc;
 is('…unlink it and the figure goes with it', resFor('Reiss', croc), null);
 
+/* ---- A ROUND REPORTS WORK THAT WENT LIVE, NOT WORK THAT WAS BRIEFED ----
+   Ray, 19 Nov 2026, over Reiss's Black Friday US/CA card — live 20 Nov, brief-by 30 Oct —
+   reading a batch for 21 Oct – 17 Nov: "why would Reiss Black Friday US/CA have result alrd ?" */
+const bfLive = ev('bf', 'Black Friday US / CA', '2026-09-20');   // live 20 Sep, brief-by 30 Aug
+BRIEFS.bf = { id: 'REIS-BF-01', client: 'Reiss', kw: 'bf', status: 'running',
+  task: 'Keywords Optimisation - Black Friday US / CA - Marketing Planner - 0926' };
+is('a moment briefed inside a window but live after it gets nothing',
+   resFor('Reiss', ev('bf2', 'Black Friday US / CA', '2026-10-20')) , null);   // brief-by 29 Sep, inside r2
+BRIEFS.bf2 = { id: 'REIS-BF-02', client: 'Reiss', kw: 'bf2', status: 'running',
+  task: 'Keywords Optimisation - Black Friday US / CA 2 - Marketing Planner - 1026' };
+is('…still nothing once it holds a ticket — the window is about going live',
+   resFor('Reiss', ev('bf2', 'Black Friday US / CA', '2026-10-20')), null);
+is('…and the moment that really went live in it is covered', resFor('Reiss', bfLive)?.id, 'r2');
+delete BRIEFS.bf; delete BRIEFS.bf2;
+
 // ---------- the moment's OWN read-out beats the fortnight round ----------
 // Ray, 21 Sep 2026: Vimalesh answered the Silk brief on its own thread with the numbers.
 // /api/kwresults reports a whole fortnight; the ticket reports THIS optimisation.
-const silk = ev('silk', 'Silk', '2026-09-09');            // live-by 19 Aug -> inside batch r1
+const silk = ev('silk', 'Silk', '2026-08-20');            // live 20 Aug -> inside batch r1
 BRIEFS.silk1 = { id: 'REIS-20260811-02', client: 'Reiss', kw: 'silk', status: 'confirmed', updated: 5,
   task: 'Keywords Optimisation - Silk - Marketing Planner - 0826',
   comms: [{ note: 'Thanks, live now', when: 1 },
