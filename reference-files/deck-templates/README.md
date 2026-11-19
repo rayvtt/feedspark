@@ -5,6 +5,22 @@ is PowerPoint (`.pptx`) — HTML decks are no longer an output option** (Ray, Au
 deck request ("intro for Hobbycraft new agency", "Q2–Q3 review for Schuh") is built
 by referencing the files in this folder, not from scratch.
 
+## The bank at a glance
+
+Every reference here is a Ray-approved deck that shipped. Read the **core template** always,
+then the row whose **deck type** matches what you are building; a client exemplar beats a
+generic one only when the client is the same.
+
+| Reference | Deck type | What to reach for it for |
+|---|---|---|
+| `FeedSpark_Core_Deck_Template.pptx` | — (governs all) | Design, elements, colour, type and voice. 18 named layouts fully populated. Never skip it. |
+| `StrategyReview_Reference.pptx` | Strategy Review | Chapter spine, proportion, and how much to cut. The FCC's own modules as the evidence. |
+| `KeywordsReport_Reference.pptx` | Keyword optimisation report | A short monthly client read-out: what shipped, what moved in the feed, what each test returned. Dense data slides built by hand. |
+
+Depositing a new one is three steps — attach the `.pptx`, say it is a deck reference, and the
+session files it under the naming convention below and adds its row to this table. The table
+IS the index: a reference with no row here is one nobody will know to read.
+
 ## The core template
 
 **`FeedSpark_Core_Deck_Template.pptx`** — the governing reference for design, elements,
@@ -56,6 +72,50 @@ picture spans 6.5″–13.3″ while the Two-Card Grid's card 2 starts at 7.11�
 was in the file and invisible on screen. Either drop card 2 on a picture slide or keep the
 picture inside the right column — never leave copy underneath it.
 
+## The Keyword optimisation report reference
+
+**`KeywordsReport_Reference.pptx`** — the shape a **monthly keyword read-out** takes, deposited
+by Ray on 19 Nov 2026: Superdry GB, November 2026, five slides. Read it before any keyword or
+optimisation-results deck; like the Strategy Review it overrides the core template on
+*structure and proportion*, never on design.
+
+**Five slides, and that is the point.** Cover · what shipped and when · what changed in the
+feed · the result test by test · thank you. A monthly read-out is not a review: there is one
+claim per slide and no slide restates another's number.
+
+What it teaches that the other two do not:
+
+- **Every headline is a CLAIM, not a label.** "Knitwear went from 11% to 63% keyworded",
+  "Every keyword test since October 2025 lifted impressions" — the slide beneath then has to
+  support it. An eyebrow in caps above it says which deck section you are in; a quiet line
+  under it states the basis ("Share of products carrying at least one keyword phrase, since
+  30th Sept.").
+- **The client's own data is the artwork.** The cover's right-hand card is real keyword slots
+  under real product-type paths (`Women › Jumpers › Patterned Jumper` with its chips), not a
+  stock image. Every chart is drawn from shapes — dumbbells for before→after, a month-axis
+  timeline with brief-due and goes-live dots, inline bars in the results table.
+- **A right-hand rail carries the summary.** Slides 03 and 04 split at ~8.8″ behind a hairline
+  rule: the table on the left, the "across the 14 tests" / "what a keyword slot carries"
+  reading on the right. It is where the so-what lives.
+- **State the test method on the slide that shows results.** The footnote defines A/B against
+  before/after and says the bar is capped past +100% (`›`). A figure whose basis is unstated
+  is a figure a client cannot check.
+- **Say what is not known yet.** "Read-outs still to come — coats & jackets, knitwear and
+  loungewear are in analysis." Honest gaps beat a padded table.
+- **Closing slide is a real sign-off**: Thank you, a line inviting the next thing
+  ("a theme to add to the calendar"), then name, role and address.
+
+Geometry worth copying (13.33″ × 7.5″, every slide on the **Blank** layout, shapes placed by
+hand rather than in placeholders):
+
+- Cover and closing carry a full-height orange spine at `x=0`, `0.18″` wide; content starts at
+  `0.87″`. Content slides use a `0.67″` left margin with a small orange tick at `0.67, 0.40`.
+- Slide number top-right at `x=12.10` — **cover and closing are unnumbered, content runs 01+**.
+- Footer hairline at `y=6.62`, "FeedSpark · Private & Confidential" at `y=7.18`, every slide.
+- Type runs small and dense: body 7.5–8pt, labels 7pt caps, headline 17–26pt, hero stat 40pt.
+- Palette beyond the core: rules `#E2E8F0`, muted text `#64748B`, washes `#F1F5F9` / `#EFF6FF`,
+  blue ramp `#3B82F6` / `#60A5FA` / `#BFDBFE`, green `#059669`, amber `#F59E0B`.
+
 ## Two files, two jobs
 
 | File | Job |
@@ -76,6 +136,7 @@ it's a deck reference — the session commits it here. Name it for what it teach
 
 When a deck build starts, the `/deck-generator` skill reads this folder and uses the closest
 matching reference (deck type first, then client) on top of the core template. New deposits
-are picked up automatically — the skill lists the folder every run; also add a line to the
-table in the Deck Generator module (`docs/FeedSpark_DeckBuilder.html`, `TEMPLATE LIBRARY`
-marker) so the FCC page shows it.
+are picked up automatically — the skill lists the folder every run. Add the reference's row to
+**The bank at a glance** above in the same commit; that table is the only index. (The FCC's
+Deck Generator page carried a copy of this list until it was retired on 12 Nov 2026 — there is
+no page to update any more.)
