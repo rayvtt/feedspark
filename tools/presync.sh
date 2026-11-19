@@ -147,6 +147,8 @@ node tools/test_spendlens.mjs >/dev/null || { echo "✗ Spend Lens harness faile
 echo "   ✓ families, uplift figures only as recorded, the 3-month window, ran-recently / blocked / briefed out of the three, one first for the book, industry-not-peer in the brief, the competitor signals, scope + money throttle"
 echo "── validating: AI visibility (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)"
 node tools/test_aivis.mjs >/dev/null
+echo "── validating: AI shopping demand (Merchant Center AI performance: the export, SKU matching, ROAS, verdicts, the store)"
+node tools/test_aidemand.mjs >/dev/null
 echo "   ✓ domain classes, names in order, branded + no-answer rules, share of voice, questions from the PT tree, Claude stream + pause_turn, OpenAI / Perplexity / SerpApi, scope + grant, NDJSON hold"
 
 echo "── validating: Title Lab (the eight attributes, the mask, title against field, before → after, the join, wiring)"
@@ -502,6 +504,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: AI visibility, driven (the grid, a live streamed run, the drawer, stop, track, match)"
   NODE_PATH=$(npm root -g) node tools/check_aivis.js || {
     echo "✗ AI visibility tripwire failed — the grid, the live stream, the answer drawer, the stop, or a saved run regressed"; exit 1; }
+  echo "── validating: AI shopping demand, driven (the stored report, the match, verdicts, labels, the brief, an upload, the folds)"
+  NODE_PATH=$(npm root -g) node tools/check_aidemand.js || {
+    echo "✗ AI shopping demand tripwire failed — the report, the SKU match, a verdict, the label sheet, the upload or a fold regressed"; exit 1; }
   echo "── validating: Title Lab, driven (the join, the summary, side by side, the mask, the checks, the brief tab, folds, the phone)"
   NODE_PATH=$(npm root -g) node tools/check_titles.js || {
     echo "✗ Title Lab tripwire failed — a summary figure, a card, a mask, a check count, the brief tab, a fold or the phone layout regressed"; exit 1; }

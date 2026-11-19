@@ -61,7 +61,19 @@ function build() {
   const brand = { ok: true, client: 'Northwind', cfg, runs: [runs[1].meta, runs[0].meta], last: runs[1].run, surfaces, granted: true };
   const pt = { snapshot: { labels: { product_type: { values: [['Women > Coats > Wool Coats', 420], ['Men > Jackets > Rain Jackets', 380], ['Footwear > Walking Boots', 300], ['Accessories > Hats', 90]] } } } };
   const csv = 'id,title,link\nNW100,Northwind Wool Coat Navy,https://www.northwind.co.uk/p/wool-coat/NW100\nNW200,Northwind Storm Rain Jacket,https://www.northwind.co.uk/p/storm/NW200\n';
-  return { book, brand, runs: runs.map((r) => r.run), pt, csv, ctx };
+  // AI shopping demand: an INVENTED Merchant Center AI performance book (two weeks of terms, one of intents and
+  // attributes) for the invented brand — the shapes are the export's, no figure is a client's
+  const dT = (from, to, rows) => ({ id: 'terms_' + from + '_' + to, kind: 'terms', from, to, label: '', country: 'GB', category: 'Apparel > Outerwear', filter: 'Term frequency >= 0.05', rows, by: 'ray@feedspark.com', at: at0, src: 'upload' });
+  const at0 = Date.UTC(2026, 10, 18, 9, 0, 0);
+  const demand = { ok: true, granted: true, uploads: [
+    dT('2026-11-09', '2026-11-15', [{ t: 'wool coat', f: 1, ps: 40, sov: 0.31 }, { t: 'rain jacket', f: 0.62, ps: 22, sov: 0.08 }, { t: 'storm proof', f: 0.3, ps: 5, sov: 0 }, { t: 'ski suit', f: 0.2, ps: 0, sov: null }, { t: 'quilted', f: 0.12, ps: 3, sov: null }]),
+    { id: 'intents_2026-11-09_2026-11-15', kind: 'intents', from: '2026-11-09', to: '2026-11-15', label: '', country: 'GB', category: 'Apparel > Outerwear', filter: 'Intent frequency >= 0.01',
+      rows: [{ t: 'dressing for cold weather', f: 1, ps: 12, sov: 0.1 }, { t: 'shopping for a specific occasion', f: 0.5, ps: 0, sov: null }], by: 'ray@feedspark.com', at: at0, src: 'upload' },
+    { id: 'attrs_2026-11-09_2026-11-15', kind: 'attrs', from: '2026-11-09', to: '2026-11-15', label: '', country: 'GB', category: 'Apparel > Outerwear', filter: '',
+      rows: [{ t: 'Color', f: 2400, ps: 300, sov: null }, { t: 'Material', f: 900, ps: 120, sov: null }, { t: 'Season', f: 60, ps: 8, sov: null }], by: 'ray@feedspark.com', at: at0, src: 'upload' },
+    dT('2026-11-02', '2026-11-08', [{ t: 'wool coat', f: 1, ps: 31, sov: 0.22 }, { t: 'rain jacket', f: 0.7, ps: 20, sov: 0.05 }, { t: 'storm proof', f: 0.25, ps: 4, sov: 0 }]),
+  ] };
+  return { book, brand, runs: runs.map((r) => r.run), pt, csv, ctx, demand };
 }
 function stubLines() {
   const d = build();
@@ -72,6 +84,9 @@ function stubLines() {
     + "  if(url.indexOf('/feedlab/engine.js')>=0)" + txt(src('feedlab_engine.js'), 'application/javascript') + "\n"
     + "  if(url.indexOf('/api/feed/proxy')>=0)" + txt(JSON.stringify(d.csv), 'text/csv') + "\n"
     + "  if(url.indexOf('/api/ptypes/snapshot')>=0)return j(" + JSON.stringify(d.pt) + ");\n"
+    + "  if(url.indexOf('/aivis/demand.js')>=0)" + txt(src('aidemand_engine.js'), 'application/javascript') + "\n"
+    + "  if(url.indexOf('/api/aivis/demand')>=0)return j(" + JSON.stringify(d.demand) + ");\n"
+    + "  if(url.indexOf('/api/breakdown/ads')>=0)return j({ok:true,done:true,cur:'GBP',range:'Last 30 days',rows:{nw100:[900,40,60,3,420],NW200:[500,20,50,1,90]}});\n"
     + "  if(url.indexOf('/api/aivis?client=')>=0&&url.indexOf('run=')>=0){var R=" + JSON.stringify(d.runs) + ";var id=(url.match(/run=([^&]+)/)||[])[1];return j({ok:true,run:R.filter(function(x){return x.id===id;})[0]||R[1]});}\n"
     + "  if(url.indexOf('/api/aivis?client=')>=0)return j(" + JSON.stringify(d.brand) + ");\n"
     + "  if(url.indexOf('/api/aivis/run')>=0)return j({ok:true});\n"

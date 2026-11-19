@@ -130,3 +130,60 @@ read from Google's own results page, so they are the closest to what a shopper s
   - the drawer, a live run (the concurrency caps, save as answers land), stop, track and match;
   - the 390px sheet.
 - `check_mobile` / `check_darkmode` get the same synthetic book.
+
+---
+
+## AI shopping demand — Merchant Center's AI performance report (19 Nov 2026)
+
+Ray: "I am looking for instant recommendations, instant activation, things to be changed, and product SKU
+matching … match how many products in the catalog correspond to that search term and how they are
+performing in terms of average ROAS across the catalog."
+
+The live-answers half of this module asks the answer engines. This half reads what **Google itself
+reports** shoppers ask its AI surfaces for: Merchant Center › Analytics › **AI performance**, three tabs —
+Shopping terms, Search intent, Product attributes — each with a frequency, "Products showing" and (terms,
+intents) a share of voice. US only so far, category level; it names no product.
+
+### The lane
+- **Today: upload.** ⇪ Upload report on `/aivis` takes the three exports (any subset). The file is read in
+  the browser — the tab-separated one is UTF-16, the comma one UTF-8; `decode()` reads the bytes — and only
+  the rows are stored.
+- **Store:** KV `aidemand:<client>:<mkt>` = `{ v:1, up:[{ id, kind, from, to, country, category, filter,
+  rows:[{t,f,ps,sov}], by, at, src }] }`. One reading per kind × period; a re-upload replaces it; newest 90
+  kept. `src/aidemand.js` (`cleanUpload` → `mergeUpload`).
+- **Tomorrow: a daily pull.** Google has published no API for this report yet. When one exists, the pull
+  calls the same `cleanUpload` → `mergeUpload` with `src: 'api'` — nothing on the page changes.
+- **Routes:** `GET|PUT|DELETE /api/aivis/demand?client=&market=` — inside the scoped `/api/aivis` block;
+  reading follows client scope, writing needs the `aivis` grant; who and when are the server's stamp.
+
+### The reading (`docs/aidemand_engine.js`, served at `/aivis/demand.js`)
+| Step | Rule |
+|---|---|
+| Words | Hyphens, plurals, "-ed" and run-together spellings are one thing ("Long-Sleeved" = "long sleeve" = "longsleeve"); whole words in order only. |
+| SKU match | ⚡ Match the catalogue streams the live feed once. A product matches a term when its title, highlights, description, product type or attributes/details say it. Counted: products, styles (item groups), how many say it **in the title**. |
+| ROAS | FeedHero's 30-day Ads Traffic, joined by product id (case-blind). A term's ROAS is the matched products' summed value ÷ summed spend, shown beside the same ratio for the whole feed. No spend = no ROAS. |
+| Verdict | **Hero** share of voice ≥ 25% · **Growth** products match, share low or unreported · **Wording gap** Google shows products, the feed never says the term · **Range gap** nothing matches and Google shows none (a client question, not a feed fix). |
+| Action | Growth: under half the matching titles say it → a title job naming the count; else highlights + Q&A; else depth + budget. |
+| Rank | frequency × (1 − share) × weight (growth 1, wording 0.7, range 0.2, hero 0.15). |
+
+Four honesty rules, pinned in the harness: a blank share of voice is **not reported**, never zero;
+"Google shows" (Google's count) and "In the catalogue" (the feed's own words) are never merged; ROAS is a
+ratio of sums; a move over time needs two measured readings.
+
+### What comes out
+- **⬇ Label SKUs** — `id, custom_label, ai_terms, title`: products of a hero term are `AI_Hero_Terms`,
+  every other product of a growth term `AI_Growth_Opportunity`. A supplemental-feed sheet; the FCC does not
+  write FeedHero rules, so the label is mapped to a free custom label there.
+- **⬇ These SKUs** per term (in-title flag, spend, value) and **→ Brief** per term, per intent or for the
+  whole ranked list — Workflow's composer in a new tab.
+- **Search intents** — matched on their own key words where they have any; each gets the play that fits
+  (occasion, sizing, weather, features) and the fields it lands in.
+- **Product attributes** — where each lives (`g:color`, `g:material`… or `g:product_detail` when Google has
+  no field) and how full the feed is.
+- **Over time** — each term's first and latest share across the readings held, the move in points. A
+  rising share beside feed work is evidence, not proof.
+
+Every section of `/aivis` now folds (`fcc-aivis-fold`; a fresh device opens AI shopping demand and the live
+answers). Harnesses: `tools/test_aidemand.mjs` (qa_gate / presync / validate) and
+`tools/check_aidemand.js` (Playwright, presync).
+
