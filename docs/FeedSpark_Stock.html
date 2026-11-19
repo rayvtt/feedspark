@@ -2648,8 +2648,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (fid && fid !== (foc.getAttribute('data-rng') || '')) { var back = fid === 'sim-bq' ? $('#sim-bq') : $('#sim-ctl [data-num="' + fid + '"]'); if (back) { back.focus(); if (caret != null) try { back.setSelectionRange(caret, caret); } catch (e) {} } }
     $('#sim-sum').innerHTML = '<div class="it"><span>In stock in the master</span><b>' + n0(res.inStock) + '</b>' + (res.pre ? '<span title="Backorder and pre-order rows are a size the style is made in, never one counted in stock">+ ' + n0(res.pre) + ' on backorder / pre-order, not counted</span>' : '') + '</div>'
       + '<div class="it"><span>Held back by these rules</span><b>' + n0(res.held) + '</b><span>' + share(res.held, res.inStock) + ' of in stock' + (res.casc && res.casc.extra ? ' · +' + n0(res.casc.extra) + ' from the cascade' : '') + '</span></div>'
-      + '<div class="it"><span>Stays live</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + '</span></div>'
-      + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ', not live in the Google feed' : 'not joined to the Google feed') + '</span></div>';
+      // a WHAT-IF beside TODAY (Ray, 19 Nov 2026: "live in US shopping feed today is 27542 instock? compared with 27,010 as
+      // you shown?") — the simulated figure says it is one, and today's live count sits under today's held-back
+      + '<div class="it"><span>Would stay live with these rules</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + ' · a simulation, not today’s feed</span></div>'
+      + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ' · live in Google today: ' + n0(res.today.joined - res.today.held) : 'not joined to the Google feed') + '</span></div>';
     var t = res.today, dlt = t ? t.sim - t.held : 0;
     // COMPARED WITH TODAY, in three plain lines (Ray, 10 Nov 2026, crossing out the one long sentence this used to be: "i dont
     // understand this - rewrite and have option to hide") — held back today vs with these rules, then the two ways a product
