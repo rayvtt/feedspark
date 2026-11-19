@@ -17170,6 +17170,8 @@
   {"name": "AI demand: the AM picks which feed fields a term is matched on", "file": "docs/aidemand_engine.js", "pattern": "function matchOne(term, cat, fields) {"},
   {"name": "AI demand: the field pick is kept per device and re-matches in place", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "lsSet('fcc-aivis-demflds', D.flds); if (D.cat) rematch(); render(); return;"},
   {"name": "AI demand: a verdict tile filters the terms table", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "if ((el = t.closest('[data-vf]')))"},
-  {"name": "AI demand: the report bar names the report, its meta and each reading's period", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "<span class=\"dm-tag\">Merchant Center · AI performance</span>"}
+  {"name": "AI demand: the report bar names the report, its meta and each reading's period", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "<span class=\"dm-tag\">Merchant Center · AI performance</span>"},
+  {"name": "AI demand: every column of every demand table sorts, blanks last either way", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "function sorted(tb, list, val) {"},
+  {"name": "AI demand: a header click sorts its own table, a second click reverses it", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "srtSet(sk[0], sk[1]); render(); return;"}
  ]
 }
