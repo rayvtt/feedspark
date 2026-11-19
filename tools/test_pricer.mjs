@@ -1084,7 +1084,10 @@ const r2 = (x) => Math.round(x * 100) / 100;
   const qc = E.packageQuote(spec('go+ar', { x_soon: { label: 'Coming thing', kind: 'feed', pkg: 'ar', unit: 0.1, status: 'planned' } }), LG);
   ok(qc.lines.some((l) => l.key === 'x_soon' && l.status === 'coming'), 'D: a planned optimisation reads coming — included when live');
   // services
-  ok(q2.extras.length === 2 && q2.extras.every((x) => x.status === 'included') && q2.monthly.extras === 0 && !q1.extras.length, 'D: the seeded services ride Tier 2 as "included" (no charge until Management sets one), not Tier 1');
+  ok(q2.extras.filter((x) => x.status === 'included').length === 2 && q2.monthly.extras === 0 && !q1.extras.length, 'D: the seeded services ride Tier 2 as "included" (no charge until Management sets one), not Tier 1');
+  ok(q2.extras.some((x) => x.key === 'x_intent_map' && x.status === 'coming') && !q2.extras.some((x) => x.key === 'x_ai_sov'), 'D: intent & attribute mapping rides Tier 2 as coming; the SoV dashboard is Tier 3 only');
+  { const q3 = E.packageQuote(spec('go+ar+rf', {}), LG);
+    ok(['x_ai_sov', 'x_ai_labels', 'x_intent_map'].every((k) => q3.extras.some((x) => x.key === k && x.status === 'coming' && x.monthly == null)) && q3.monthly.extras === 0, 'D: the three GMC-visibility services ride Tier 3, planned and unpriced — never a made-up £'); }
   const qs = E.packageQuote(spec('go+ar', { x_restock: { monthly: 150 } }), LG);
   ok(qs.extras.some((x) => x.key === 'x_restock' && x.status === 'priced' && x.monthly === 150) && Math.abs(qs.monthly.total - q2.monthly.total - 150) < 0.01 && qs.monthly.extras === 150, 'D: a service given a monthly £ adds it to the monthly total');
   ok(!E.packageQuote(spec('go+ar', { x_stock_rc: { del: true } }), LG).extras.some((x) => x.key === 'x_stock_rc'), 'D: a seed the team removed is gone');
