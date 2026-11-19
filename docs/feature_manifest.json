@@ -16968,7 +16968,7 @@
       "pr": 0
     },
     {
-      "name": "Stock simulator: How the rules meet \u2014 overlapping / independent / cascading switch",
+      "name": "Stock simulator: How the rules meet — overlapping / independent / cascading switch",
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "function modeCtl() {",
       "pr": 0
@@ -16980,7 +16980,7 @@
       "pr": 0
     },
     {
-      "name": "Catalogue engine: cascading \u2014 product rules take sizes out before the style rules read the runs",
+      "name": "Catalogue engine: cascading — product rules take sizes out before the style rules read the runs",
       "file": "docs/catalog_engine.js",
       "pattern": "function cascade(D, rules, blk) {",
       "pr": 0
@@ -16998,7 +16998,7 @@
       "pr": 0
     },
     {
-      "name": "Stock: Check a product \u2014 a card after the simulator",
+      "name": "Stock: Check a product — a card after the simulator",
       "file": "docs/FeedSpark_Stock.html",
       "pattern": "<section class=\"card\" id=\"pid-card\">",
       "pr": 0
@@ -17016,13 +17016,13 @@
       "pr": 0
     },
     {
-      "name": "Catalogue engine: productFind \u2014 an id, else a style, else near matches, never a guess",
+      "name": "Catalogue engine: productFind — an id, else a style, else near matches, never a guess",
       "file": "docs/catalog_engine.js",
       "pattern": "function productFind(D, q, lim) {",
       "pr": 0
     },
     {
-      "name": "Catalogue engine: productCheck \u2014 range completion, threshold and exclusion against one product",
+      "name": "Catalogue engine: productCheck — range completion, threshold and exclusion against one product",
       "file": "docs/catalog_engine.js",
       "pattern": "function productCheck(D, i, rules, o) {",
       "pr": 0
@@ -17098,78 +17098,430 @@
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "this one through ticket"
     },
-  {"name": "A/B archive: the [attribute] in a test type is read off the report", "file": "cloudflare/feedspark-deck/src/abtests.js", "pattern": "typeName: abTypeName(t.type, attr)"},
-  {"name": "Keyword calendar: Results lab hides brands per device", "file": "docs/FeedSpark_KWCal.html", "pattern": "localStorage.setItem('fcc-lab-hide'"},
-  {"name": "Keyword calendar: Results lab card carries the completed date", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labDone(r)"},
-  {"name": "Workflow: the Brief pipeline section is gone (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-bp\"", "forbidden": true},
-  {"name": "Workflow: Team workload section is gone (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-wk\"", "forbidden": true},
-  {"name": "Workflow: the test register left for the Keyword calendar (Ray, 11 Nov 2026)", "file": "docs/FeedSpark_Workflow.html", "pattern": "id=\"ws-tests\"", "forbidden": true},
-  {"name": "Keyword calendar: the test register folds per device", "file": "docs/FeedSpark_KWCal.html", "pattern": "fcc-kw-tests-open"},
-  {"name": "Workflow: an unsaved brief is said on the ledger's head line", "file": "docs/FeedSpark_Workflow.html", "pattern": "function blLine(){"},
-  {"name": "Title Lab: the page is served", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/titles':      { html: TITLES_PAGE, slug: 'titles' },"},
-  {"name": "Title Lab: the engine is served verbatim", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/titles/engine.js' && request.method === 'GET')"},
-  {"name": "Title Lab: a grantable module", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "{ slug: 'titles', label: 'Title Lab', path: '/titles' },"},
-  {"name": "Title Lab: the eight attributes in Ray's order", "file": "docs/titlelab_engine.js", "pattern": "var KEYS = ATTRS.map(function (a) { return a.k; });"},
-  {"name": "Title Lab: title against field — a value the field lacks is title_only", "file": "docs/titlelab_engine.js", "pattern": "if (!has) return 'title_only';"},
-  {"name": "Title Lab: new name words are a rewording, never a re-ordering", "file": "docs/titlelab_engine.js", "pattern": "function order(mask) { return mask.filter(function (k) { return k !== 'name'; }).join('>'); }"},
-  {"name": "Title Lab: before falls back to the original-title stamp and says so", "file": "docs/titlelab_engine.js", "pattern": "if (!before && p.otitle) { before = squash(p.otitle); src = 'stamp'; bh = 'c:fs_data_original_title'; }"},
-  {"name": "Title Lab: the page reads the Catalogue's master lane", "file": "docs/FeedSpark_Titles.html", "pattern": "fetchBytes('/api/catalog/master/file' + mq(), g,"},
-  {"name": "Title Lab: every section folds, per device", "file": "docs/FeedSpark_Titles.html", "pattern": "var FOLD_K = 'fcc-tl-fold', OPEN0 = { sum: 1, sbs: 1 }, FOLD = null;"},
-  {"name": "Title Lab: a brief opens Workflow in a new tab", "file": "docs/FeedSpark_Titles.html", "pattern": "wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Title Fix - '"},
-  {"name": "Retired module: no link to /feedlab in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /deck-builder in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /restock in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /roas in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /feedlab in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /deck-builder in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /restock in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /roas in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /feedlab in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /deck-builder in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /restock in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /roas in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Stock.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /feedlab in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/feedlab", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /deck-builder in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/deck-builder", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /restock in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/restock", "forbidden": true, "pr": 0},
-  {"name": "Retired module: no link to /roas in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")", "file": "docs/FeedSpark_Catalog.html", "pattern": "href=\"/roas", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: '/feedlab':     { html: FEEDLAB", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/feedlab':     { html: FEEDLAB", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: '/roas':        { html: ROAS_PAGE", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/roas':        { html: ROAS_PAGE", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: '/restock':     { html: RESTOCK_PAGE", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/restock':     { html: RESTOCK_PAGE", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: '/deck-builder':{ html: DECKBUILDER", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "'/deck-builder':{ html: DECKBUILDER", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: slug: 'restock'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'restock'", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: slug: 'roas'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'roas'", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: slug: 'feedlab'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'feedlab'", "forbidden": true, "pr": 0},
-  {"name": "Retired module stays retired: slug: 'deck-builder'", "file": "cloudflare/feedspark-deck/src/access.js", "pattern": "slug: 'deck-builder'", "forbidden": true, "pr": 0},
-  {"name": "Retired modules: old links 301 to the Command Center", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {", "pr": 0},
-  {"name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')", "pr": 0},
-  {"name": "Title Lab: the item type is looked for up the tree, gender and age words set aside", "file": "docs/titlelab_engine.js", "pattern": "var lw = words(lv[d]).filter(function (w) { return !SYN_REV.gender[w] && !SYN_REV.age_group[w]; });"},
-  {"name": "Title Lab: a taught word is read first, before any field", "file": "docs/titlelab_engine.js", "pattern": "put(ta, ti, tn, 'taught', false);"},
-  {"name": "Title Lab: an accepted pair is not a gap", "file": "docs/titlelab_engine.js", "pattern": "Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';"},
-  {"name": "Title Lab: corrections are the team's — two shared-state namespaces", "file": "cloudflare/feedspark-deck/src/sharedstate.js", "pattern": "titleteachall: null,"},
-  {"name": "Title Lab: a correction re-reads every title and is pushed to the team", "file": "docs/FeedSpark_Titles.html", "pattern": "body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all })"},
-  {"name": "Title Lab: a card's thumbnail opens every image the feed carries", "file": "docs/FeedSpark_Titles.html", "pattern": "function imagesOf(r) {"},
-  {"name": "Workflow: plan appends go one at a time per workbook (call actions no longer overwrite each other)", "file": "docs/FeedSpark_Workflow.html", "pattern": "function planFetch(opts){"},
-  {"name": "Workflow: a confirmed row the live plan does not carry is written again", "file": "docs/FeedSpark_Workflow.html", "pattern": "function planHeal(){"},
-  {"name": "Worker: plan appends queue per workbook", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const _planAppendQ = new Map();"},
-  {"name": "Worker: a plan append in a new month adds the month row first", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "const sep = planMonthSep(grid, c, planYm(env));"},
-  {"name": "Worker: the month row is labelled in the tab's own pattern", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "function monthLabelLike(prev, ym) {"},
-  {"name": "Worker: an append reads its rows back and reports an overwrite", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "overwritten by another plan write on row"},
-  {"name": "Workflow: no direct append fetch bypasses the queue", "file": "docs/FeedSpark_Workflow.html", "pattern": "fetch('/api/sheets/append',{method:'POST'", "forbidden": true},
-  {"name": "Breakdown: the source feed is a third chip per market", "file": "docs/FeedSpark_Breakdown.html", "pattern": "function loadSource(g, st, tries) {"},
-  {"name": "Breakdown: the roster says which markets carry a source feed", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "src: !/-fb$/.test(r.mkt) && !!catCmpid(r.src)"},
-  {"name": "Results Lab: an archive card is titled by its batch name", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labArcName(t){"},
-  {"name": "Results Lab: a result on the register and in the archive is one card", "file": "docs/FeedSpark_KWCal.html", "pattern": "function labDedupe(rows){"},
-  {"name": "AI demand: the engine parses the Merchant Center AI performance export", "file": "docs/aidemand_engine.js", "pattern": "function parseExport(text) {"},
-  {"name": "AI demand: a term is matched to the products that say it, with their ROAS", "file": "docs/aidemand_engine.js", "pattern": "function matchOne(term, cat, fields) {"},
-  {"name": "AI demand: the store checks an upload whole", "file": "cloudflare/feedspark-deck/src/aidemand.js", "pattern": "export function cleanUpload(u, stamp) {"},
-  {"name": "AI demand: the worker route sits inside the scoped aivis block", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/aivis/demand') {"},
-  {"name": "AI demand: the worker serves the engine", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/aivis/demand.js' && request.method === 'GET') {"},
-  {"name": "AI demand: the section on the AI visibility page", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "FCC-AIDEMAND"},
-  {"name": "AI visibility: every section folds, per device", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "var FKEY = 'fcc-aivis-fold'"},
-  {"name": "Pricer bank: the three GMC-visibility services (AI SoV dashboard, Dynamic AI custom labels, Intent & attribute mapping) seeded planned + unpriced", "file": "docs/pricer_engine.js", "pattern": "x_intent_map: { label: 'Intent & attribute mapping'", "pr": 0},
-  {"name": "AI demand: the AM picks which feed fields a term is matched on", "file": "docs/aidemand_engine.js", "pattern": "function matchOne(term, cat, fields) {"},
-  {"name": "AI demand: the field pick is kept per device and re-matches in place", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "lsSet('fcc-aivis-demflds', D.flds); if (D.cat) rematch(); render(); return;"},
-  {"name": "AI demand: a verdict tile filters the terms table", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "if ((el = t.closest('[data-vf]')))"},
-  {"name": "AI demand: the report bar names the report, its meta and each reading's period", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "<span class=\"dm-tag\">Merchant Center · AI performance</span>"}
- ]
+    {
+      "name": "A/B archive: the [attribute] in a test type is read off the report",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "typeName: abTypeName(t.type, attr)"
+    },
+    {
+      "name": "Keyword calendar: Results lab hides brands per device",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "localStorage.setItem('fcc-lab-hide'"
+    },
+    {
+      "name": "Keyword calendar: Results lab card carries the completed date",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function labDone(r)"
+    },
+    {
+      "name": "Workflow: the Brief pipeline section is gone (Ray, 11 Nov 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "id=\"ws-bp\"",
+      "forbidden": true
+    },
+    {
+      "name": "Workflow: Team workload section is gone (Ray, 11 Nov 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "id=\"ws-wk\"",
+      "forbidden": true
+    },
+    {
+      "name": "Workflow: the test register left for the Keyword calendar (Ray, 11 Nov 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "id=\"ws-tests\"",
+      "forbidden": true
+    },
+    {
+      "name": "Keyword calendar: the test register folds per device",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "fcc-kw-tests-open"
+    },
+    {
+      "name": "Workflow: an unsaved brief is said on the ledger's head line",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function blLine(){"
+    },
+    {
+      "name": "Title Lab: the page is served",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/titles':      { html: TITLES_PAGE, slug: 'titles' },"
+    },
+    {
+      "name": "Title Lab: the engine is served verbatim",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/titles/engine.js' && request.method === 'GET')"
+    },
+    {
+      "name": "Title Lab: a grantable module",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "{ slug: 'titles', label: 'Title Lab', path: '/titles' },"
+    },
+    {
+      "name": "Title Lab: the eight attributes in Ray's order",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "var KEYS = ATTRS.map(function (a) { return a.k; });"
+    },
+    {
+      "name": "Title Lab: title against field — a value the field lacks is title_only",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "if (!has) return 'title_only';"
+    },
+    {
+      "name": "Title Lab: new name words are a rewording, never a re-ordering",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "function order(mask) { return mask.filter(function (k) { return k !== 'name'; }).join('>'); }"
+    },
+    {
+      "name": "Title Lab: before falls back to the original-title stamp and says so",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "if (!before && p.otitle) { before = squash(p.otitle); src = 'stamp'; bh = 'c:fs_data_original_title'; }"
+    },
+    {
+      "name": "Title Lab: the page reads the Catalogue's master lane",
+      "file": "docs/FeedSpark_Titles.html",
+      "pattern": "fetchBytes('/api/catalog/master/file' + mq(), g,"
+    },
+    {
+      "name": "Title Lab: every section folds, per device",
+      "file": "docs/FeedSpark_Titles.html",
+      "pattern": "var FOLD_K = 'fcc-tl-fold', OPEN0 = { sum: 1, sbs: 1 }, FOLD = null;"
+    },
+    {
+      "name": "Title Lab: a brief opens Workflow in a new tab",
+      "file": "docs/FeedSpark_Titles.html",
+      "pattern": "wfTab('/workflow?brief=' + b64url({ client: S.brand, task: 'Title Fix - '"
+    },
+    {
+      "name": "Retired module: no link to /feedlab in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/feedlab",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /deck-builder in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/deck-builder",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /restock in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/restock",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /roas in FeedSpark_Workflow.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/roas",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /feedlab in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/feedlab",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /deck-builder in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/deck-builder",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /restock in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/restock",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /roas in FeedSpark_Command_Center.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/roas",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /feedlab in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "href=\"/feedlab",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /deck-builder in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "href=\"/deck-builder",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /restock in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "href=\"/restock",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /roas in FeedSpark_Stock.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "href=\"/roas",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /feedlab in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "href=\"/feedlab",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /deck-builder in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "href=\"/deck-builder",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /restock in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "href=\"/restock",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module: no link to /roas in FeedSpark_Catalog.html (Ray, 12 Nov 2026: \"remove / kill these modules from FCC\")",
+      "file": "docs/FeedSpark_Catalog.html",
+      "pattern": "href=\"/roas",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: '/feedlab':     { html: FEEDLAB",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/feedlab':     { html: FEEDLAB",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: '/roas':        { html: ROAS_PAGE",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/roas':        { html: ROAS_PAGE",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: '/restock':     { html: RESTOCK_PAGE",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/restock':     { html: RESTOCK_PAGE",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: '/deck-builder':{ html: DECKBUILDER",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/deck-builder':{ html: DECKBUILDER",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: slug: 'restock'",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "slug: 'restock'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: slug: 'roas'",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "slug: 'roas'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: slug: 'feedlab'",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "slug: 'feedlab'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired module stays retired: slug: 'deck-builder'",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "slug: 'deck-builder'",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Retired modules: old links 301 to the Command Center",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/feedlab' || path === '/deck-builder' || path === '/restock' || path === '/roas') {",
+      "pr": 0
+    },
+    {
+      "name": "Retired /feedlab page: its engine still served (Golden Record, guards, Stock, Catalogue load it)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/feedlab/engine.js' && request.method === 'GET')",
+      "pr": 0
+    },
+    {
+      "name": "Title Lab: the item type is looked for up the tree, gender and age words set aside",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "var lw = words(lv[d]).filter(function (w) { return !SYN_REV.gender[w] && !SYN_REV.age_group[w]; });"
+    },
+    {
+      "name": "Title Lab: a taught word is read first, before any field",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "put(ta, ti, tn, 'taught', false);"
+    },
+    {
+      "name": "Title Lab: an accepted pair is not a gap",
+      "file": "docs/titlelab_engine.js",
+      "pattern": "Tc.ok.has(k + '|' + phraseKey(fd.v) + '|' + phraseKey(fieldV))) return 'agree';"
+    },
+    {
+      "name": "Title Lab: corrections are the team's — two shared-state namespaces",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "titleteachall: null,"
+    },
+    {
+      "name": "Title Lab: a correction re-reads every title and is pushed to the team",
+      "file": "docs/FeedSpark_Titles.html",
+      "pattern": "body: JSON.stringify({ titleteach: TEACH.brand, titleteachall: TEACH.all })"
+    },
+    {
+      "name": "Title Lab: a card's thumbnail opens every image the feed carries",
+      "file": "docs/FeedSpark_Titles.html",
+      "pattern": "function imagesOf(r) {"
+    },
+    {
+      "name": "Workflow: plan appends go one at a time per workbook (call actions no longer overwrite each other)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function planFetch(opts){"
+    },
+    {
+      "name": "Workflow: a confirmed row the live plan does not carry is written again",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function planHeal(){"
+    },
+    {
+      "name": "Worker: plan appends queue per workbook",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const _planAppendQ = new Map();"
+    },
+    {
+      "name": "Worker: a plan append in a new month adds the month row first",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const sep = planMonthSep(grid, c, planYm(env));"
+    },
+    {
+      "name": "Worker: the month row is labelled in the tab's own pattern",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function monthLabelLike(prev, ym) {"
+    },
+    {
+      "name": "Worker: an append reads its rows back and reports an overwrite",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "overwritten by another plan write on row"
+    },
+    {
+      "name": "Workflow: no direct append fetch bypasses the queue",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fetch('/api/sheets/append',{method:'POST'",
+      "forbidden": true
+    },
+    {
+      "name": "Breakdown: the source feed is a third chip per market",
+      "file": "docs/FeedSpark_Breakdown.html",
+      "pattern": "function loadSource(g, st, tries) {"
+    },
+    {
+      "name": "Breakdown: the roster says which markets carry a source feed",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "src: !/-fb$/.test(r.mkt) && !!catCmpid(r.src)"
+    },
+    {
+      "name": "Results Lab: an archive card is titled by its batch name",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function labArcName(t){"
+    },
+    {
+      "name": "Results Lab: a result on the register and in the archive is one card",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function labDedupe(rows){"
+    },
+    {
+      "name": "AI demand: the engine parses the Merchant Center AI performance export",
+      "file": "docs/aidemand_engine.js",
+      "pattern": "function parseExport(text) {"
+    },
+    {
+      "name": "AI demand: a term is matched to the products that say it, with their ROAS",
+      "file": "docs/aidemand_engine.js",
+      "pattern": "function matchOne(term, cat, fields) {"
+    },
+    {
+      "name": "AI demand: the store checks an upload whole",
+      "file": "cloudflare/feedspark-deck/src/aidemand.js",
+      "pattern": "export function cleanUpload(u, stamp) {"
+    },
+    {
+      "name": "AI demand: the worker route sits inside the scoped aivis block",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/api/aivis/demand') {"
+    },
+    {
+      "name": "AI demand: the worker serves the engine",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (path === '/aivis/demand.js' && request.method === 'GET') {"
+    },
+    {
+      "name": "AI demand: the section on the AI visibility page",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "FCC-AIDEMAND"
+    },
+    {
+      "name": "AI visibility: every section folds, per device",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "var FKEY = 'fcc-aivis-fold'"
+    },
+    {
+      "name": "Pricer bank: the three GMC-visibility services (AI SoV dashboard, Dynamic AI custom labels, Intent & attribute mapping) seeded planned + unpriced",
+      "file": "docs/pricer_engine.js",
+      "pattern": "x_intent_map: { label: 'Intent & attribute mapping'",
+      "pr": 0
+    },
+    {
+      "name": "AI demand: the AM picks which feed fields a term is matched on",
+      "file": "docs/aidemand_engine.js",
+      "pattern": "function matchOne(term, cat, fields) {"
+    },
+    {
+      "name": "AI demand: the field pick is kept per device and re-matches in place",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "lsSet('fcc-aivis-demflds', D.flds); if (D.cat) rematch(); render(); return;"
+    },
+    {
+      "name": "AI demand: a verdict tile filters the terms table",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "if ((el = t.closest('[data-vf]')))"
+    },
+    {
+      "name": "AI demand: the report bar names the report, its meta and each reading's period",
+      "file": "docs/FeedSpark_AIVisibility.html",
+      "pattern": "<span class=\"dm-tag\">Merchant Center · AI performance</span>"
+    },
+    {
+      "name": "KWCal: a batch ties on the day a moment goes live, not its brief-by",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var mk=evMkt(brand,e), t=new Date(e.date+'T12:00:00Z').getTime(), out=null;"
+    }
+  ]
 }
