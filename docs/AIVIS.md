@@ -161,6 +161,7 @@ intents) a share of voice. US only so far, category level; it names no product.
 |---|---|
 | Words | Hyphens, plurals, "-ed" and run-together spellings are one thing ("Long-Sleeved" = "long sleeve" = "longsleeve"); whole words in order only. |
 | SKU match | ⚡ Match the catalogue streams the live feed once. A product matches a term when its title, highlights, description, product type or attributes/details say it. Counted: products, styles (item groups), how many say it **in the title**. |
+| Match on | The AM picks which fields count — Title · Description · Product type · Product highlights · Product details · Attributes (all on by default, at least one). A product matches when any PICKED field says the term; counts, verdicts, labels, SKU lists and briefs follow at once, with no second feed read. Per device (`fcc-aivis-demflds`); a narrowed match is named on the source line, in the brief and in the SKU file. |
 | ROAS | FeedHero's 30-day Ads Traffic, joined by product id (case-blind). A term's ROAS is the matched products' summed value ÷ summed spend, shown beside the same ratio for the whole feed. No spend = no ROAS. |
 | Verdict | **Hero** share of voice ≥ 25% · **Growth** products match, share low or unreported · **Wording gap** Google shows products, the feed never says the term · **Range gap** nothing matches and Google shows none (a client question, not a feed fix). |
 | Action | Growth: under half the matching titles say it → a title job naming the count; else highlights + Q&A; else depth + budget. |

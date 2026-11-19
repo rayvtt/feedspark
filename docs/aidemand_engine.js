@@ -11,8 +11,9 @@
  * intents) a share of voice. It names no product. This engine turns it into feed work:
  *   parseExport   — the export as Google writes it (tab OR comma, four meta lines, blanks)
  *   indexProducts — the live feed, each field normalised once
- *   matchTerms    — which products SAY a term, and where (title / highlights / description /
- *                   product type / attributes), with their own Google Ads sums beside the catalogue's
+ *   matchTerms    — which products SAY a term in the fields the AM picked (title / description /
+ *                   product type / highlights / product details / attributes), and where, with
+ *                   their own Google Ads sums beside the catalogue's
  *   verdict       — hero · growth · wording gap · range gap, with the action in words
  *   labelSets     — the SKUs for AI_Hero_Terms / AI_Growth_Opportunity
  *   intentPlay / attrPlan / trend / headline
@@ -36,6 +37,16 @@
 
   var HERO_SOV = 0.25;      // a quarter of the AI answers in the category already show the brand
   var TITLE_SHARE = 0.5;    // under half of the matching products say it in the title → a title job
+  // the feed fields a term can be matched on — the AM picks which count (Ray, 19 Nov 2026: "allow a campaigner to
+  // select which fields need to match as well … title, description, product type, product highlights, or product details")
+  var FIELDS = [['ti', 'Title'], ['de', 'Description'], ['pt', 'Product type'], ['hl', 'Product highlights'], ['pd', 'Product details'], ['at', 'Attributes']];
+  var FIELD_KEYS = FIELDS.map(function (f) { return f[0]; });
+  // the picked fields, in the engine's order; nothing picked (or nothing known) = every field
+  function fieldSet(fields) {
+    var l = FIELD_KEYS.filter(function (k) { return fields && fields.indexOf(k) >= 0; });
+    return l.length ? l : FIELD_KEYS.slice();
+  }
+  function fieldNames(fields) { var on = fieldSet(fields); return FIELDS.filter(function (f) { return on.indexOf(f[0]) >= 0; }).map(function (f) { return f[1].toLowerCase(); }); }
   var MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
 
   // ---- reading the export ---------------------------------------------------------------------
@@ -173,7 +184,7 @@
     (rows || []).forEach(function (r) {
       if (!r || r.id == null || r.id === '') return;
       var p = { id: String(r.id), gid: String(r.gid || r.id), ti: String(r.ti || ''),
-        n: { ti: normText(r.ti), hl: normText(r.hl), de: normText(String(r.de || '').slice(0, 2000)), pt: normText(r.pt), at: normText((r.at || '') + ' ' + (r.pd || '')) },
+        n: { ti: normText(r.ti), hl: normText(r.hl), de: normText(String(r.de || '').slice(0, 2000)), pt: normText(r.pt), pd: normText(r.pd), at: normText(r.at) },
         pd: normText(r.pd), has: r.has || {}, a: A ? A[String(r.id).toLowerCase()] || null : null };
       P.push(p); tot.n++; groups[p.gid] = 1;
       if (p.a) { tot.adv++; tot.impr += +p.a[0] || 0; tot.clicks += +p.a[1] || 0; tot.cost += +p.a[2] || 0; tot.conv += +p.a[3] || 0; tot.value += +p.a[4] || 0; }
@@ -184,19 +195,22 @@
     return { P: P, tot: tot };
   }
 
-  function matchOne(term, cat) {
-    var forms = termForms(term), P = cat.P;
-    var m = { n: 0, groups: 0, ti: 0, hl: 0, de: 0, pt: 0, at: 0, notTi: 0, idx: [], inTi: [],
+  // a product MATCHES when any of the PICKED fields says the term; where it says it is counted for every field,
+  // so narrowing the match to the title still shows how many of those also carry it in a highlight
+  function matchOne(term, cat, fields) {
+    var forms = termForms(term), P = cat.P, on = fieldSet(fields), use = {};
+    on.forEach(function (k) { use[k] = 1; });
+    var m = { n: 0, groups: 0, ti: 0, hl: 0, de: 0, pt: 0, pd: 0, at: 0, notTi: 0, idx: [], inTi: [], fields: on,
       ads: { adv: 0, impr: 0, clicks: 0, cost: 0, conv: 0, value: 0, roas: null } };
     if (!forms.length) return m;
     var g = {};
     for (var i = 0; i < P.length; i++) {
-      var p = P[i], n = p.n;
-      var a = says(n.ti, forms), b = says(n.hl, forms), c = says(n.de, forms), d = says(n.pt, forms), e = says(n.at, forms);
-      if (!(a || b || c || d || e)) continue;
-      m.n++; m.idx.push(i); m.inTi.push(a ? 1 : 0); g[p.gid] = 1;
-      if (a) m.ti++; else m.notTi++;
-      if (b) m.hl++; if (c) m.de++; if (d) m.pt++; if (e) m.at++;
+      var p = P[i], n = p.n, hit = false, w = {};
+      for (var j = 0; j < FIELD_KEYS.length; j++) { var k = FIELD_KEYS[j]; w[k] = says(n[k], forms); if (w[k] && use[k]) hit = true; }
+      if (!hit) continue;
+      m.n++; m.idx.push(i); m.inTi.push(w.ti ? 1 : 0); g[p.gid] = 1;
+      if (w.ti) m.ti++; else m.notTi++;
+      if (w.hl) m.hl++; if (w.de) m.de++; if (w.pt) m.pt++; if (w.pd) m.pd++; if (w.at) m.at++;
       if (p.a) { m.ads.adv++; m.ads.impr += +p.a[0] || 0; m.ads.clicks += +p.a[1] || 0; m.ads.cost += +p.a[2] || 0; m.ads.conv += +p.a[3] || 0; m.ads.value += +p.a[4] || 0; }
     }
     m.groups = Object.keys(g).length;
@@ -216,11 +230,12 @@
     } else if (!m.n) {
       if (row.ps > 0) {
         kind = 'wording';
-        act = 'Google shows ' + row.ps + ' of the brand’s products for ' + q + ', but no title, highlight, description or product type in the feed uses the words. Find the products that qualify and write the term in.';
+        var fn = fieldNames(m.fields);
+        act = 'Google shows ' + row.ps + ' of the brand’s products for ' + q + ', but ' + (fn.length === FIELDS.length ? 'no field in the feed' : 'none of the fields matched on (' + fn.join(', ') + ')') + ' uses the words. Find the products that qualify and write the term in.';
         fields = ['title', 'product_highlight', 'description'];
       } else {
         kind = 'range';
-        act = 'Shoppers ask for ' + q + ' and nothing in the catalogue matches — a range question for the client, not a feed fix.';
+        act = 'Shoppers ask for ' + q + ' and nothing in the catalogue matches' + (fieldNames(m.fields).length === FIELDS.length ? '' : ' on the fields picked') + ' — a range question for the client, not a feed fix.';
       }
     } else {
       kind = 'growth';
@@ -242,9 +257,9 @@
   }
   var KIND_LABEL = { hero: 'Hero', growth: 'Growth', wording: 'Wording gap', range: 'Range gap' };
 
-  function matchTerms(rows, cat) {
+  function matchTerms(rows, cat, fields) {
     return (rows || []).map(function (r) {
-      var m = matchOne(r.t, cat);
+      var m = matchOne(r.t, cat, fields);
       return { row: r, m: m, v: verdict(r, m, cat.tot) };
     });
   }
@@ -295,9 +310,9 @@
     for (var i = 0; i < PLAYS.length; i++) if (PLAYS[i].re.test(s)) return PLAYS[i];
     return { k: 'usecase', fields: ['product_highlight', 'question_and_answer'], say: 'Write the use-case down: one highlight and one Q&A in the shopper’s own words.' };
   }
-  function matchIntents(rows, cat) {
+  function matchIntents(rows, cat, fields) {
     return (rows || []).map(function (r) {
-      var key = intentKey(r.t), m = key && cat ? matchOne(key, cat) : null;
+      var key = intentKey(r.t), m = key && cat ? matchOne(key, cat, fields) : null;
       return { row: r, key: key, m: m, play: intentPlay(r.t) };
     });
   }
@@ -351,7 +366,7 @@
     return { terms: (rows || []).length, known: known, sov: w > 0 ? s / w : null, kinds: c };
   }
 
-  return { HERO_SOV: HERO_SOV, TITLE_SHARE: TITLE_SHARE, KIND_LABEL: KIND_LABEL, ATTR_FIELD: ATTR_FIELD,
+  return { HERO_SOV: HERO_SOV, TITLE_SHARE: TITLE_SHARE, KIND_LABEL: KIND_LABEL, ATTR_FIELD: ATTR_FIELD, FIELDS: FIELDS, fieldSet: fieldSet, fieldNames: fieldNames,
     decode: decode, num: num, frac: frac, parsePeriod: parsePeriod, parseExport: parseExport,
     stem: stem, toks: toks, normText: normText, termForms: termForms, says: says,
     indexProducts: indexProducts, matchOne: matchOne, verdict: verdict, matchTerms: matchTerms,
