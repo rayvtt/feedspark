@@ -1,0 +1,194 @@
+#!/usr/bin/env node
+/*
+ * tools/check_aidemand.js — AI SHOPPING DEMAND, DRIVEN AS AN AM DRIVES IT.
+ *
+ * Ray, 19 Nov 2026: "I am looking for instant recommendations, instant activation, things to be changed,
+ * and product SKU matching … match how many products in the catalog correspond to that search term and how
+ * they are performing in terms of average ROAS across the catalog."
+ *
+ * tools/test_aidemand.mjs pins the engine and the store. THIS drives the real /aivis page on an INVENTED
+ * Merchant Center book (tools/aivis_stub.js) and an invented eight-product feed whose every count is made
+ * by hand in this file:
+ *   · a fresh device opens the demand report and the live answers, folds the rest; the fold is remembered;
+ *   · the stored reading renders: period, weighted share of voice, a blank share as NOT REPORTED, the move
+ *     against the previous week;
+ *   · ⚡ Match the catalogue: products per term, how many say it in the title, ROAS beside the catalogue's,
+ *     and the verdict — hero, growth, wording gap, range gap;
+ *   · a term opens its products, the ones not saying it in the title first;
+ *   · ⬇ Label SKUs downloads the AI_Hero_Terms / AI_Growth_Opportunity sheet;
+ *   · → Brief opens Workflow in a NEW tab with the term's evidence;
+ *   · ⇪ Upload reads a UTF-16 tab-separated export as Google writes it, stores it, and the trend grows;
+ *   · 390px never scrolls sideways.
+ * Run: node tools/check_aidemand.js        (in presync; CI has no browsers)
+ */
+'use strict';
+const fs = require('fs'), path = require('path'), os = require('os');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log('· playwright not installed — AI demand check skipped'); process.exit(0); }
+const ROOT = path.join(__dirname, '..'), D = path.join(ROOT, 'docs');
+const STUBS = require('./aivis_stub.js');
+const PAGE = fs.readFileSync(path.join(D, 'FeedSpark_AIVisibility.html'), 'utf8');
+const FCC_CSS = (() => { const s = fs.readFileSync(path.join(D, 'FeedSpark_Design.html'), 'utf8'); const a = s.indexOf('/* FCC-DESIGN:START */'), b = s.indexOf('/* FCC-DESIGN:END */'); return a < 0 ? '' : s.slice(a, b); })();
+const HTML = PAGE.split('<link rel="stylesheet" href="/design/fcc.css">').join('<style>' + FCC_CSS + '</style>');
+
+// the invented feed — eight products, six styles. Hand counts:
+//   "wool coat"   → N1 N2 (title) + N3 (description only)  = 3 products, 2 in the title, 2 styles
+//   "rain jacket" → N4 N5 (title; N5 written "Rain-Jackets") + N6 (description) = 3, 2 in the title
+//   "storm proof" → none (N4 says "Storm", never "proof")   → Google shows 5 → a WORDING gap
+//   "ski suit"    → none, Google shows 0                    → a RANGE gap
+//   "quilted"     → N7 (title)                               = 1
+const FEED = ['id,item_group_id,title,description,product_type,product_highlight,color,material,gender,product_detail',
+  'N1,g1,Northwind Wool Coat Navy,A warm coat for winter,Women > Coats,Fully lined,Navy,Wool,female,General:Season:Winter',
+  'N2,g1,Northwind Wool Coat Camel,A warm coat for winter,Women > Coats,Fully lined,Camel,Wool,female,',
+  'N3,g2,Northwind Long Overcoat,A long wool coat cut from a heavy blend,Women > Coats,,Grey,Wool,female,',
+  'N4,g3,Northwind Storm Rain Jacket,Keeps the weather out,Men > Jackets,Taped seams,Black,Nylon,male,',
+  'N5,g3,Northwind Packable Rain-Jackets,Folds into its pocket,Men > Jackets,,Blue,Nylon,male,',
+  'N6,g4,Northwind Shell,A light rain jacket for the hills,Men > Jackets,,Green,Nylon,male,',
+  'N7,g5,Northwind Quilted Gilet,A layer for cold mornings,Men > Gilets,,Olive,Polyester,male,',
+  'N8,g6,Northwind Fleece,Soft and warm,Men > Fleece,,,Polyester,male,'].join('\n') + '\n';
+// Google Ads, 30 days: [impr, clicks, cost, conv, value] — the ids in another case on purpose
+//   catalogue: 300 spend, 700 value → 233% · wool coat: 100 → 500 = 500% · rain jacket: 100 → 100 = 100%
+const ADS = { n1: [900, 40, 50, 3, 400], N2: [500, 20, 50, 1, 100], n4: [400, 10, 100, 1, 100], N8: [300, 9, 100, 1, 100] };
+const BOOK = STUBS.build().demand.uploads;
+const STUB = `
+window.__dem=${JSON.stringify(BOOK)};window.__demPuts=[];
+window.fetch=function(url,opts){url=String(url);opts=opts||{};var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
+ if(url.indexOf('/api/aivis/demand')>=0){
+   if(opts.method==='PUT'){var b=JSON.parse(opts.body);window.__demPuts.push(b);var u=b.upload;u.id=u.kind+'_'+u.from+'_'+u.to;u.by='ray@feedspark.com';u.at=1;u.src='upload';
+     window.__dem=window.__dem.filter(function(x){return x.id!==u.id;}).concat([u]).sort(function(a,b){return a.to<b.to?1:-1;});return j({ok:true,id:u.id,uploads:window.__dem});}
+   return j({ok:true,granted:true,uploads:window.__dem});}
+ if(url.indexOf('/api/feed/proxy')>=0)return Promise.resolve(new Response(${JSON.stringify(FEED)},{status:200,headers:{'content-type':'text/csv'}}));
+ if(url.indexOf('/api/breakdown/ads')>=0)return j({ok:true,done:true,cur:'GBP',range:'Last 30 days',rows:${JSON.stringify(ADS)}});
+${STUBS.stubLines()}
+ return j({ok:false,error:'stub'},404);};`;
+
+let pass = 0, fail = 0;
+const ok = (name, cond, got) => { if (cond) { pass++; console.log('  ✓ ' + name); } else { fail++; console.log('  ✗ ' + name + (got !== undefined ? ' — got ' + JSON.stringify(got) : '')); } };
+// a week later, as Google writes the tab-separated export: UTF-16LE with a byte-order mark
+const NEXT = '﻿"Name: AI shopping terms, product attributes and search intents"\n"Time period: Nov 16, 2026 – Nov 22, 2026"\nFilters: Country = GB;Category = Apparel > Outerwear\nColumn filters: Term frequency >= 0.05\n'
+  + 'Search term\tTerm frequency\tProducts showing\tShare of voice\nwool coat\t1.0\t44\t0.4\nrain jacket\t0.6\t30\t0.21\nski suit\t0.2\t0\t\n';
+
+(async () => {
+  const b = await chromium.launch({ headless: true });
+  const tmp = path.join(os.tmpdir(), '_aidemandcheck_FeedSpark_AIVisibility.html');
+  fs.writeFileSync(tmp, HTML);
+  const row = (pg, t) => pg.evaluate((t) => { const tr = document.querySelector('#dem-terms tr[data-term="' + t + '"]'); return tr ? [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim()) : null; }, t);
+  try {
+    const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', acceptDownloads: true });
+    const pg = await ctx.newPage();
+    const errs = []; pg.on('pageerror', (e) => errs.push(String(e)));
+    await pg.addInitScript(STUB);
+    await pg.goto('file://' + tmp);
+    await pg.waitForSelector('#dem-terms tbody tr', { timeout: 8000 });
+
+    console.log('· a fresh device');
+    const folds = await pg.evaluate(() => [...document.querySelectorAll('main .card')].map((c) => [c.id, !c.classList.contains('folded'), (c.querySelector('.chead .fold') || { getAttribute() {} }).getAttribute('aria-expanded')]));
+    ok('ten sections, each with its own chevron', folds.length === 10 && folds.every((f) => f[2] === 'true' || f[2] === 'false'), folds);
+    ok('the demand report and the live answers open, the rest folded', folds.filter((f) => f[1]).map((f) => f[0]).join() === 'dem-card,live-card', folds.filter((f) => f[1]));
+    const h0 = await pg.evaluate(() => { const c = document.querySelector('#sov-card'); return [...c.children].filter((x) => !x.classList.contains('chead')).every((x) => x.getBoundingClientRect().height === 0); });
+    ok('a folded section paints nothing but its head', h0);
+    ok('the button names the action still available', (await pg.textContent('#fold-all')).indexOf('Open all') >= 0);
+
+    console.log('· the stored reading');
+    const src = (await pg.innerText('#dem-src')).replace(/\s+/g, ' ');
+    ok('the source line names the report, the category and the period', /AI performance/.test(src) && /Apparel > Outerwear/.test(src) && /9 Nov – 15 Nov 2026/.test(src), src);
+    const k0 = (await pg.innerText('#dem-kpis')).replace(/\s+/g, ' ');
+    ok('5 terms and a share of voice weighted by frequency over the 3 that report one (19%)', /TERMS SHOPPERS ASK 5/i.test(k0) && /19%/.test(k0) && /3 of 5 terms/.test(k0), k0);
+    const wool0 = await row(pg, 'wool coat'), ski0 = await row(pg, 'ski suit');
+    ok('the move against the week before is in points (22% → 31% = ▲9)', /31%/.test(wool0[2]) && /▲9 pts/.test(wool0[2]), wool0);
+    ok('a blank share of voice reads NOT REPORTED, never 0%', /not reported/.test(ski0[2]) && !/0%/.test(ski0[2]), ski0);
+    ok('before a match the catalogue columns say so rather than showing a zero', /match to see/.test(wool0[4]) && !(await pg.isEnabled('#dem-labels')), wool0);
+
+    console.log('· ⚡ Match the catalogue');
+    await pg.click('#dem-match');
+    await pg.waitForFunction(() => /500%/.test((document.querySelector('#dem-terms') || {}).innerText || ''), null, { timeout: 8000 });
+    const wool = await row(pg, 'wool coat'), rain = await row(pg, 'rain jacket'), storm = await row(pg, 'storm proof'), ski = await row(pg, 'ski suit'), quilt = await row(pg, 'quilted');
+    ok('wool coat: 3 products in 2 styles, 2 say it in the title', /^3 2 styles$/.test(wool[4]) && /^2 67%$/.test(wool[5]), wool);
+    ok('its ROAS is the matched products’ own sums (500%) beside the catalogue’s (233%)', /500%/.test(wool[6]) && /vs 233% catalogue/.test(wool[6]), wool);
+    ok('a hyphenated plural in a title still matches (rain jacket: 3, 2 in the title, 100%)', /^3 /.test(rain[4]) && /^2 /.test(rain[5]) && /100%/.test(rain[6]), rain);
+    ok('the four verdicts: hero · growth · wording gap · range gap', /HERO/i.test(wool[7]) && /GROWTH/i.test(rain[7]) && /WORDING GAP/i.test(storm[7]) && /RANGE GAP/i.test(ski[7]) && /GROWTH/i.test(quilt[7]), [wool[7], rain[7], storm[7], ski[7], quilt[7]]);
+    ok('a term no product says shows 0 in the catalogue beside Google’s own 5', storm[3] === '5' && /^0/.test(storm[4]), storm);
+    const k1 = (await pg.innerText('#dem-kpis')).replace(/\s+/g, ' ');
+    ok('the tiles count 1 hero · 2 growth · 1 wording · 1 range and 7 SKUs to label (3 hero, 4 growth)', /HERO TERMS 1 /i.test(k1) && /GROWTH TERMS 2 /i.test(k1) && /WORDING GAPS 1 /i.test(k1) && /RANGE GAPS 1 /i.test(k1) && /SKUS TO LABEL 7 3 hero · 4 growth/i.test(k1), k1);
+    ok('the source line says what was matched and against which Google Ads read', /Matched against 8 products/.test(await pg.innerText('#dem-src')) && /4 advertised/.test(await pg.innerText('#dem-src')));
+
+    console.log('· a term’s products');
+    await pg.click('#dem-terms tr[data-term="wool coat"]');
+    const det = await pg.evaluate(() => { const x = document.querySelector('#dem-terms tr.dm-x'); return { act: x.querySelector('.dm-act').innerText, rows: [...x.querySelectorAll('table.t > tbody > tr')].map((tr) => [...tr.children].map((c) => c.innerText.trim())) }; });
+    ok('its three products, the one NOT saying it in the title first', det.rows.length === 3 && det.rows[0][1] === 'N3' && /no/.test(det.rows[0][2]) && /yes/.test(det.rows[1][2]), det.rows);
+    ok('the action is said in words and names the label', /Protect it/.test(det.act) && /AI_Hero_Terms/.test(det.act), det.act);
+
+    if (process.env.AIDEMAND_SHOT) await pg.screenshot({ path: path.join(process.env.AIDEMAND_SHOT, 'aidemand_terms.png'), fullPage: true });   // a visual pass, on request
+    console.log('· activation');
+    const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#dem-labels')]);
+    const csv = fs.readFileSync(await dl.path(), 'utf8').replace(/^﻿/, '').trim().split('\n');
+    ok('⬇ Label SKUs: one row per product, 3 AI_Hero_Terms and 4 AI_Growth_Opportunity', csv[0] === 'id,custom_label,ai_terms,title' && csv.length === 8 && csv.filter((l) => /,AI_Hero_Terms,/.test(l)).length === 3 && csv.filter((l) => /,AI_Growth_Opportunity,/.test(l)).length === 4, csv);
+    ok('a product is labelled once, and the fleece nobody asked for is not labelled', new Set(csv.slice(1).map((l) => l.split(',')[0])).size === 7 && !csv.some((l) => /^N8,/.test(l)));
+    await pg.click('#dem-tabs [data-dtab="act"]');
+    const order = await pg.evaluate(() => [...document.querySelectorAll('#dem-body .dm-rank .w b')].map((x) => x.firstChild.textContent.trim()));
+    ok('Actions rank by how often it is asked and how little is held: rain jacket, storm proof, quilted — then the hero', order.join('|') === 'rain jacket|storm proof|quilted|wool coat', order);
+    if (process.env.AIDEMAND_SHOT) await pg.screenshot({ path: path.join(process.env.AIDEMAND_SHOT, 'aidemand_actions.png'), fullPage: true });
+    ok('a range gap is named for the client and offered no brief', /ski suit/.test(await pg.innerText('#dem-body')) && !(await pg.$('#dem-body [data-tbrief="ski suit"]')));
+    // file:// cannot load /workflow, so the tab is caught where the page opens it: window.open(url, '_blank')
+    await pg.evaluate(() => { window.__opened = []; window.open = function (u, t) { window.__opened.push([String(u), t]); return {}; }; });
+    await pg.click('#dem-body [data-tbrief="rain jacket"]');
+    const opened = await pg.evaluate(() => window.__opened);
+    const u = (opened[0] || [''])[0], q = (u.split('brief=')[1] || '').replace(/-/g, '+').replace(/_/g, '/');
+    let brief = {}; try { brief = JSON.parse(Buffer.from(q, 'base64').toString('utf8')); } catch (e) {}
+    ok('→ Brief opens Workflow in a NEW tab and the module stays where it was', opened.length === 1 && /^\/workflow\?brief=/.test(u) && opened[0][1] === '_blank' && /AIVisibility/.test(pg.url()), opened);
+    ok('the brief carries the term, its evidence and the label', /^AI Demand - rain jacket - Growth - Northwind GB - \d{4}$/.test(brief.task || '') && brief.cat === 'keyword' && /3 products/.test(brief.scope) && /100% against 233%/.test(brief.scope) && /AI_Growth_Opportunity/.test(brief.scope), brief);
+
+    console.log('· intents and attributes');
+    await pg.click('#dem-tabs [data-dtab="intents"]');
+    const ints = await pg.evaluate(() => [...document.querySelectorAll('#dem-intents tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim())));
+    ok('an intent is matched on its own key words and given what to write', ints.length === 2 && /say “cold weather”/.test(ints[0][4]) && /g:product_highlight/.test(ints[0][5]) && /occasion/i.test(ints[1][5]), ints);
+    await pg.click('#dem-tabs [data-dtab="attrs"]');
+    const attrs = await pg.evaluate(() => [...document.querySelectorAll('#dem-attrs tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim())));
+    ok('an attribute names where it lives and how full the feed is (colour 7 of 8 = 88%; Season has no field)', /g:color/.test(attrs[0][3]) && /^88%/.test(attrs[0][4]) && /g:material/.test(attrs[1][3]) && /^100%/.test(attrs[1][4]) && /g:product_detail/.test(attrs[2][3]) && /^13%/.test(attrs[2][4]), attrs);
+
+    console.log('· ⇪ Upload — the export as Google writes it');
+    const buf = Buffer.from(NEXT, 'utf16le');
+    await pg.setInputFiles('#dem-file', { name: 'AI_shopping_terms_2026-11-23.csv', mimeType: 'text/csv', buffer: buf });
+    await pg.waitForFunction(() => window.__demPuts.length === 1, null, { timeout: 8000 });
+    const put = await pg.evaluate(() => window.__demPuts[0].upload);
+    ok('a UTF-16 tab-separated export is read: kind, period, country, rows', put.kind === 'terms' && put.from === '2026-11-16' && put.to === '2026-11-22' && put.country === 'GB' && put.rows.length === 3, put);
+    ok('a blank share of voice is stored as null, not zero', put.rows[2].sov === null && put.rows[0].sov === 0.4, put.rows);
+    await pg.click('#dem-tabs [data-dtab="time"]');
+    const time = await pg.evaluate(() => [...document.querySelectorAll('#dem-time tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim())));
+    const tw = time.filter((r) => r[0] === 'wool coat')[0], ts = time.filter((r) => r[0] === 'ski suit')[0];
+    ok('Over time: wool coat 22% → 40% across three readings, +18 pts', tw && /^22%/.test(tw[1]) && /^40%/.test(tw[2]) && /\+18 pts/.test(tw[3]) && tw[4] === '3', tw);
+    ok('a term never given a share shows no move rather than a made-up one', ts && ts[3] === '—', ts);
+    ok('the new week is the reading on screen and the match re-ran on it', /16 Nov – 22 Nov 2026/.test(await pg.innerText('#dem-src')) && /TERMS SHOPPERS ASK 3/i.test((await pg.innerText('#dem-kpis')).replace(/\s+/g, ' ')));
+
+    console.log('· the fold');
+    await pg.click('#live-card > .chead h3');
+    ok('a head click folds its section', await pg.evaluate(() => document.querySelector('#live-card').classList.contains('folded')));
+    await pg.click('#dem-match');
+    ok('a control in a head is never a fold', await pg.evaluate(() => !document.querySelector('#dem-card').classList.contains('folded')));
+    await pg.reload(); await pg.waitForSelector('#dem-kpis .k', { timeout: 8000 });
+    ok('the choice is remembered on this device', await pg.evaluate(() => document.querySelector('#live-card').classList.contains('folded') && !document.querySelector('#dem-card').classList.contains('folded')));
+    await pg.click('#fold-all');
+    ok('⊕ Open all opens every section', await pg.evaluate(() => !document.querySelector('main .card.folded')) && /Fold all/.test(await pg.textContent('#fold-all')));
+    await pg.click('#fold-all');
+    const line = await pg.textContent('#dem-sum');
+    ok('folded, the demand head keeps what it found', await pg.evaluate(() => document.querySelector('#dem-card').classList.contains('folded')) && /5 terms/.test(line) && /share of voice 19%/.test(line), line);
+    await pg.evaluate(() => { location.hash = '#prod-card'; });
+    await pg.waitForFunction(() => !document.querySelector('#prod-card').classList.contains('folded'), null, { timeout: 3000 });
+    ok('a #hash opens the section it names', true);
+    ok('no page errors', errs.length === 0, errs);
+    await ctx.close();
+
+    console.log('· at 390px');
+    const mc = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    const mp = await mc.newPage();
+    await mp.addInitScript(STUB);
+    await mp.goto('file://' + tmp);
+    await mp.waitForSelector('#dem-terms tbody tr', { timeout: 8000 });
+    await mp.click('#dem-match');
+    await mp.waitForFunction(() => /500%/.test((document.querySelector('#dem-terms') || {}).innerText || ''), null, { timeout: 8000 });
+    ok('the page never scrolls sideways — the table pans in its frame', await mp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), await mp.evaluate(() => document.documentElement.scrollWidth));
+    ok('every control of the section is on the phone', await mp.evaluate(() => ['dem-up', 'dem-match', 'dem-labels', 'dem-brief'].every((id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.width > 0 && r.height > 0; })));
+    await mc.close();
+  } finally { await b.close(); try { fs.unlinkSync(tmp); } catch (e) {} }
+  console.log('\n' + (fail ? 'FAIL' : 'PASS') + ' — ' + (pass + fail) + ' assertions' + (fail ? ', ' + fail + ' failed' : ''));
+  process.exit(fail ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });

@@ -131,6 +131,8 @@ jobs:
         run: node tools/test_gmcvis.mjs
       - name: AI visibility harness (reading engine, every surface adapter vs stub answers, the lifted /api/aivis route)
         run: node tools/test_aivis.mjs
+      - name: AI shopping demand harness (Merchant Center AI performance — the export, SKU matching, ROAS, verdicts, the store)
+        run: node tools/test_aidemand.mjs
       - name: Title Lab harness (attributes, the mask, title against field, the master join, wiring)
         run: node tools/test_titles.mjs
       - name: Field breakdown harness (the column store, every reading, filters, the cross-tab, wiring)

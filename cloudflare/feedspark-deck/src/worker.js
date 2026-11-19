@@ -136,6 +136,11 @@ import PIXEL_ENGINE_SRC from "../../../docs/pixel_engine.js";
 // Claude? The asking is src/aivis.js (streamed); reading the answers is docs/aivis_engine.js, in the page.
 import AIVIS_PAGE from "../../../docs/FeedSpark_AIVisibility.html";
 import AIVIS_ENGINE_SRC from "../../../docs/aivis_engine.js";
+// AI shopping demand (Ray, 19 Nov 2026) — Merchant Center's "AI performance" report (shopping terms, search
+// intents, product attributes) read against the live feed: src/aidemand.js is the store, docs/aidemand_engine.js
+// the reading (parse, SKU match, ROAS beside the catalogue's, the action per term), run in the page.
+import * as AIDEMAND from "./aidemand.js";
+import AIDEMAND_ENGINE_SRC from "../../../docs/aidemand_engine.js";
 // /breakdown (Ray, 15 Oct 2026: "a custom 'breakdown' fields module to breakdown in pivot with any fields in any
 // feeds"): Label Guard's value · SKUs · share table and a cross-tab, for ANY field of ANY wired feed. The feed streams
 // through /api/feed/proxy and is read in the page (docs/breakdown_engine.js, served verbatim at /breakdown/engine.js).
@@ -1814,6 +1819,9 @@ async function route(request, env, ctx) {
     }
     if (path === '/catalog/pixels.js' && request.method === 'GET') {
       return new Response(PIXEL_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/aivis/demand.js' && request.method === 'GET') {
+      return new Response(AIDEMAND_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/aivis/engine.js' && request.method === 'GET') {
       return new Response(AIVIS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
@@ -3530,6 +3538,38 @@ async function route(request, env, ctx) {
         const m = k.metadata || {}, parts = k.name.split(':');
         return { id: parts[parts.length - 1], client: parts[1], at: m.at || 0, by: m.by || '', mkt: m.mkt || '', sv: m.sv || [], n: m.n || 0, final: !!m.f, sum: m.sum || null };
       };
+      // AI SHOPPING DEMAND — Merchant Center's AI performance report, one reading per kind × period, per client × market
+      // (KV aidemand:<client>:<mkt>). Uploaded from the page today; a daily Merchant API pull writes the same record
+      // through the same cleanUpload → mergeUpload (src 'api'). Reading is scoped; writing needs the `aivis` grant.
+      //   GET    /api/aivis/demand?client=&market=      → every reading held
+      //   PUT    /api/aivis/demand?client=&market=      → { upload } — checked whole, replaces the same kind × period
+      //   DELETE /api/aivis/demand?client=&market=&id=  → drop one reading
+      if (path === '/api/aivis/demand') {
+        const dm = (url.searchParams.get('market') || '').toLowerCase().slice(0, 12);
+        if (!client) return json({ ok: false, error: 'client required' }, 400);
+        if (!AIVIS.aivisMarket(dm)) return json({ ok: false, error: 'not a Google Shopping market' }, 400);
+        const dkey = 'aidemand:' + client + ':' + dm;
+        const dstore = await env.EDITS.get(dkey, 'json');
+        if (request.method === 'GET') return json({ ok: true, granted, uploads: AIDEMAND.viewStore(dstore) });
+        if (!granted) return json({ ok: false, error: 'AI visibility is not granted to this signin' }, 403);
+        if (request.method === 'PUT') {
+          let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+          const up = AIDEMAND.cleanUpload(b && b.upload, { by: who(request), at: Date.now(), src: 'upload' });
+          if (!up) return json({ ok: false, error: 'not a readable AI performance export — it needs a kind, a period and at least one row' }, 400);
+          const next = AIDEMAND.mergeUpload(dstore, up);
+          await env.EDITS.put(dkey, JSON.stringify(next));
+          logActivity(ctx, env, request, 'aidemand-upload', client + ' ' + dm.toUpperCase() + ' · ' + up.kind + ' ' + up.from + '→' + up.to + ' · ' + up.rows.length + ' rows');
+          return json({ ok: true, id: up.id, uploads: next.up });
+        }
+        if (request.method === 'DELETE') {
+          const next = AIDEMAND.dropUpload(dstore, (url.searchParams.get('id') || '').slice(0, 60));
+          if (!next.removed) return json({ ok: false, error: 'no such reading' }, 404);
+          await env.EDITS.put(dkey, JSON.stringify({ v: 1, up: next.up }));
+          logActivity(ctx, env, request, 'aidemand-delete', client + ' ' + dm.toUpperCase());
+          return json({ ok: true, uploads: next.up });
+        }
+        return json({ ok: false, error: 'method' }, 405);
+      }
       if (path === '/api/aivis' && request.method === 'GET' && !client) {
         const brands = {};
         (await feedRoster(env)).filter((r) => AIVIS.aivisMarket(r.mkt) && inScope(r.client)).forEach((r) => {

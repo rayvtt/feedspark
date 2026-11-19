@@ -355,6 +355,44 @@ window.addEventListener('load',restore);
 [data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
 [data-theme=dark] tr.cat-sub td{background:#181B22}
 [data-theme=dark] tr.brand-row:hover td{background:#181B22}
+
+  /* ---- AI shopping demand (Merchant Center AI performance) + the page's folds ---- */
+  .foldbar{display:flex;justify-content:flex-end;margin:10px 0 -6px}
+  .chead{cursor:pointer}
+  .chead .fold{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:transform .15s}
+  .card.folded>.chead .fold{transform:rotate(-90deg)}
+  .card.folded>.chead{margin-bottom:0}
+  .card.folded>:not(.chead),.card.folded>.chead .tools{display:none!important}
+  .fsum{font-size:12px;font-weight:700;color:var(--muted);margin-left:6px}
+  @media print{.card.folded>:not(.chead){display:revert!important}.foldbar,.chead .fold{display:none!important}}
+  .dk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+  .dk .k{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper);min-width:0}
+  .dk .k span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .dk .k b{display:block;font-size:22px;font-weight:900;margin:2px 0;font-variant-numeric:tabular-nums}
+  .dk .k small{display:block;font-size:11.5px;color:var(--muted)}
+  .dm-src{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:2px 0 4px}
+  .dm-src select{height:28px}
+  .dm-bar{display:inline-block;width:64px;height:7px;border-radius:4px;background:var(--grid,#EEE);vertical-align:middle;margin-right:6px;overflow:hidden}
+  .dm-bar i{display:block;height:100%;border-radius:4px;background:var(--vin,#2563EB)}
+  .dm-bar.s i{background:var(--orange-deep,#ED6F0B)}
+  .vk{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:100px;border:1px solid var(--line);white-space:nowrap}
+  .vk.hero{color:var(--good);border-color:var(--good)}
+  .vk.growth{color:var(--orange-deep);border-color:var(--orange-deep)}
+  .vk.wording{color:var(--vin,#2563EB);border-color:var(--vin,#2563EB)}
+  .vk.range{color:var(--muted)}
+  .dm-dl{font-size:11px;font-weight:800;margin-left:4px}
+  .dm-dl.up{color:var(--good)}.dm-dl.dn{color:var(--risk)}
+  tr.dm-x>td{background:rgba(245,166,35,.05);white-space:normal}
+  .dm-act{font-size:13px;line-height:1.5;margin:2px 0 8px;max-width:900px}
+  .dm-f{display:inline-block;font:700 11px/1 ui-monospace,Menlo,monospace;padding:3px 6px;border-radius:6px;background:var(--wash);border:1px solid var(--line);margin:0 4px 4px 0}
+  .dm-empty{border:1px dashed var(--line);border-radius:12px;padding:18px;margin:10px 0;font-size:13px;line-height:1.55;color:var(--ink-2)}
+  .dm-empty ol{margin:8px 0 0 18px;padding:0}
+  .dm-rank{display:grid;grid-template-columns:28px 104px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+  .dm-rank:first-child{border-top:0}
+  .dm-rank .n{font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+  .dm-rank .w b{display:block;font-size:13.5px}.dm-rank .w span{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  .dm-rank .b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  @media(max-width:760px){.dm-rank{grid-template-columns:24px minmax(0,1fr)}.dm-rank .w,.dm-rank .b{grid-column:2}.dm-rank .b{justify-content:flex-start}}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -382,9 +420,25 @@ window.addEventListener('load',restore);
 </div></header>
 
 <main class="wrap">
+  <div class="foldbar"><button class="btn" id="fold-all" type="button">⊖ Fold all</button></div>
+  <section class="card" data-no-digest id="dem-card">
+    <div class="chead"><div class="sp"><h3>AI shopping demand<span class="fsum" id="dem-sum"></span></h3><p class="ch" id="dem-sub">What shoppers ask Google's AI surfaces for in this category — Merchant Center's AI performance report — matched to the products that can answer it.</p></div>
+      <div class="tools">
+        <input type="file" id="dem-file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" multiple hidden>
+        <button class="btn go" id="dem-up" type="button" title="The exports from Merchant Center › AI performance: shopping terms, search intents, product attributes">⇪ Upload report</button>
+        <button class="btn" id="dem-match" type="button" title="Read the live feed and the 30-day Google Ads report, and match every term to the products that say it">⚡ Match the catalogue</button>
+        <button class="btn" id="dem-labels" type="button" disabled title="The SKUs for AI_Hero_Terms and AI_Growth_Opportunity — a supplemental-feed sheet">⬇ Label SKUs</button>
+        <button class="btn" id="dem-brief" type="button" disabled title="The ranked actions as one brief, in Workflow (new tab)">→ Brief</button>
+      </div></div>
+    <div class="dm-src" id="dem-src"></div>
+    <div class="dk" id="dem-kpis"></div>
+    <div class="chips" id="dem-tabs" role="tablist" aria-label="AI shopping demand views"></div>
+    <div id="dem-body"></div>
+  </section>
+
   <div class="kpis" id="kpis"></div>
 
-  <section class="card" id="live-card">
+  <section class="card" data-no-digest id="live-card">
     <div class="chead"><div class="sp"><h3 id="live-h">Live answers</h3><p class="ch" id="live-sub">One row per question, one column per surface. Click a cell to read the answer.</p></div>
       <div class="tools"><span class="legend" style="margin:0"><span><i style="background:var(--good)"></i>named</span><span><i style="background:var(--risk)"></i>not named</span><span><i style="background:var(--muted)"></i>no AI answer</span></span></div></div>
     <div class="prog" id="prog" hidden><i></i></div>
@@ -393,43 +447,43 @@ window.addEventListener('load',restore);
   </section>
 
   <div class="grid2 row-gap">
-    <section class="card" id="sov-card">
+    <section class="card" data-no-digest id="sov-card">
       <div class="chead"><div class="sp"><h3>Share of voice</h3><p class="ch">Brands named in unbranded answers, each counted once per answer.</p></div></div>
       <div class="hb" id="sov"></div>
       <p class="note" id="sov-note"></p>
     </section>
-    <section class="card" id="surf-card">
+    <section class="card" data-no-digest id="surf-card">
       <div class="chead"><div class="sp"><h3>Visibility by surface</h3><p class="ch">Unbranded answers that name the brand.</p></div></div>
       <div class="hb" id="bysurf"></div>
     </section>
   </div>
 
   <div class="grid2 row-gap">
-    <section class="card" id="dom-card">
+    <section class="card" data-no-digest id="dom-card">
       <div class="chead"><div class="sp"><h3>Who the answers cite</h3><p class="ch">Sites cited as sources, by whose site they are.</p></div></div>
       <div class="chips" id="dom-cls" style="margin-bottom:10px"></div>
       <div class="hb dm" id="doms"></div>
       <button class="btn more" id="dom-more" type="button" hidden>Show all</button>
     </section>
-    <section class="card" id="cand-card">
+    <section class="card" data-no-digest id="cand-card">
       <div class="chead"><div class="sp"><h3>Also named — not tracked</h3><p class="ch">Brand-looking names the answers recommend that are not on the competitor list.</p></div></div>
       <div class="cands" id="cands"></div>
     </section>
   </div>
 
-  <section class="card" id="prod-card">
+  <section class="card" data-no-digest id="prod-card">
     <div class="chead"><div class="sp"><h3>The brand's products in the answers</h3><p class="ch" id="prod-sub">Product pages cited, or products named by their own title. Match the answers against the live feed to see them.</p></div>
       <div class="tools"><button class="btn" id="match" type="button">⚡ Match against the feed</button></div></div>
     <div class="tw"><table class="t" id="prods"><thead><tr><th>Product</th><th>ID</th><th>How</th><th class="num">Answers</th></tr></thead><tbody><tr><td colspan="4" class="empty">Not matched yet.</td></tr></tbody></table></div>
   </section>
 
-  <section class="card" id="trend-card">
+  <section class="card" data-no-digest id="trend-card">
     <div class="chead"><div class="sp"><h3>Over time</h3><p class="ch" id="trend-sub">Each run's visibility in this market, per surface.</p></div></div>
     <div class="sm" id="sm"></div>
     <div class="tw" style="margin-top:12px"><table class="t" id="runs"><thead><tr><th>Run</th><th>By</th><th class="num">Answers</th><th class="num">Visibility</th><th class="num">Share of voice</th><th class="num">Site cited</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 
-  <section class="card" id="setup-card">
+  <section class="card" data-no-digest id="setup-card">
     <div class="chead"><div class="sp"><h3>Setup</h3><p class="ch">The questions asked in this market, the competitors to count, and the brand's own sites. Shared with the team.</p></div>
       <div class="tools"><span class="dirty" id="dirty" hidden>Unsaved changes</span><button class="btn" id="save" type="button">Save setup</button></div></div>
     <div class="setup-cols">
@@ -451,7 +505,7 @@ window.addEventListener('load',restore);
     </div>
   </section>
 
-  <section class="card" id="how-card">
+  <section class="card" data-no-digest id="how-card">
     <div class="chead"><div class="sp"><h3>How it is measured</h3><p class="ch">Each surface is asked through its own API with its web search on.</p></div></div>
     <div class="tw"><table class="t" id="how"><thead><tr><th>Surface</th><th>Read through</th><th>Model</th><th>Switched on by</th><th>State</th></tr></thead><tbody></tbody></table></div>
     <p class="note" data-instr>Answers through an API are close to, not identical with, what a signed-in shopper sees in each app: the apps add their own instructions, memory and personalisation. Google AI Mode and AI Overviews are read from Google's own results page, so they are the closest to what a shopper sees. Every surface is asked as a shopper in the market's country, with the date. Visibility counts only unbranded questions; share of voice counts each tracked brand once per answer; position is the order the brand is first named among the tracked brands. A surface that showed no AI answer, or failed, is left out of every rate and counted on its own.</p>
@@ -519,6 +573,8 @@ function loadEngine(path, name, need) {
 }
 
 var E = null;   // window.AIVis
+// the AI shopping demand block lives in its own script — it reads the page's brand and market by name
+window.FCCAiv = { brand: function () { return S.brand; }, mkt: function () { return S.mkt; }, granted: function () { return !!S.granted; }, load: function (p, n) { return loadEngine(p, n, 1); }, toast: function (m) { toast(m); }, csv: function (n, h, r) { csvDownload(n, h, r); }, label: function (m) { return mktLabel(m); } };
 var CONC = 4, PER_SURFACE = 2, BIG_RUN = 30;
 var S = {
   surf: [], surfOn: {}, mk: {}, brands: [], brand: '', mkt: '', granted: false, owner: false,
@@ -580,6 +636,7 @@ function pickBrand(b) {
 }
 function pickMarket(m) {
   S.mkt = m; closeAp();
+  try { document.dispatchEvent(new CustomEvent('fcc-aiv-market')); } catch (e) {}
   S.ctx = E.brandCtx(S.brand, { aliases: S.cfg.alias, domains: S.cfg.doms, comps: S.cfg.comps });
   var last = S.pendingLast && S.pendingLast.mkt === m ? S.pendingLast : null;
   S.pendingLast = null;
@@ -1247,5 +1304,460 @@ $('#save').addEventListener('click', function () { saveSetup(false); });
 window.addEventListener('beforeunload', function (e) { if (S.running) { e.preventDefault(); e.returnValue = ''; } });
 
 if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+})();
+</script>
+<script>
+/* ---- AI SHOPPING DEMAND (Ray, 19 Nov 2026) --------------------------------------------------------------
+   Merchant Center's "AI performance" report — shopping terms, search intents, product attributes — read
+   against the live feed: which products SAY each term and where, what those products earn in Google Ads
+   beside the whole catalogue, and the action per term (hero · growth · wording gap · range gap). The report
+   is uploaded today; the store (/api/aivis/demand) is shaped so a daily Merchant API pull writes the same
+   record. Reading is docs/aidemand_engine.js. FCC-AIDEMAND */
+(function () {
+  var A = window.FCCAiv; if (!A) return;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var n0 = function (v) { return Math.round(v || 0).toLocaleString('en-GB'); };
+  var pct = function (v, d) { if (v == null) return '—'; var p = v * 100; return (p >= 10 || d === 0 ? Math.round(p) : Math.round(p * 10) / 10) + '%'; };
+  var lsGet = function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+  var lsSet = function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  function wfTab(u) { var w = window.open(u, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } else location.href = u; return w; }
+  function b64url(o) { var s = unescape(encodeURIComponent(JSON.stringify(o))); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function mmyy() { var d = new Date(); return ('0' + (d.getMonth() + 1)).slice(-2) + String(d.getFullYear()).slice(-2); }
+  function dshort(iso) { var d = new Date(iso + 'T00:00:00Z'); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }); }
+  function perLabel(u) { return u ? dshort(u.from) + ' – ' + dshort(u.to) + ' ' + String(u.to).slice(0, 4) : ''; }
+  function api(u, opt) {
+    return fetch(u, Object.assign({ credentials: 'same-origin' }, opt || {}))
+      .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'HTTP ' + r.status }; }); })
+      .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
+  }
+
+  var E = null;
+  var D = { gen: 0, brand: '', mkt: '', ups: [], sel: {}, tab: lsGet('fcc-aivis-demtab', 'terms'), st: 'idle', msg: '',
+    rows: null, cat: null, res: null, ints: null, ads: null, open: '', srt: 'f', unsaved: false };
+  var TABS = [['act', 'Actions'], ['terms', 'Shopping terms'], ['intents', 'Search intents'], ['attrs', 'Product attributes'], ['time', 'Over time']];
+  var KW = { terms: 'Shopping terms', intents: 'Search intents', attrs: 'Product attributes' };
+
+  function mq() { return '?client=' + encodeURIComponent(D.brand) + '&market=' + encodeURIComponent(D.mkt); }
+  function ofKind(k) { return D.ups.filter(function (u) { return u.kind === k; }); }
+  function cur(k) { var l = ofKind(k); return l.filter(function (u) { return u.id === D.sel[k]; })[0] || l[0] || null; }
+  function prev(k) { var c = cur(k); return c ? ofKind(k).filter(function (u) { return u.to < c.to; })[0] || null : null; }
+
+  // ---- the market changed: read what is held ----
+  function onMarket() {
+    var b = A.brand(), m = A.mkt();
+    if (!b || !m || (b === D.brand && m === D.mkt)) return;
+    D.gen++; D.brand = b; D.mkt = m; D.ups = []; D.sel = {}; D.rows = null; D.cat = null; D.res = null; D.ints = null; D.ads = null; D.open = ''; D.st = 'loading'; D.msg = ''; D.unsaved = false;
+    render();
+    var g = D.gen;
+    A.load('/aivis/demand.js', 'FeedAiDemand').then(function (x) { E = x; return api('/api/aivis/demand' + mq()); }).then(function (d) {
+      if (g !== D.gen) return;
+      D.st = 'idle';
+      if (!d || !d.ok) { D.msg = 'The stored reports could not be read' + (d && d.error ? ' — ' + d.error : '') + '.'; }
+      else D.ups = d.uploads || [];
+      render();
+    }).catch(function (e) { if (g === D.gen) { D.st = 'idle'; D.msg = 'The AI demand engine did not load — ' + ((e && e.message) || e); render(); } });
+  }
+
+  // ---- upload: read in the browser, store the rows ----
+  function upload(files) {
+    if (!E || !files.length) return;
+    var g = D.gen, done = 0, bad = [];
+    var next = function (i) {
+      if (i >= files.length) {
+        if (g !== D.gen) return;
+        if (D.cat) rematch();
+        render();
+        A.toast(done ? done + ' report' + (done === 1 ? '' : 's') + ' read' + (bad.length ? ' · ' + bad.length + ' not read' : '') : (bad[0] || 'Nothing was read'));
+        if (bad.length && done) setTimeout(function () { A.toast(bad[0]); }, 3200);
+        return;
+      }
+      var f = files[i];
+      f.arrayBuffer().then(function (buf) {
+        var x = E.parseExport(E.decode(new Uint8Array(buf)));
+        if (!x.ok) { bad.push(f.name + ': ' + x.error); return next(i + 1); }
+        if (!x.from || !x.to) { bad.push(f.name + ': the export has no readable "Time period" line, so it cannot be dated.'); return next(i + 1); }
+        var mk = D.mkt.toUpperCase().slice(0, 2), cc = x.country === 'UK' ? 'GB' : x.country;
+        if (cc && cc !== mk && !confirm(f.name + ' is a report for ' + x.country + ', and the market on screen is ' + A.label(D.mkt) + '.\n\nFile it under ' + A.label(D.mkt) + ' anyway?')) { bad.push(f.name + ': left out — it is a ' + x.country + ' report.'); return next(i + 1); }
+        var up = { kind: x.kind, from: x.from, to: x.to, label: x.label, country: x.country, category: x.category, filter: x.filter, rows: x.rows };
+        return api('/api/aivis/demand' + mq(), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ upload: up }) }).then(function (d) {
+          if (g !== D.gen) return;
+          if (d && d.ok) { D.ups = d.uploads || D.ups; D.sel[x.kind] = d.id; D.unsaved = false; }
+          else {   // never lost: shown on this screen, and said to be unsaved
+            up.id = x.kind + '_' + x.from + '_' + x.to; up.at = Date.now(); up.by = 'this screen'; up.src = 'upload';
+            D.ups = D.ups.filter(function (u) { return u.id !== up.id; }).concat([up]).sort(function (a, b) { return a.to < b.to ? 1 : -1; });
+            D.sel[x.kind] = up.id; D.unsaved = (d && d.error) || 'not saved';
+          }
+          done++; next(i + 1);
+        });
+      }).catch(function (e) { bad.push(f.name + ': ' + ((e && e.message) || e)); next(i + 1); });
+    };
+    next(0);
+  }
+  function dropReading(id) {
+    var u = D.ups.filter(function (x) { return x.id === id; })[0]; if (!u) return;
+    if (!confirm('Remove the ' + KW[u.kind].toLowerCase() + ' reading for ' + perLabel(u) + '?\n\nThe trend loses that week.')) return;
+    api('/api/aivis/demand' + mq() + '&id=' + encodeURIComponent(id), { method: 'DELETE' }).then(function (d) {
+      if (d && d.ok) { D.ups = d.uploads || []; delete D.sel[u.kind]; if (D.cat) rematch(); render(); A.toast('Reading removed'); }
+      else A.toast('Could not remove it' + (d && d.error ? ' — ' + d.error : ''));
+    });
+  }
+
+  // ---- match: the live feed once, Google Ads beside it ----
+  function colsOf(FA, hd) {
+    var k = hd.map(FA.normKey), ix = function (n) { return k.indexOf(n); }, all = function (p) { var o = []; k.forEach(function (x, i) { if (x === p || x.indexOf(p + '(') === 0) o.push(i); }); return o; };
+    return { n: k.length, id: ix('id'), gid: ix('item_group_id'), ti: ix('title'), de: ix('description'), pt: ix('product_type') >= 0 ? ix('product_type') : ix('product_type(1)'),
+      hl: all('product_highlight'), pd: all('product_detail'), gender: ix('gender'), color: ix('color'), size: ix('size'), material: ix('material'), pattern: ix('pattern'), age_group: ix('age_group') };
+  }
+  function match() {
+    if (D.st === 'reading' || !E) return;
+    var g = D.gen, b = D.brand, m = D.mkt;
+    D.st = 'reading'; D.msg = 'Reading the ' + A.label(m) + ' feed…'; D.rows = null; D.cat = null; D.res = null; render();
+    readAds(g);
+    A.load('/feedlab/engine.js', 'FeedAudit').then(function (FA) {
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(b) + '&market=' + encodeURIComponent(m), { credentials: 'same-origin' }).then(function (res) {
+        if (!res.ok || !res.body) return res.text().then(function (t) { var e = ''; try { e = JSON.parse(t).error; } catch (x) {} throw new Error(e || 'HTTP ' + res.status); });
+        var rd = res.body.getReader(), dec = new TextDecoder('utf-8'), parser = null, c = null, rows = [], n = 0;
+        var v = function (row, i) { return i >= 0 && row[i] != null ? String(row[i]) : ''; };
+        var join = function (row, list) { var o = []; list.forEach(function (i) { if (row[i]) o.push(String(row[i]).replace(/\|\|\|/g, ' · ')); }); return o.join(' · '); };
+        function onRow(row, h) {
+          if (!c) { c = colsOf(FA, h || row); return; }
+          if (h && h.length !== c.n) c = colsOf(FA, h);
+          n++;
+          if (rows.length >= 120000 || c.id < 0 || !row[c.id]) return;
+          rows.push({ id: v(row, c.id), gid: v(row, c.gid), ti: v(row, c.ti), de: v(row, c.de), pt: v(row, c.pt), hl: join(row, c.hl), pd: join(row, c.pd),
+            at: [v(row, c.color), v(row, c.material), v(row, c.pattern), v(row, c.gender)].join(' '),
+            has: { gender: !!v(row, c.gender), color: !!v(row, c.color), size: !!v(row, c.size), material: !!v(row, c.material), pattern: !!v(row, c.pattern), age_group: !!v(row, c.age_group) } });
+          if (n % 2000 === 0 && g === D.gen) { D.msg = 'Reading the ' + A.label(m) + ' feed… ' + n0(n) + ' products'; var el = $('#dem-state'); if (el) el.textContent = D.msg; }
+        }
+        function pump() {
+          return rd.read().then(function (x) {
+            if (x.done) { var tl = dec.decode(); if (parser) { if (tl) parser.push(tl); parser.end(); } return rows; }
+            var t = dec.decode(x.value, { stream: true });
+            if (!parser) { var t0 = t.replace(/^﻿/, ''); if (!t0.trim()) return pump(); parser = /^\s*</.test(t0) ? FA.createXmlParser(onRow) : FA.createParser(onRow); }
+            parser.push(t);
+            return pump();
+          });
+        }
+        return pump();
+      });
+    }).then(function (rows) {
+      if (g !== D.gen) return;
+      if (!rows.length) throw new Error('the feed returned no products');
+      D.rows = rows; D.st = 'done'; D.msg = '';
+      rematch(); render();
+      A.toast('Matched against ' + n0(rows.length) + ' products');
+    }).catch(function (e) { if (g === D.gen) { D.st = 'idle'; D.msg = 'The feed could not be read: ' + ((e && e.message) || e); render(); } });
+  }
+  function readAds(g) {
+    D.ads = { st: 'loading', tries: 0 };
+    var step = function () {
+      if (g !== D.gen) return;
+      fetch('/api/breakdown/ads' + mq(), { credentials: 'same-origin' })
+        .then(function (res) { return res.json().then(function (j) { return { s: res.status, j: j }; }, function () { return { s: res.status, j: {} }; }); })
+        .then(function (o) {
+          if (g !== D.gen) return;
+          var j = o.j || {}, X = D.ads;
+          if (o.s === 202 || j.state === 'preparing') { X.st = 'preparing'; if (++X.tries > 30) { X.st = 'none'; X.why = 'FeedHero is still downloading the report from Google Ads — match again in a few minutes.'; adsDone(); return; } setTimeout(step, 8000); return; }
+          if (j.state === 'no_ads' || j.state === 'no_token' || j.missing) { X.st = 'none'; X.why = j.error || 'There is no Google Ads product report for this market.'; adsDone(); return; }
+          if (!j.ok) { X.st = 'none'; X.why = 'Google Ads could not be read — ' + (j.error || 'HTTP ' + o.s); adsDone(); return; }
+          if (!j.done) { X.got = j.got; X.total = j.total; setTimeout(step, 60); return; }
+          X.st = 'ready'; X.rows = j.rows || {}; X.cur = j.cur || ''; X.curMix = !!j.curMix; X.range = j.range || 'last 30 days';
+          adsDone();
+        })
+        .catch(function (e) { if (g === D.gen) { D.ads.st = 'none'; D.ads.why = 'Google Ads could not be read — ' + ((e && e.message) || e); adsDone(); } });
+    };
+    step();
+  }
+  function adsDone() { if (D.rows) { rematch(); render(); } }
+  function rematch() {
+    if (!D.rows || !E) return;
+    D.cat = E.indexProducts(D.rows, D.ads && D.ads.st === 'ready' ? D.ads.rows : null);
+    var t = cur('terms'), it = cur('intents');
+    D.res = t ? E.matchTerms(t.rows, D.cat) : null;
+    D.ints = it ? E.matchIntents(it.rows, D.cat) : null;
+  }
+  function money(v) {
+    var X = D.ads, c = X && !X.curMix && /^[A-Z]{3}$/.test(X.cur || '') ? X.cur : '';
+    if (c) { try { return new Intl.NumberFormat('en-GB', { style: 'currency', currency: c, maximumFractionDigits: 0 }).format(v); } catch (e) {} }
+    return n0(v);
+  }
+  function roasTxt(x) { return x == null || !isFinite(x) ? '—' : n0(x * 100) + '%'; }
+
+  // ---- render ----
+  function bar(v, cls) { return '<span class="dm-bar' + (cls ? ' ' + cls : '') + '"><i style="width:' + Math.max(0, Math.min(100, Math.round((v || 0) * 100))) + '%"></i></span>'; }
+  function sovCell(r, p) {
+    if (r.sov == null) return '<span data-tip="Google printed no share of voice for this row — not reported, which is not the same as zero.">— <small>not reported</small></span>';
+    var h = bar(r.sov, 's') + pct(r.sov);
+    if (p && p.sov != null) { var d = Math.round((r.sov - p.sov) * 1000) / 10; if (d) h += '<span class="dm-dl ' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d) + ' pts</span>'; }
+    return h;
+  }
+  function prevRow(k, t) { var p = prev(k); if (!p) return null; var key = t.toLowerCase(); return p.rows.filter(function (r) { return r.t.toLowerCase() === key; })[0] || null; }
+  function roasCell(m) {
+    if (!D.ads || D.ads.st === 'loading' || D.ads.st === 'preparing') return '<small>reading Google Ads…</small>';
+    if (D.ads.st !== 'ready') return '<span data-tip="' + esc(D.ads.why || '') + '">—</span>';
+    if (!m.n) return '—';
+    if (m.ads.roas == null) return '<span data-tip="None of the matching products drew Google Ads spend in ' + esc(D.ads.range) + '.">— <small>no spend</small></span>';
+    var base = D.cat.tot.roas, d = base ? m.ads.roas / base - 1 : null;
+    return '<b>' + roasTxt(m.ads.roas) + '</b>' + (d != null && Math.abs(d) >= 0.1 ? '<span class="dm-dl ' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + '</span>' : '') +
+      '<br><small data-tip="' + esc(money(m.ads.value) + ' conversion value on ' + money(m.ads.cost) + ' spend across ' + n0(m.ads.adv) + ' advertised products — a ratio of sums, never an average of ratios.') + '">vs ' + roasTxt(base) + ' catalogue</small>';
+  }
+  function srcLine() {
+    var h = '', any = D.ups.length;
+    if (D.st === 'loading') return 'Reading the stored reports…';
+    ['terms', 'intents', 'attrs'].forEach(function (k) {
+      var l = ofKind(k), c = cur(k); if (!c) return;
+      h += '<span><b>' + KW[k] + '</b> · ';
+      if (l.length > 1) h += '<select class="fld" data-per="' + k + '" aria-label="' + KW[k] + ' period" data-no-keep>' + l.map(function (u) { return '<option value="' + esc(u.id) + '"' + (u.id === c.id ? ' selected' : '') + '>' + esc(perLabel(u)) + '</option>'; }).join('') + '</select>';
+      else h += esc(perLabel(c));
+      h += (A.granted() ? ' <button class="btn" type="button" data-drop="' + esc(c.id) + '" title="Remove this reading" aria-label="Remove this reading">🗑</button>' : '') + '</span>';
+    });
+    var t = cur('terms') || cur('intents') || cur('attrs');
+    if (t) h = '<span>Merchant Center · AI performance · ' + esc(t.country || '—') + (t.category ? ' · ' + esc(t.category) : '') + (t.filter ? ' · <span data-tip="The column filter the export was downloaded with — rows under it are not in the file.">' + esc(t.filter) + '</span>' : '') + (t.src === 'api' ? ' · daily pull' : t.by ? ' · uploaded by ' + esc(String(t.by).split('@')[0]) : '') + '</span>' + h;
+    if (D.unsaved) h += '<span style="color:var(--risk)"><b>Not saved</b> — ' + esc(D.unsaved) + '. It shows on this screen only.</span>';
+    if (D.msg) h += '<span id="dem-state">' + esc(D.msg) + '</span>';
+    else if (D.cat) {
+      var X = D.ads || {};
+      h += '<span id="dem-state">Matched against ' + n0(D.cat.tot.n) + ' products' + (X.st === 'ready' ? ' · Google Ads ' + esc(X.range) + ', ' + n0(D.cat.tot.adv) + ' advertised' + (X.curMix ? ' · mixed currencies, money as reported' : '') : X.st === 'none' ? ' · <span data-tip="' + esc(X.why || '') + '">no Google Ads read</span>' : ' · reading Google Ads…') + '</span>';
+    }
+    return h || (any ? '' : '');
+  }
+  function kpis() {
+    var t = cur('terms'); if (!t) return '';
+    var H = E.headline(t.rows, D.res), k = H.kinds, L = D.res ? E.labelSets(D.res, D.cat) : null;
+    var tile = function (a, b, c, tip) { return '<div class="k"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '><span>' + a + '</span><b>' + b + '</b><small>' + c + '</small></div>'; };
+    var h = tile('Terms shoppers ask', n0(H.terms), esc(perLabel(t)), '')
+      + tile('AI share of voice', pct(H.sov), 'weighted by how often each term is asked · ' + H.known + ' of ' + H.terms + ' terms report one', 'The share of AI answers in this category that show the brand, per term, weighted by term frequency. Terms with no share reported are left out, never counted as zero.');
+    if (D.res) h += tile('Hero terms', n0(k.hero), 'share of voice ' + pct(E.HERO_SOV, 0) + ' or more — protect', '')
+      + tile('Growth terms', n0(k.growth), 'asked for, products match, share is low', '')
+      + tile('Wording gaps', n0(k.wording), 'Google shows products, the feed never says it', '')
+      + tile('Range gaps', n0(k.range), 'asked for, nothing to sell — not a feed fix', '')
+      + tile('SKUs to label', n0(L.hero + L.growth), n0(L.hero) + ' hero · ' + n0(L.growth) + ' growth', 'Products matching a hero term are AI_Hero_Terms; every other product matching a growth term is AI_Growth_Opportunity.');
+    else h += tile('Catalogue match', '—', 'press ⚡ Match the catalogue', '');
+    return h;
+  }
+  function empty() {
+    return '<div class="dm-empty"><b>No AI performance report is held for ' + esc(D.brand) + ' ' + esc(A.label(D.mkt)) + ' yet.</b>'
+      + '<ol><li>In Merchant Center open <b>Analytics › AI performance</b> and pick the category.</li>'
+      + '<li>On each tab — <b>Shopping terms</b>, <b>Search intent</b>, <b>Product attributes</b> — press Download.</li>'
+      + '<li>Press <b>⇪ Upload report</b> here and choose the files (one, two or all three). Upload each new week to build the trend.</li></ol>'
+      + '<p class="note" style="margin-top:10px">Google publishes this report for the US only so far, and at category level — it says what shoppers ask for, never which product was shown.</p></div>';
+  }
+  function needMatch(what) { return '<small>' + (D.st === 'reading' ? 'reading…' : what || 'match to see') + '</small>'; }
+  function termsTable() {
+    var t = cur('terms'); if (!t) return '<p class="note">No shopping-terms export is held — upload the Shopping terms tab.</p>';
+    var list = t.rows.map(function (r, i) { return { r: r, x: D.res ? D.res[i] : null }; });
+    var S = D.srt;
+    list.sort(function (a, b) {
+      if (S === 'sov') return (b.r.sov == null ? -1 : b.r.sov) - (a.r.sov == null ? -1 : a.r.sov);
+      if (S === 'n' && D.res) return b.x.m.n - a.x.m.n;
+      if (S === 'score' && D.res) return b.x.v.score - a.x.v.score;
+      return (b.r.f || 0) - (a.r.f || 0);
+    });
+    var th = function (k, l, num) { return '<th class="srt' + (num ? ' num' : '') + (S === k ? ' on' : '') + '" data-dsrt="' + k + '">' + l + '</th>'; };
+    var h = '<div class="tw"><table class="t" id="dem-terms"><thead><tr>' + th('f', 'Search term') + '<th>Asked</th>' + th('sov', 'Share of voice') + '<th class="num" data-tip="Google’s own count of the brand’s products shown for the term.">Google shows</th>'
+      + th('n', 'In the catalogue', 1) + '<th class="num">In the title</th><th class="num">ROAS · 30 days</th>' + th('score', 'Verdict') + '</tr></thead><tbody>';
+    list.forEach(function (o) {
+      var r = o.r, x = o.x, open = D.open === r.t;
+      h += '<tr class="cl' + (open ? ' sel' : '') + '" data-term="' + esc(r.t) + '"><td><b>' + esc(r.t) + '</b></td><td>' + bar(r.f) + '<small>' + pct(r.f) + '</small></td><td>' + sovCell(r, prevRow('terms', r.t)) + '</td><td class="num">' + (r.ps == null ? '—' : n0(r.ps)) + '</td>';
+      if (x) h += '<td class="num"><b>' + n0(x.m.n) + '</b>' + (x.m.n ? '<br><small>' + n0(x.m.groups) + (x.m.groups === 1 ? ' style' : ' styles') + '</small>' : '') + '</td><td class="num">' + (x.m.n ? n0(x.m.ti) + '<br><small>' + pct(x.m.ti / x.m.n, 0) + '</small>' : '—') + '</td><td class="num">' + roasCell(x.m) + '</td><td><span class="vk ' + x.v.kind + '">' + E.KIND_LABEL[x.v.kind] + '</span></td>';
+      else h += '<td class="num">' + needMatch() + '</td><td class="num">—</td><td class="num">—</td><td>—</td>';
+      h += '</tr>';
+      if (open) h += '<tr class="dm-x"><td colspan="8">' + termDetail(r, x) + '</td></tr>';
+    });
+    return h + '</tbody></table></div><p class="note">“Google shows” is Google’s count of products it showed; “In the catalogue” is the products whose own feed text says the term — two different questions. Click a term for its products.</p>';
+  }
+  function termDetail(r, x) {
+    if (!x) return '<p class="dm-act">Press <b>⚡ Match the catalogue</b> to see which products say “' + esc(r.t) + '”, where, and what they earn.</p>';
+    var h = '<p class="dm-act">' + esc(x.v.act) + '</p>';
+    if (x.v.fields.length) h += '<div>' + x.v.fields.map(function (f) { return '<span class="dm-f">g:' + f + '</span>'; }).join('') + '</div>';
+    if (x.m.n) {
+      h += '<p class="note" style="margin:6px 0">Said in: title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt) + ' · attributes &amp; details ' + n0(x.m.at) + ' — of ' + n0(x.m.n) + ' products.'
+        + (x.v.cmp === 'above' ? ' These products return more than the catalogue average — worth their own budget.' : x.v.cmp === 'below' ? ' These products return less than the catalogue average — fix the listing before adding budget.' : '') + '</p>';
+      var ps = E.termProducts(x, D.cat, 8), ads = D.ads && D.ads.st === 'ready';
+      h += '<div class="tw"><table class="t"><thead><tr><th>Product</th><th>ID</th><th>In the title</th>' + (ads ? '<th class="num">Spend</th><th class="num">Conv. value</th>' : '') + '</tr></thead><tbody>'
+        + ps.map(function (p) { return '<tr><td>' + esc(p.ti || '—') + '</td><td><span class="mono">' + esc(p.id) + '</span></td><td>' + (p.inTi ? '✓ yes' : '✗ no') + '</td>' + (ads ? '<td class="num">' + money(p.cost) + '</td><td class="num">' + money(p.value) + '</td>' : '') + '</tr>'; }).join('')
+        + '</tbody></table></div>' + (x.m.n > ps.length ? '<p class="note">' + ps.length + ' of ' + n0(x.m.n) + ' shown — the ones not saying it in the title first. The download carries them all.</p>' : '');
+    }
+    return h + '<div class="toolbar" style="margin-top:8px">' + (x.m.n ? '<button class="btn" type="button" data-skus="' + esc(r.t) + '">⬇ These SKUs</button>' : '') + (x.v.kind !== 'range' ? '<button class="btn" type="button" data-tbrief="' + esc(r.t) + '">→ Brief this term</button>' : '') + '</div>';
+  }
+  function actions() {
+    if (!cur('terms')) return '<p class="note">Upload the Shopping terms export to get ranked actions.</p>';
+    if (!D.res) return '<div class="dm-empty"><b>The actions need the catalogue.</b> Press <b>⚡ Match the catalogue</b> — the feed is read once and every term is matched to the products that say it, with their Google Ads return beside the catalogue’s.</div>';
+    var list = D.res.slice().sort(function (a, b) { return b.v.score - a.v.score; });
+    var top = list.filter(function (x) { return x.v.kind === 'growth' || x.v.kind === 'wording'; }).slice(0, 10), hero = list.filter(function (x) { return x.v.kind === 'hero'; }), range = list.filter(function (x) { return x.v.kind === 'range'; });
+    var row = function (x, i) {
+      return '<div class="dm-rank"><span class="n">' + (i + 1) + '</span><span><span class="vk ' + x.v.kind + '">' + E.KIND_LABEL[x.v.kind] + '</span></span><span class="w"><b>' + esc(x.row.t) + ' <small>· asked ' + pct(x.row.f) + ' · share ' + (x.row.sov == null ? 'not reported' : pct(x.row.sov)) + ' · ' + n0(x.m.n) + ' products</small></b><span>' + esc(x.v.act) + '</span></span>'
+        + '<span class="b">' + (x.m.n ? '<button class="btn" type="button" data-skus="' + esc(x.row.t) + '">⬇ SKUs</button>' : '') + '<button class="btn" type="button" data-tbrief="' + esc(x.row.t) + '">→ Brief</button></span></div>';
+    };
+    var h = '<h4 style="margin:10px 0 2px">Do first — ranked by how often it is asked and how little of it the brand holds</h4>' + (top.length ? top.map(row).join('') : '<p class="note">Nothing to grow: every frequent term is either held or has no product behind it.</p>');
+    if (hero.length) h += '<h4 style="margin:16px 0 2px">Protect — the terms the brand already holds</h4>' + hero.map(row).join('');
+    if (range.length) h += '<h4 style="margin:16px 0 2px">For the client — asked for, nothing to sell</h4><p class="note" style="margin:4px 0">' + range.map(function (x) { return '<b>' + esc(x.row.t) + '</b> (asked ' + pct(x.row.f) + ')'; }).join(' · ') + '. No feed change answers these; they are range and buying questions.</p>';
+    return h;
+  }
+  function intentsTable() {
+    var t = cur('intents'); if (!t) return '<p class="note">No search-intent export is held — upload the Search intent tab.</p>';
+    var ints = D.ints || E.matchIntents(t.rows, null);
+    return '<div class="tw"><table class="t" id="dem-intents"><thead><tr><th>Search intent</th><th>Asked</th><th>Share of voice</th><th class="num">Google shows</th><th class="num" data-tip="Products whose feed text uses the intent’s own key words.">In the catalogue</th><th>What to write</th><th></th></tr></thead><tbody>'
+      + ints.map(function (x) {
+        var r = x.row;
+        return '<tr><td><b>' + esc(r.t) + '</b></td><td>' + bar(r.f) + '<small>' + pct(r.f) + '</small></td><td>' + sovCell(r, prevRow('intents', r.t)) + '</td><td class="num">' + (r.ps == null ? '—' : n0(r.ps)) + '</td><td class="num">'
+          + (!x.key ? '<span data-tip="Too general to match to products by words.">—</span>' : x.m ? '<b>' + n0(x.m.n) + '</b><br><small>say “' + esc(x.key) + '”</small>' : needMatch()) + '</td><td style="white-space:normal;min-width:260px">' + esc(x.play.say) + '<br>' + x.play.fields.map(function (f) { return '<span class="dm-f">g:' + f + '</span>'; }).join('') + '</td><td><button class="btn" type="button" data-ibrief="' + esc(r.t) + '">→ Brief</button></td></tr>';
+      }).join('') + '</tbody></table></div><p class="note">An intent is a reason to buy, not a word in a column — it is answered in highlights, Q&amp;A and product details. A blank share of voice is Google reporting none.</p>';
+  }
+  function attrsTable() {
+    var t = cur('attrs'); if (!t) return '<p class="note">No product-attributes export is held — upload the Product attributes tab.</p>';
+    var plan = E.attrPlan(t.rows, D.cat);
+    return '<div class="tw"><table class="t" id="dem-attrs"><thead><tr><th>Attribute</th><th>Search popularity</th><th class="num">Google shows</th><th>Lives in</th><th class="num">In the feed</th><th>What to do</th></tr></thead><tbody>'
+      + plan.map(function (x) {
+        return '<tr><td><b>' + esc(x.row.t) + '</b></td><td>' + bar(x.rel) + '<small>' + (x.row.f == null ? '—' : n0(x.row.f)) + '</small></td><td class="num">' + (x.row.ps == null ? '—' : n0(x.row.ps)) + '</td><td><span class="dm-f">' + x.where + '</span></td><td class="num">'
+          + (x.fill == null ? needMatch() : '<b>' + pct(x.fill, 0) + '</b><br><small>' + (x.field ? 'of products state it' : 'name it in a detail') + '</small>') + '</td><td style="white-space:normal;min-width:260px">' + esc(x.how) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  function timeTable() {
+    var l = ofKind('terms');
+    if (l.length < 2) return '<div class="dm-empty"><b>One reading is held' + (l[0] ? ' — ' + esc(perLabel(l[0])) : '') + '.</b> Share of voice moves week to week; upload the next export and each term shows where it started, where it is and the move in points. That before-and-after is the proof of the work.</div>';
+    var tr = E.trend(l).filter(function (o) { return o.pts.length > 1; });
+    return '<div class="tw"><table class="t" id="dem-time"><thead><tr><th>Search term</th><th>First reading</th><th>Latest</th><th class="num">Move</th><th class="num">Readings</th></tr></thead><tbody>'
+      + tr.map(function (o) {
+        return '<tr><td><b>' + esc(o.t) + '</b></td><td>' + (o.first ? pct(o.first.sov) + ' <small>' + esc(dshort(o.first.to)) + '</small>' : '— <small>not reported</small>') + '</td><td>' + (o.last ? pct(o.last.sov) + ' <small>' + esc(dshort(o.last.to)) + '</small>' : '—') + '</td><td class="num">'
+          + (o.delta == null ? '<span data-tip="A move needs two readings that both report a share.">—</span>' : '<span class="dm-dl ' + (o.delta >= 0 ? 'up' : 'dn') + '">' + (o.delta > 0 ? '▲ +' : o.delta < 0 ? '▼ ' : '') + o.delta + ' pts</span>') + '</td><td class="num">' + o.pts.length + '</td></tr>';
+      }).join('') + '</tbody></table></div><p class="note">' + l.length + ' readings, ' + esc(perLabel(l[l.length - 1])) + ' to ' + esc(perLabel(l[0])) + '. A rising share alongside feed work is evidence, not proof — Google does not say why a share moved.</p>';
+  }
+  function foldLine() {
+    var t = cur('terms'); if (!t) return D.ups.length ? '· ' + D.ups.length + ' readings held' : '· no report uploaded yet';
+    var H = E.headline(t.rows, D.res);
+    return '· ' + H.terms + ' terms · share of voice ' + pct(H.sov) + (D.res ? ' · ' + H.kinds.growth + ' growth · ' + H.kinds.hero + ' hero' : '') + ' · ' + perLabel(t);
+  }
+  function render() {
+    if (!$('#dem-card')) return;
+    $('#dem-src').innerHTML = srcLine();
+    var has = D.ups.length > 0;
+    $('#dem-sum').textContent = E && D.st !== 'loading' ? foldLine() : '';
+    $('#dem-kpis').innerHTML = has && E ? kpis() : '';
+    $('#dem-tabs').innerHTML = has ? TABS.map(function (t) {
+      var n = t[0] === 'act' ? '' : t[0] === 'time' ? (ofKind('terms').length || '') : ((cur(t[0]) || { rows: [] }).rows.length || '');
+      return '<button class="chip' + (D.tab === t[0] ? ' on' : '') + '" type="button" role="tab" aria-selected="' + (D.tab === t[0]) + '" data-dtab="' + t[0] + '">' + t[1] + (n ? ' <span class="k">' + n + '</span>' : '') + '</button>';
+    }).join('') : '';
+    var body = '';
+    if (D.st === 'loading') body = '<p class="note">Reading…</p>';
+    else if (!has || !E) body = D.brand ? empty() : '';
+    else body = D.tab === 'act' ? actions() : D.tab === 'intents' ? intentsTable() : D.tab === 'attrs' ? attrsTable() : D.tab === 'time' ? timeTable() : termsTable();
+    $('#dem-body').innerHTML = body;
+    var g = A.granted();
+    $('#dem-up').disabled = !g || !D.brand || !E; $('#dem-up').title = g ? 'The exports from Merchant Center › AI performance: shopping terms, search intents, product attributes' : 'View only — uploading is not granted to this signin';
+    $('#dem-match').disabled = !has || D.st === 'reading' || D.st === 'loading';
+    $('#dem-match').textContent = D.st === 'reading' ? 'Reading the feed…' : D.cat ? '↻ Match again' : '⚡ Match the catalogue';
+    $('#dem-labels').disabled = !D.res; $('#dem-brief').disabled = !D.res;
+  }
+
+  // ---- exits ----
+  function findX(t) { return (D.res || []).filter(function (x) { return x.row.t === t; })[0] || null; }
+  function stamp() { var t = cur('terms'); return D.brand.replace(/[^A-Za-z0-9]+/g, '_') + '_' + D.mkt.toUpperCase() + (t ? '_' + t.to : ''); }
+  function skusCsv(t) {
+    var x = findX(t); if (!x) return;
+    var ps = E.termProducts(x, D.cat, 0);
+    A.csv('AI_demand_' + t.replace(/[^A-Za-z0-9]+/g, '_') + '_' + stamp() + '.csv', ['id', 'title', 'search_term', 'in_title', 'verdict', 'spend_30d', 'conversion_value_30d'],
+      ps.map(function (p) { return [p.id, p.ti, t, p.inTi ? 'yes' : 'no', E.KIND_LABEL[x.v.kind], p.cost || 0, p.value || 0]; }));
+  }
+  function labelsCsv() {
+    if (!D.res) return;
+    var L = E.labelSets(D.res, D.cat);
+    if (!L.rows.length) { A.toast('No product matches a hero or growth term'); return; }
+    A.csv('AI_labels_' + stamp() + '.csv', ['id', 'custom_label', 'ai_terms', 'title'], L.rows.map(function (o) { return [o.id, o.label, o.terms.join(' | '), o.ti]; }));
+    A.toast(n0(L.hero) + ' hero · ' + n0(L.growth) + ' growth SKUs — map custom_label to a free slot in FeedHero');
+  }
+  function srcWords() { var t = cur('terms') || cur('intents'); return 'Source: Google Merchant Center › AI performance' + (t ? ' · ' + (t.country || '') + (t.category ? ' · ' + t.category : '') + ' · ' + perLabel(t) : ''); }
+  function termBrief(t) {
+    var x = findX(t); if (!x) return;
+    var r = x.row, mk = A.label(D.mkt), ads = D.ads && D.ads.st === 'ready';
+    var lines = [srcWords(), '',
+      'Search term: "' + r.t + '" — asked ' + pct(r.f) + ' as often as the most-asked term in the category',
+      'Share of voice: ' + (r.sov == null ? 'not reported by Google' : pct(r.sov)) + ' · Google shows ' + (r.ps == null ? '—' : n0(r.ps)) + ' of our products',
+      'In the catalogue: ' + n0(x.m.n) + ' products (' + n0(x.m.groups) + ' styles) say it — title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt)];
+    if (ads && x.m.n) lines.push('Google Ads, ' + D.ads.range + ': these products return ' + roasTxt(x.m.ads.roas) + ' against ' + roasTxt(D.cat.tot.roas) + ' for the catalogue');
+    lines.push('', 'Verdict: ' + E.KIND_LABEL[x.v.kind], 'Action: ' + x.v.act);
+    if (x.v.fields.length) lines.push('Fields: ' + x.v.fields.map(function (f) { return 'g:' + f; }).join(', '));
+    if (x.v.kind === 'hero' || x.v.kind === 'growth') lines.push('Label: ' + (x.v.kind === 'hero' ? 'AI_Hero_Terms' : 'AI_Growth_Opportunity') + ' in a free custom label');
+    lines.push('', 'SKU list: download "⬇ These SKUs" for this term from AI visibility › AI shopping demand and attach it.', 'Done when: the term reads naturally in the fields above on every listed product, and the next weekly report is uploaded to read the share of voice again.');
+    wfTab('/workflow?brief=' + b64url({ client: D.brand, task: 'AI Demand - ' + r.t + ' - ' + E.KIND_LABEL[x.v.kind] + ' - ' + D.brand + ' ' + mk + ' - ' + mmyy(), cat: 'keyword', scope: lines.join('\n') }));
+  }
+  function intentBrief(t) {
+    var it = cur('intents'); if (!it) return;
+    var x = (D.ints || E.matchIntents(it.rows, null)).filter(function (o) { return o.row.t === t; })[0]; if (!x) return;
+    var r = x.row, lines = [srcWords(), '', 'Search intent: "' + r.t + '" — asked ' + pct(r.f) + ' as often as the most-asked intent',
+      'Share of voice: ' + (r.sov == null ? 'not reported by Google' : pct(r.sov)) + ' · Google shows ' + (r.ps == null ? '—' : n0(r.ps)) + ' of our products'];
+    if (x.m) lines.push('In the catalogue: ' + n0(x.m.n) + ' products use the words "' + x.key + '"');
+    lines.push('', 'Action: ' + x.play.say, 'Fields: ' + x.play.fields.map(function (f) { return 'g:' + f; }).join(', '), '', 'Done when: the products that suit this intent say so in the fields above, in the shopper’s own words.');
+    wfTab('/workflow?brief=' + b64url({ client: D.brand, task: 'AI Demand - Intent - ' + r.t + ' - ' + D.brand + ' ' + A.label(D.mkt) + ' - ' + mmyy(), cat: 'keyword', scope: lines.join('\n') }));
+  }
+  function allBrief() {
+    if (!D.res) return;
+    var t = cur('terms'), H = E.headline(t.rows, D.res), L = E.labelSets(D.res, D.cat);
+    var list = D.res.slice().sort(function (a, b) { return b.v.score - a.v.score; });
+    var lines = [srcWords(), '', 'AI share of voice (weighted by term frequency): ' + pct(H.sov) + ' over ' + H.known + ' of ' + H.terms + ' terms',
+      H.kinds.hero + ' hero · ' + H.kinds.growth + ' growth · ' + H.kinds.wording + ' wording gaps · ' + H.kinds.range + ' range gaps', '', 'DO FIRST'];
+    list.filter(function (x) { return x.v.kind === 'growth' || x.v.kind === 'wording'; }).slice(0, 10).forEach(function (x, i) { lines.push((i + 1) + '. "' + x.row.t + '" (share ' + (x.row.sov == null ? 'not reported' : pct(x.row.sov)) + ', ' + n0(x.m.n) + ' products) — ' + x.v.act); });
+    var hero = list.filter(function (x) { return x.v.kind === 'hero'; });
+    if (hero.length) { lines.push('', 'PROTECT'); hero.forEach(function (x) { lines.push('- "' + x.row.t + '" (share ' + pct(x.row.sov) + ', ' + n0(x.m.n) + ' products)'); }); }
+    lines.push('', 'LABELS: ' + n0(L.hero) + ' SKUs AI_Hero_Terms · ' + n0(L.growth) + ' SKUs AI_Growth_Opportunity — sheet from "⬇ Label SKUs", mapped to a free custom label.',
+      'Done when: titles and highlights carry the terms above on the listed products, the labels are live, and the next weekly report is uploaded to read the share of voice again.');
+    wfTab('/workflow?brief=' + b64url({ client: D.brand, task: 'AI Demand - Terms, labels and highlights - ' + D.brand + ' ' + A.label(D.mkt) + ' - ' + mmyy(), cat: 'keyword', scope: lines.join('\n') }));
+  }
+
+  // ---- wiring ----
+  var card = $('#dem-card');
+  card.addEventListener('click', function (e) {
+    var t = e.target, el;
+    if ((el = t.closest('[data-dtab]'))) { D.tab = el.getAttribute('data-dtab'); lsSet('fcc-aivis-demtab', D.tab); render(); return; }
+    if ((el = t.closest('[data-drop]'))) { dropReading(el.getAttribute('data-drop')); return; }
+    if ((el = t.closest('[data-skus]'))) { skusCsv(el.getAttribute('data-skus')); return; }
+    if ((el = t.closest('[data-tbrief]'))) { termBrief(el.getAttribute('data-tbrief')); return; }
+    if ((el = t.closest('[data-ibrief]'))) { intentBrief(el.getAttribute('data-ibrief')); return; }
+    if ((el = t.closest('[data-dsrt]'))) { D.srt = el.getAttribute('data-dsrt'); render(); return; }
+    if ((el = t.closest('tr[data-term]'))) { var k = el.getAttribute('data-term'); D.open = D.open === k ? '' : k; render(); return; }
+  });
+  card.addEventListener('change', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-per]') : null;
+    if (el) { D.sel[el.getAttribute('data-per')] = el.value; if (D.cat) rematch(); render(); }
+  });
+  $('#dem-up').addEventListener('click', function () { $('#dem-file').click(); });
+  $('#dem-file').addEventListener('change', function () { var f = Array.prototype.slice.call(this.files || []); this.value = ''; upload(f); });
+  $('#dem-match').addEventListener('click', match);
+  $('#dem-labels').addEventListener('click', labelsCsv);
+  $('#dem-brief').addEventListener('click', allBrief);
+  document.addEventListener('fcc-aiv-market', onMarket);
+  onMarket();
+
+  /* ---- EVERY SECTION FOLDS (the standing rule): the card head is the toggle, a chevron at its right; a fresh
+     device opens the demand report and the live answers; what a person folds or opens is this device's
+     (fcc-aivis-fold); the phone's skim view leaves these cards to the page (data-no-digest), so one fold serves
+     both screens and a fresh phone opens the demand report alone; a #hash opens the card it names for the visit; print opens everything. ---- */
+  var FKEY = 'fcc-aivis-fold', FOPEN = window.innerWidth < 760 ? { 'dem-card': 1 } : { 'dem-card': 1, 'live-card': 1 }, FOLD = lsGet(FKEY, {}) || {};
+  var cards = Array.prototype.slice.call(document.querySelectorAll('main .card')).filter(function (c) { return c.id && c.querySelector(':scope > .chead'); });
+  function foldBar() { var b = $('#fold-all'), any = cards.some(function (c) { return c.classList.contains('folded'); }); b.textContent = any ? '⊕ Open all' : '⊖ Fold all'; b.setAttribute('data-to', any ? 'open' : 'fold'); }
+  function foldSet(c, open, keep) {
+    c.classList.toggle('folded', !open);
+    var b = c.querySelector(':scope > .chead .fold'); if (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.title = open ? 'Fold this section' : 'Open this section'; }
+    if (keep) { FOLD[c.id] = open ? 1 : 0; lsSet(FKEY, FOLD); }
+    foldBar();
+  }
+  cards.forEach(function (c) {
+    var hd = c.querySelector(':scope > .chead'), b = document.createElement('button');
+    b.type = 'button'; b.className = 'fold'; b.textContent = '▾'; b.setAttribute('aria-label', 'Fold or open ' + ((hd.querySelector('h3') || {}).firstChild || {}).textContent);
+    hd.appendChild(b);
+    foldSet(c, Object.prototype.hasOwnProperty.call(FOLD, c.id) ? !!FOLD[c.id] : !!FOPEN[c.id], false);
+    hd.addEventListener('click', function (e) {
+      if (e.target.closest('.tools,a,input,select,label') || (e.target.closest('button') && !e.target.closest('.fold'))) return;   // a head never swallows its own controls
+      foldSet(c, c.classList.contains('folded'), true);
+    });
+  });
+  $('#fold-all').addEventListener('click', function () { var open = this.getAttribute('data-to') === 'open'; cards.forEach(function (c) { foldSet(c, open, true); }); });
+  function hashOpen() {
+    var id = location.hash && location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)) : '', el = id ? document.getElementById(id) : null;
+    var c = el && el.closest ? el.closest('.card.folded') : null;
+    if (c) { foldSet(c, true, false); setTimeout(function () { try { el.scrollIntoView({ block: 'start' }); } catch (e) {} }, 60); }
+  }
+  window.addEventListener('hashchange', hashOpen); hashOpen();
 })();
 </script>

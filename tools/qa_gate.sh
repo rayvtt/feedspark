@@ -558,6 +558,12 @@ if node tools/test_aivis.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ AI visibility harness FAILED — see node tools/test_aivis.mjs"; FAIL=1
 fi
+echo "── qa-gate 3h6d2/7: AI shopping demand (Merchant Center AI performance: the export, SKU matching, ROAS, verdicts, the store)"
+if node tools/test_aidemand.mjs >/dev/null 2>&1; then
+  echo "   ✓ AI shopping demand harness passes"
+else
+  echo "   ✗ AI shopping demand harness FAILED — see node tools/test_aidemand.mjs"; FAIL=1
+fi
 
 echo "── qa-gate 3h6g/7: Title Lab (the eight attributes, the mask, title against field, before → after, the join, wiring)"
 if node tools/test_titles.mjs >/dev/null 2>&1; then

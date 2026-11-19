@@ -74,6 +74,8 @@ const pcTxt = (v) => (Math.round(v * 10) / 10) + '%';
     const pg = await ctx.newPage();
     const errs = []; pg.on('pageerror', (e) => errs.push(String(e)));
     await pg.addInitScript(STUB);
+    /* every section folds since 19 Nov 2026 — this harness reads the cards a fresh device opens folded, so it opens them all */
+    await pg.addInitScript(() => { try { localStorage.setItem('fcc-aivis-fold', JSON.stringify({ 'dem-card': 1, 'live-card': 1, 'sov-card': 1, 'surf-card': 1, 'dom-card': 1, 'cand-card': 1, 'prod-card': 1, 'trend-card': 1, 'setup-card': 1, 'how-card': 1 })); } catch (e) {} });
     await pg.goto('file://' + tmp);
     await pg.waitForSelector('#mx button.cell[data-i]', { timeout: 8000 });
     const grid = await pg.evaluate(() => ({ rows: document.querySelectorAll('#mx tbody tr').length, cols: document.querySelectorAll('#mx thead th.sf').length, cells: document.querySelectorAll('#mx button.cell[data-i]').length }));
@@ -145,6 +147,8 @@ const pcTxt = (v) => (Math.round(v * 10) / 10) + '%';
     const mc = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     const mp = await mc.newPage();
     await mp.addInitScript(STUB);
+    /* every section folds since 19 Nov 2026 — this harness reads the cards a fresh device opens folded, so it opens them all */
+    await mp.addInitScript(() => { try { localStorage.setItem('fcc-aivis-fold', JSON.stringify({ 'dem-card': 1, 'live-card': 1, 'sov-card': 1, 'surf-card': 1, 'dom-card': 1, 'cand-card': 1, 'prod-card': 1, 'trend-card': 1, 'setup-card': 1, 'how-card': 1 })); } catch (e) {} });
     await mp.goto('file://' + tmpS);
     await mp.waitForSelector('#mx button.cell[data-i]', { timeout: 8000 });
     await mp.evaluate(() => window.FCCDigest && window.FCCDigest.expandAll && window.FCCDigest.expandAll());
