@@ -307,7 +307,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     });
     ok('the Management 🔒 tab is absent and the sell £ is read-only', !r.shown && r.mgmt === false && !r.unitEd, r);
     ok('the Optimisation bank is read-only for an AM: tier buttons disabled, no add form, it says Management sets the tiers',
-      await p.evaluate(() => Array.from(document.querySelectorAll('#bk-body button[data-bkt]')).every((x) => x.disabled) && document.querySelectorAll('#bk-body tr').length === 12 && !document.querySelector('#bk-add details') && /Management sets the tiers/.test(document.querySelector('#bk-sum').textContent)));
+      await p.evaluate(() => Array.from(document.querySelectorAll('#bk-body button[data-bkt]')).every((x) => x.disabled) && document.querySelectorAll('#bk-body tr').length === 15 && !document.querySelector('#bk-add details') && /Management sets the tiers/.test(document.querySelector('#bk-sum').textContent)));
     ok('no console error for the AM signin', !errs.filter((e) => !/403/.test(e)).length, errs.slice(0, 3));
     await ctx.close(); try { fs.unlinkSync(tmp); } catch (e) {}
   }
@@ -345,7 +345,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     const bk0 = await p.evaluate(() => ({ rows: document.querySelectorAll('#bk-body tr').length, seg: document.querySelectorAll('#svc-prev [data-pv]').length,
       hl: (document.querySelector('#bk-body tr[data-bkrow="highlights"] .bk-g') || {}).value, svc: !!document.querySelector('#bk-body tr[data-bkrow="x_stock_rc"]'),
       t2svc: Array.from(document.querySelectorAll('.tier[data-opt="go+ar"] .tk-c.svc')).map((x) => x.textContent) }));
-    ok('the Optimisation bank lists every optimisation (10 package lines + the two seeded services) with what each gives', bk0.rows === 12 && bk0.hl === '+4 highlights per product' && bk0.svc, bk0);
+    ok('the Optimisation bank lists every optimisation (10 package lines + the five seeded services) with what each gives', bk0.rows === 15 && bk0.hl === '+4 highlights per product' && bk0.svc, bk0);
     ok('the Tier 2 card carries the seeded services as what-it-gives chips (Stock RC%, Restock)', bk0.t2svc.some((t) => /Stock RC%/.test(t)) && bk0.t2svc.some((t) => /Restock/.test(t)), bk0.t2svc);
     ok('the preview switch offers Today · Tier 1 · Tier 2 · Tier 3', bk0.seg === 4);
     await p.click('#svc-prev [data-pv="go+ar+rf"]'); await p.waitForTimeout(500);

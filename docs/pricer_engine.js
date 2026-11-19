@@ -643,7 +643,20 @@
     x_stock_rc: { label: 'Stock range completion', kind: 'service', pkg: 'ar', gives: 'Stock RC%: held at the brand\'s line',
       why: 'products held back from Google until enough of their sizes are in stock — set and read on /stock' },
     x_restock: { label: 'Restock alerts', kind: 'service', pkg: 'ar', gives: 'Restock: demanded-but-unbuyable products flagged daily',
-      why: 'products shoppers still ask for in Google Ads that cannot be bought — read on /restock' } };
+      why: 'products shoppers still ask for in Google Ads that cannot be bought — read on /restock' },
+    // GMC VISIBILITY-LED SERVICES (Ray, 19 Nov 2026: "with the new GMC visibility report … producing a bunch of
+    // different services … be more inclusive within this pricing module, and this will build the entire AI proposal
+    // package"). Seeded PLANNED and unpriced — they read "coming — included when live" until Management sets the
+    // status and a monthly £ in the bank; the tier is the team's to move in ⚙ Customise.
+    x_ai_sov: { label: 'AI Visibility & Share of Voice', kind: 'service', pkg: 'rf', status: 'planned',
+      gives: 'AI Share of Voice per term, tied to PMax revenue',
+      why: "GMC's Shopping terms, Search intent and Product attributes read beside FeedHero's ROAS — the closed loop: share of voice on a term moved, and the revenue it drove" },
+    x_ai_labels: { label: 'Dynamic AI custom labels', kind: 'service', pkg: 'rf', status: 'planned',
+      gives: 'AI_Hero_Terms · AI_Growth_Opportunity in custom labels',
+      why: 'SKUs matching high-share, high-frequency AI terms vs under-indexed opportunity SKUs tagged in custom_label_0–4 — the basis for dedicated PMax asset groups or Shopping priorities' },
+    x_intent_map: { label: 'Intent & attribute mapping', kind: 'service', pkg: 'ar', status: 'planned',
+      gives: 'intent-mapped titles & highlights',
+      why: "Google Ads search terms cross-read with GMC's Search intent and Product attributes, so SparkAI embeds attributes (merino wool, waterproof) and intents (wedding guest, business casual) instead of keyword stuffing" } };
   var BANK_STATUS = ['live', 'pilot', 'building', 'planned'];
   // does an option carry an item in this tier?
   function inOption(option, pkg) {

@@ -553,7 +553,7 @@ export function sanitizeRoadmapPut(body, cur, ctx) {
 // its label, kind (feed | service), fields, price (£ a product / set-up hours / £ a month), delivery status and why.
 // A seed the team removed is {del: true}; any other custom removed is simply absent (kvmerge, under the read stamp).
 export const BANK_TIERS = ['go', 'ar', 'rf', 'off'];
-export const BANK_SEEDS = ['x_stock_rc', 'x_restock'];
+export const BANK_SEEDS = ['x_stock_rc', 'x_restock', 'x_ai_sov', 'x_ai_labels', 'x_intent_map'];
 const BANK_BUILTIN = PKG_LINE_KEYS.filter((k) => k !== 'client');
 export function bankKey(k) { return BANK_BUILTIN.indexOf(k) >= 0 ? 'builtin' : (/^x_[a-z0-9_]{2,30}$/.test(String(k || '')) ? 'custom' : null); }
 function cleanBank(k, v) {
