@@ -2463,12 +2463,21 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   function simMarkets() { return mkts().filter(function (m) { return m.wk && m.wk.g; }); }
   function simMkt() { return mById(SIM.cmpid); }
+  function simUse(cmpid) {
+    SIM.cmpid = cmpid || '';
+    if (SIM.D && SIM.D.cmpid === SIM.cmpid) return;
+    var x = RD[SIM.cmpid];
+    if (x) { SIM.E = x.E; SIM.H = x.H; SIM.D = x.D; SIM.rules.block.v = []; SIM.q = ''; SIM.all = false; simHeroMark(); }
+  }
   function simLine() { var m = simMkt(), ln = m && m.av && m.av.held && m.av.held.line; return ln && isFinite(+ln.x) ? +ln.x : null; }
   function renderSim() {
     var ms = simMarkets(), sel = $('#sim-mkt');
+    // A READ NEVER OUTLIVES ITS MARKET (Ray, 19 Nov 2026: a Reiss US simulator showing GB's 28,795 — "but this is US not
+    // GB"): when the market in view changes, the simulator moves with it, taking that market's own read if this page
+    // already holds one; another market's products are never drawn under this one's name.
     if (!SIM.cmpid || !ms.some(function (m) { return m.cmpid === SIM.cmpid; })) {
       var pick = ms.filter(function (m) { return S.mks.length && m.market === S.mks[0]; })[0] || ms[0];
-      if (!SIM.D) SIM.cmpid = pick ? pick.cmpid : '';
+      if (!SIM.busy) simUse(pick ? pick.cmpid : '');
     }
     sel.innerHTML = ms.map(function (m) { return '<option value="' + esc(m.cmpid) + '"' + (m.cmpid === SIM.cmpid ? ' selected' : '') + '>' + esc(m.client + ' ' + m.market) + '</option>'; }).join('')
       || '<option value="">No market with a Google feed in view</option>';
@@ -2629,13 +2638,13 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var E = SIM.E, r = SIM.rules, hz = r.hero.on && !simHeroWhy() ? r : Object.assign({}, r, { hero: { on: false } }), res = E.simulate(D, hz, { cat: SIM.cat, mode: SIM.mode }), share = function (n, of) { return of ? Math.round((n / of) * 1000) / 10 + '%' : '—'; };
     box.hidden = false;
     var info = D.info || {};
-    st.textContent = m.client + ' ' + m.market + ' · ' + n0(D.n) + ' master products, ' + n0(res.inStock) + ' in stock across ' + n0(D.styles) + ' styles'
+    st.textContent = m.client + ' ' + m.market + ' · ' + n0(D.n) + ' master products, ' + n0(res.inStock) + ' in stock' + (res.pre ? ' (' + n0(res.pre) + ' on backorder / pre-order, not counted)' : '') + ' across ' + n0(D.styles) + ' styles'
       + (D.join ? ' · joined to the Google feed on ' + D.join.h : ' · not joined to the Google feed') + (info.lastImport ? ' · master imported ' + String(info.lastImport).slice(0, 16) : '') + ' · read ' + since(D.at);
     var foc = document.activeElement, fid = foc && (foc.getAttribute('data-rng') || foc.getAttribute('data-num') || foc.id), caret = foc && foc.id === 'sim-bq' ? foc.selectionStart : null;
     if (!(foc && foc.getAttribute && foc.getAttribute('data-rng'))) $('#sim-ctl').innerHTML = simCtl();
     else $$('#sim-ctl .sl').forEach(function (el) { var k = el.getAttribute('data-r'), x = r[k], c = SIM_RULES[k]; if (k === 'block' || !c) return; el.querySelector('.v').textContent = x.on ? c.u(x.v, x.m) : 'off'; el.classList.toggle('off', !x.on); var n = el.querySelector('[data-num]'); if (n) n.value = x.v; $$('[data-pre]', el).forEach(function (b) { b.classList.toggle('on', x.on && +b.getAttribute('data-pre').split('|')[1] === x.v); }); });
     if (fid && fid !== (foc.getAttribute('data-rng') || '')) { var back = fid === 'sim-bq' ? $('#sim-bq') : $('#sim-ctl [data-num="' + fid + '"]'); if (back) { back.focus(); if (caret != null) try { back.setSelectionRange(caret, caret); } catch (e) {} } }
-    $('#sim-sum').innerHTML = '<div class="it"><span>In stock in the master</span><b>' + n0(res.inStock) + '</b></div>'
+    $('#sim-sum').innerHTML = '<div class="it"><span>In stock in the master</span><b>' + n0(res.inStock) + '</b>' + (res.pre ? '<span title="Backorder and pre-order rows are a size the style is made in, never one counted in stock">+ ' + n0(res.pre) + ' on backorder / pre-order, not counted</span>' : '') + '</div>'
       + '<div class="it"><span>Held back by these rules</span><b>' + n0(res.held) + '</b><span>' + share(res.held, res.inStock) + ' of in stock' + (res.casc && res.casc.extra ? ' · +' + n0(res.casc.extra) + ' from the cascade' : '') + '</span></div>'
       + '<div class="it"><span>Stays live</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + '</span></div>'
       + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ', not live in the Google feed' : 'not joined to the Google feed') + '</span></div>';
@@ -2683,7 +2692,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var c = SIM_RULES[k]; v = Math.round(+v); if (!isFinite(v) || v < 1) return;
     SIM.rules[k].v = Math.min(k === 'rc' || k === 'hero' ? 100 : 999, v); SIM.rules[k].on = true; simSave(); simLater();
   }
-  $('#sim-mkt').addEventListener('change', function () { SIM.cmpid = this.value; renderSim(); });
+  $('#sim-mkt').addEventListener('change', function () { simUse(this.value); renderSim(); });
   $('#sim-load').addEventListener('click', simLoad);
   $('#sim-more').addEventListener('click', function () { SIM.all = !SIM.all; simDraw(); });
   $('#sim-tier').addEventListener('click', function (e) { var b = e.target.closest('[data-st]'); if (!b) return; SIM.cat = b.getAttribute('data-st'); SIM.all = false; simSave(); simDraw(); });
@@ -2779,7 +2788,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   }
   function pidFind() { var x = pidRead(); PID.hit = x ? x.E.productFind(x.D, PID.q, 12) : null; if (x) PID.hit.cmpid = PID.cmpid; }
   var PID_TD = { 0: 'not joined', 1: 'live', 2: 'sent out of stock', 3: 'not in the feed' };
-  var PID_ST = { 1: 'In stock', 0: 'Out of stock', '-1': 'Not stated' };
+  var PID_ST = { 1: 'In stock', 0: 'Out of stock', 2: 'Backorder / pre-order', '-1': 'Not stated' };
   function pidPct(v) { return v == null ? '—' : (Math.round(v * 10) / 10) + '%'; }
   function pidCk(k, c, R, p) {
     var TAG = { hold: '<span class="tg or">Holds it back</span>', pass: '<span class="tg gr">Passes</span>', unread: '<span class="tg">Not stated</span>', scope: '<span class="tg">Outside its range</span>', noline: '<span class="tg">Cut-off not readable</span>', none: '<span class="tg">No such rule</span>' };
@@ -2833,6 +2842,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var styN = hit.kind === 'style' ? 'Style ' + p.style + ' — checking its first size, ' + (p.s || p.id) + '; click any size below to check it · ' : '';
     if (p.verdict === 'live') { cls += ' ok'; head = 'Live in Google'; sub = (p.kept ? 'Its style is under the range-completion line, but it is a hero size and ' + m.market + ' runs hero-size rules — kept live.' : p.by ? 'A rule below would hold it back, yet Google carries it — the rule may not reach it, or the feed has not caught up.' : 'In stock in the master and live in the Google feed.'); }
     else if (p.verdict === 'out') { cls += ' out'; head = 'Out of stock in the master'; sub = 'The master states it out of stock, so no stock rule is involved — Google ' + (p.td === 1 ? 'still carries it as live' : feedW === 'not in the feed' ? 'does not carry it' : 'carries it ' + feedW) + '.'; }
+    else if (p.verdict === 'pre') { cls += ' out'; head = 'On backorder / pre-order in the master'; sub = 'The master does not state it in stock, so no stock rule holds it back and it is not counted in stock. Google feed: ' + feedW + '.'; }
     else if (p.verdict === 'unstated') { head = 'The master states no stock for it'; sub = 'No availability word and no quantity — no rule can judge it. Google feed: ' + feedW + '.'; }
     else if (p.verdict === 'unjoined') { head = 'Not matched to the Google feed'; sub = 'The master and the Google feed could not be joined on this product, so its Google state is unknown.'; }
     else { cls += ' hold'; var BY = { rc: 'by range completion', qty: 'by the stock quantity threshold', excl: 'by the stock-based exclusion' + (R.excl.scope ? ' · ' + R.excl.scope : '') };
@@ -2843,7 +2853,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     var rcW = p.rc == null ? '—' : pidPct(p.rc);
     var tiles = '<div class="it"><span>Range completion applied</span><b>' + rcW + '</b><span>' + (p.frc != null ? 'FeedHero’s range_comp' + (p.mrc != null ? ' · master ' + pidPct(p.mrc) : '') : sty.made ? n0(sty.in) + ' of ' + n0(sty.made) + ' sizes in stock' : 'no style to measure') + (R.rc.on && R.rc.v != null ? ' · line ' + (R.rc.how === 'line' ? '≈' : '') + pidPct(R.rc.v) : '') + '</span></div>'
       + '<div class="it"><span>Sizes in stock</span><b>' + n0(sty.in) + '</b><span>of ' + nw(sty.made, 'size') + ' made' + (sty.src ? ' · FeedHero ' + n0(sty.src.in) + ' of ' + n0(sty.src.n) : '') + '</span></div>'
-      + '<div class="it"><span>Sizes out of stock</span><b>' + n0(sty.out) + '</b><span>' + (sty.none ? n0(sty.none) + ' not stated' : 'every size’s stock stated') + (sty.src ? ' · FeedHero ' + n0(sty.src.out) : '') + '</span></div>'
+      + '<div class="it"><span>Sizes out of stock</span><b>' + n0(sty.out) + '</b><span>' + (sty.pre ? n0(sty.pre) + ' on backorder · ' : '') + (sty.none ? n0(sty.none) + ' not stated' : 'every size’s stock stated') + (sty.src ? ' · FeedHero ' + n0(sty.src.out) : '') + '</span></div>'
       + '<div class="it"><span>This product</span><b>' + esc(PID_ST[p.st]) + '</b><span>' + (p.q == null ? 'no quantity stated' : nw(p.q, 'unit')) + ' · Google: ' + esc(feedW) + '</span></div>';
     var hero = p.hz === 1 ? '<div class="ck"><h4>' + heroIcon() + 'Hero size <span class="tg or">Hero</span></h4><p>' + esc(p.s + ' is a hero size on ' + m.client + '’s map' + (sty.hero ? ' — the style has ' + sty.hero.in + ' of its ' + sty.hero.made + ' hero sizes in stock' : '') + '.' + (R.hero.on ? ' ' + m.market + ' runs hero-size rules' + (R.hero.why ? ' (' + R.hero.why.replace(/\.$/, '') + ')' : '') + '.' : ' No hero-size rule runs in ' + m.market + '.')) + '</p></div>'
       : p.hz === 0 ? '<div class="ck"><h4>Hero size <span class="tg">Not a hero size</span></h4><p>' + esc((p.s || 'This size') + ' is not on the hero list for its product type.') + '</p></div>' : '';

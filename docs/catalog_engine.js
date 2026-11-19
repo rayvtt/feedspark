@@ -777,9 +777,14 @@
     for (var i = 0; i < (headers || []).length; i++) if (/^(quantity|qty|stockqty|stocklevel|stockquantity|inventory|inventorylevel|onhand)$/.test(s0(headers[i]).replace(/^[a-z]{1,4}:/i, '').toLowerCase().replace(/[^a-z0-9]+/g, ''))) return i;
     return -1;
   }
+  // A PRE-ORDER / BACKORDER IS NOT IN STOCK (Ray, 19 Nov 2026, over Reiss US's simulator reading "In stock in the
+  // master 28,795": "Masterfeed instock today would be 27568 skus" — 27,568 in_stock + 607 backorder in the file): it is
+  // its own state 'pre' — a size the style is made in, never one counted in stock, held back or live by the master —
+  // the same word table the In stock card's stockTally reads (availBucket 'pre'). The FEED's pre-order stays live.
   function stockOf(av, qty) {
     var a = VOCAB.availability(low(plain(Array.isArray(av) ? av[0] : av)));
-    if (a === 'in_stock' || a === 'preorder' || a === 'backorder') return 'in';
+    if (a === 'preorder' || a === 'backorder') return 'pre';
+    if (a === 'in_stock') return 'in';
     if (a === 'out_of_stock') return 'out';
     var q = parseFloat(String(qty == null ? '' : qty).replace(/,/g, ''));
     if (isFinite(q)) return q > 0 ? 'in' : 'out';
@@ -979,7 +984,7 @@
   }
   function stockRows(feed, src) {
     var hdr = null, pl = null, qi = -1, sample = [], join = feed ? -1 : -3, map = null, on = '', joinH = '', rate = 0, n = 0;
-    var R = { id: [], t: [], s: [], g: [], st: [], q: [], c: [], cs: [], br: [], gd: [], td: [], rc: [] }, sSt = 0, sRc = 0;
+    var R = { id: [], t: [], s: [], g: [], st: [], q: [], c: [], cs: [], br: [], gd: [], td: [], rc: [] }, sSt = 0, sRc = 0, nPre = 0;
     var gi = new Map(), gn = [], run = [], gpt = [], hasQ = 0, catF = 0, catM = 0;
     function first(k, row) { var c = cands(k, row, pl); if (!c.length) return ''; var v = c[0].v; return plain(Array.isArray(v) ? v[0] : v); }
     function decide() {
@@ -1010,7 +1015,7 @@
         if (fpt && g >= 0 && !gpt[g]) gpt[g] = fpt;
       }
       R.id.push(idv.slice(0, 120)); R.t.push(first('title', row).slice(0, 160)); R.s.push(first('size', row).slice(0, 40));
-      R.g.push(g); R.st.push(st === 'in' ? 1 : st === 'out' ? 0 : -1); R.q.push(qv);
+      R.g.push(g); R.st.push(st === 'in' ? 1 : st === 'out' ? 0 : st === 'pre' ? 2 : -1); if (st === 'pre') nPre++; R.q.push(qv);
       R.c.push(fpt); R.cs.push(fpt ? '' : first('product_type', row).slice(0, 160));
       R.br.push(first('brand', row).slice(0, 60)); R.gd.push(first('gender', row).slice(0, 30)); R.td.push(td); R.rc.push(sk && sk.rc != null ? sk.rc : null);
     }
@@ -1030,7 +1035,7 @@
         if (g >= 0 && gpt[g]) { R.c[i] = gpt[g]; catF++; } else if (R.cs[i]) { R.c[i] = R.cs[i]; catM++; }
       }
       delete R.cs;
-      return { ok: n > 0, n: n, rows: R, run: run, groups: gn, styles: gn.length, hasQty: hasQ > 0, qtyRows: hasQ, qcol: qi >= 0 ? s0(hdr[qi]) : '',
+      return { ok: n > 0, n: n, pre: nPre, rows: R, run: run, groups: gn, styles: gn.length, hasQty: hasQ > 0, qtyRows: hasQ, qcol: qi >= 0 ? s0(hdr[qi]) : '',
         join: join >= 0 ? { h: joinH, on: on, rate: rate } : null, joinWhy: join === -3 ? 'nofeed' : join === -2 ? 'nojoin' : '',
         cat: { feed: catF, master: catM, none: R.c.length - catF - catM }, src: src ? { st: sSt, rc: sRc } : null };
     }
@@ -1158,7 +1163,7 @@
         if (now && h) tBoth++; else if (h) tNew++; else if (now) tRel++;
       }
     }
-    return { mode: mode, inStock: inS, held: held, live: inS - held, take: take, own: own, shared: shared, qtyUnread: qU, noStyle: noS, heroUnread: heroOn ? hU : 0, heroKeep: keepM,
+    return { mode: mode, inStock: inS, pre: D.pre || 0, held: held, live: inS - held, take: take, own: own, shared: shared, qtyUnread: qU, noStyle: noS, heroUnread: heroOn ? hU : 0, heroKeep: keepM,
       casc: mode === 'casc' ? { extra: cx, by: cby, took: H.c.took } : null,
       today: tj ? { joined: tj, held: tNow, both: tBoth, newly: tNew, released: tRel, sim: tBoth + tNew } : null,
       cats: Array.from(cats.values()).sort(function (a, b) { return b[2] - a[2] || b[1] - a[1]; }) };
@@ -1247,16 +1252,16 @@
   // hero mark per size; made = sizes whose stock the master states; src = FeedHero's suppfeed counts over the sizes it lists
   function styleOf(D, g, i, src) {
     var R = D.rows, X = idIndex(D), list = g >= 0 ? X.by[g].slice() : i >= 0 ? [i] : [];
-    var c = { made: 0, in: 0, out: 0, none: 0 }, sc = null, hm = 0, hi = 0;
+    var c = { made: 0, in: 0, out: 0, pre: 0, none: 0 }, sc = null, hm = 0, hi = 0;
     var sizes = list.map(function (j) {
       var st = R.st[j], hz = R.hz ? R.hz[j] : -1, se = src ? src.get(idKey(R.id[j])) : null;
-      if (st === -1) c.none++; else { c.made++; if (st === 1) c.in++; else c.out++; }
+      if (st === -1) c.none++; else { c.made++; if (st === 1) c.in++; else if (st === 2) c.pre++; else c.out++; }
       if (hz === 1 && st !== -1) { hm++; if (st === 1) hi++; }
       if (se) { if (!sc) sc = { n: 0, in: 0, out: 0 }; sc.n++; if (se.st === 'in' || se.st === 'pre') sc.in++; else sc.out++; }
       return { i: j, id: R.id[j], s: R.s[j], st: st, q: R.q[j], td: R.td[j], hz: hz, src: se ? { st: se.st, q: se.q, rc: se.rc } : null };
     });
     var rc = c.made ? (c.in / c.made) * 100 : null;
-    return { g: g, name: g >= 0 && D.groups ? D.groups[g] : '', sizes: sizes, made: c.made, in: c.in, out: c.out, none: c.none,
+    return { g: g, name: g >= 0 && D.groups ? D.groups[g] : '', sizes: sizes, made: c.made, in: c.in, out: c.out, pre: c.pre, none: c.none,
       rc: rc == null ? null : Math.round(rc * 10) / 10, hero: hm ? { made: hm, in: hi, pc: Math.round((hi / hm) * 1000) / 10 } : null, src: sc };
   }
   function inScopeOf(D, i, scope) {
@@ -1286,7 +1291,7 @@
     c.excl = units(rules.excl, true);
     var by = ['rc', 'qty', 'excl'].filter(function (k) { return c[k].state === 'hold'; })[0] || '';
     var v;
-    if (st === 0) v = 'out'; else if (st === -1) v = 'unstated';
+    if (st === 0) v = 'out'; else if (st === 2) v = 'pre'; else if (st === -1) v = 'unstated';
     else if (!td) v = 'unjoined'; else if (td === 1) v = 'live'; else v = 'held';
     var kept = v === 'live' && by === 'rc' && hz === 1 && !!(rules.hero && rules.hero.on) ? 'hero' : '';
     return { i: i, id: R.id[i], t: R.t[i], s: R.s[i], g: R.g[i], style: R.g[i] >= 0 && D.groups ? D.groups[R.g[i]] : '', cat: R.c[i], br: R.br[i],

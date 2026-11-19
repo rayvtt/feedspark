@@ -17522,6 +17522,21 @@
       "name": "KWCal: a batch ties on the day a moment goes live, not its brief-by",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "var mk=evMkt(brand,e), t=new Date(e.date+'T12:00:00Z').getTime(), out=null;"
+    },
+    {
+      "name": "Stock: a backorder / pre-order is its own state, never in stock",
+      "file": "docs/catalog_engine.js",
+      "pattern": "if (a === 'preorder' || a === 'backorder') return 'pre';"
+    },
+    {
+      "name": "Stock simulator: a read follows the market in view (simUse)",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "if (!SIM.busy) simUse(pick ? pick.cmpid : '');"
+    },
+    {
+      "name": "Stock simulator: the tile names the backorder rows it does not count",
+      "file": "docs/FeedSpark_Stock.html",
+      "pattern": "on backorder / pre-order, not counted</span>"
     }
   ]
 }
