@@ -365,14 +365,59 @@ window.addEventListener('load',restore);
   .card.folded>:not(.chead),.card.folded>.chead .tools{display:none!important}
   .fsum{font-size:12px;font-weight:700;color:var(--muted);margin-left:6px}
   @media print{.card.folded>:not(.chead){display:revert!important}.foldbar,.chead .fold{display:none!important}}
-  .dk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
-  .dk .k{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper);min-width:0}
-  .dk .k span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-  .dk .k b{display:block;font-size:22px;font-weight:900;margin:2px 0;font-variant-numeric:tabular-nums}
-  .dk .k small{display:block;font-size:11.5px;color:var(--muted)}
-  .dm-src{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:2px 0 4px}
-  .dm-src select{height:28px}
-  .dm-bar{display:inline-block;width:64px;height:7px;border-radius:4px;background:var(--grid,#EEE);vertical-align:middle;margin-right:6px;overflow:hidden}
+  .dk{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;margin:14px 0 16px}
+  .dk .k{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px 14px 12px;background:var(--paper);min-width:0;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}
+  .dk .k span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.3}
+  .dk .k b{display:block;font-size:24px;font-weight:900;line-height:1.1;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+  .dk .k small{display:block;font-size:11.5px;line-height:1.4;color:var(--muted)}
+  .dk .k.lead{grid-column:span 2;min-width:0}
+  .dk .k.lead b{font-size:30px}
+  .dk .k .meter{display:block;height:6px;border-radius:3px;background:var(--grid,#EEE);margin:8px 0 6px;overflow:hidden}
+  .dk .k .meter i{display:block;height:100%;border-radius:3px;background:var(--orange-deep,#ED6F0B)}
+  .dk button.k{cursor:pointer;transition:border-color .12s,box-shadow .12s}
+  .dk button.k::before{content:'';position:absolute;left:12px;right:12px;top:0;height:3px;border-radius:0 0 3px 3px;background:var(--line)}
+  .dk button.k.hero::before{background:var(--good)}.dk button.k.growth::before{background:var(--orange-deep)}.dk button.k.wording::before{background:var(--vin,#2563EB)}.dk button.k.range::before{background:var(--muted)}
+  .dk button.k:hover{border-color:var(--ink-2)}
+  .dk button.k.on{border-color:var(--orange-deep);box-shadow:0 0 0 2px rgba(237,111,11,.16)}
+  @media(max-width:760px){.dk{grid-template-columns:repeat(2,minmax(0,1fr))}.dk .k.lead{grid-column:span 2}}
+  .dm-src{display:block;margin:4px 0 0;font-size:12px;color:var(--ink-2)}
+  .dm-rep{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .dm-tag{font-weight:900;color:var(--ink)}
+  .dm-m{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:100px;background:var(--wash);border:1px solid var(--line);font-size:11.5px;font-weight:700;white-space:nowrap}
+  .dm-by{color:var(--muted);font-size:11.5px}
+  .dm-pers{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .dm-per{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:2px 4px 2px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:12px}
+  .dm-per>span{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .dm-per b{font-weight:800;white-space:nowrap}
+  .dm-per select{height:26px;border:0;background:transparent;font:inherit;font-weight:800;color:inherit;padding:0 2px;max-width:170px}
+  .dm-per .x{width:26px;height:26px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;line-height:1}
+  .dm-per .x:hover{background:var(--wash);color:var(--risk)}
+  .dm-st{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5}
+  .dm-st b{color:var(--risk)}
+  .dm-match{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--wash);margin:0 0 14px}
+  .dm-match[hidden]{display:none}
+  .dm-match .lb{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+  .dm-match .chip{height:26px;font-size:11.5px}
+  #dem-tabs{gap:0;border-bottom:1px solid var(--line);margin:0 0 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  #dem-tabs::-webkit-scrollbar{display:none}
+  #dem-tabs .chip{flex:none;height:38px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:0 2px;margin:0 18px -1px 0;font-size:13px;color:var(--muted)}
+  #dem-tabs .chip:hover{color:var(--ink)}
+  #dem-tabs .chip.on{color:var(--ink);border-bottom-color:var(--orange-deep);background:none}
+  #dem-tabs .chip .k{font-weight:700;color:var(--muted);margin-left:5px}
+  .dm-vf{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+  .dm-vf .chip{height:26px;font-size:11.5px}
+  #dem-body table.t td{padding-top:10px;padding-bottom:10px;vertical-align:middle}
+  #dem-body table.t td small{color:var(--muted)}
+  #dem-body table.t td.num{font-variant-numeric:tabular-nums}
+  #dem-body>.note{margin-top:10px;line-height:1.5}
+  .dm-in{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);font-size:11.5px;margin:0 6px 6px 0}
+  .dm-in b{font-variant-numeric:tabular-nums}
+  .dm-in.z{color:var(--muted)}
+  .dm-xw{padding:6px 2px 4px}
+  .dm-xw h5{margin:12px 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .dm-sec{margin:18px 0 4px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .dm-sec:first-child{margin-top:4px}
+  .dm-bar{display:inline-block;width:72px;height:6px;border-radius:4px;background:var(--grid,#EEE);vertical-align:middle;margin-right:6px;overflow:hidden}
   .dm-bar i{display:block;height:100%;border-radius:4px;background:var(--vin,#2563EB)}
   .dm-bar.s i{background:var(--orange-deep,#ED6F0B)}
   .vk{display:inline-block;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:100px;border:1px solid var(--line);white-space:nowrap}
@@ -383,14 +428,15 @@ window.addEventListener('load',restore);
   .dm-dl{font-size:11px;font-weight:800;margin-left:4px}
   .dm-dl.up{color:var(--good)}.dm-dl.dn{color:var(--risk)}
   tr.dm-x>td{background:rgba(245,166,35,.05);white-space:normal}
-  .dm-act{font-size:13px;line-height:1.5;margin:2px 0 8px;max-width:900px}
+  .dm-act{font-size:13.5px;line-height:1.55;margin:4px 0 10px;max-width:820px;color:var(--ink)}
   .dm-f{display:inline-block;font:700 11px/1 ui-monospace,Menlo,monospace;padding:3px 6px;border-radius:6px;background:var(--wash);border:1px solid var(--line);margin:0 4px 4px 0}
-  .dm-empty{border:1px dashed var(--line);border-radius:12px;padding:18px;margin:10px 0;font-size:13px;line-height:1.55;color:var(--ink-2)}
-  .dm-empty ol{margin:8px 0 0 18px;padding:0}
-  .dm-rank{display:grid;grid-template-columns:28px 104px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+  .dm-empty{border:1px dashed var(--line);border-radius:14px;padding:20px 22px;margin:12px 0 4px;font-size:13px;line-height:1.6;color:var(--ink-2);max-width:760px}
+  .dm-empty ol{margin:10px 0 0 18px;padding:0}
+  .dm-empty li{margin:4px 0}
+  .dm-rank{display:grid;grid-template-columns:24px 108px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px 0;border-top:1px solid var(--line)}
   .dm-rank:first-child{border-top:0}
   .dm-rank .n{font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
-  .dm-rank .w b{display:block;font-size:13.5px}.dm-rank .w span{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  .dm-rank .w b{display:block;font-size:14px;margin-bottom:3px}.dm-rank .w b small{font-weight:600;color:var(--muted);font-size:11.5px}.dm-rank .w span{display:block;font-size:12.5px;color:var(--ink-2);line-height:1.55;max-width:760px}
   .dm-rank .b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   @media(max-width:760px){.dm-rank{grid-template-columns:24px minmax(0,1fr)}.dm-rank .w,.dm-rank .b{grid-column:2}.dm-rank .b{justify-content:flex-start}}
 </style>
@@ -422,7 +468,7 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="foldbar"><button class="btn" id="fold-all" type="button">⊖ Fold all</button></div>
   <section class="card" data-no-digest id="dem-card">
-    <div class="chead"><div class="sp"><h3>AI shopping demand<span class="fsum" id="dem-sum"></span></h3><p class="ch" id="dem-sub">What shoppers ask Google's AI surfaces for in this category — Merchant Center's AI performance report — matched to the products that can answer it.</p></div>
+    <div class="chead"><div class="sp"><h3>AI shopping demand<span class="fsum" id="dem-sum"></span></h3><p class="ch" id="dem-sub">What shoppers ask Google's AI for, matched to the products that can answer it.</p></div>
       <div class="tools">
         <input type="file" id="dem-file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" multiple hidden>
         <button class="btn go" id="dem-up" type="button" title="The exports from Merchant Center › AI performance: shopping terms, search intents, product attributes">⇪ Upload report</button>
@@ -432,7 +478,7 @@ window.addEventListener('load',restore);
       </div></div>
     <div class="dm-src" id="dem-src"></div>
     <div class="dk" id="dem-kpis"></div>
-    <div class="chips" id="dem-flds" role="group" aria-label="Feed fields a term is matched on" style="margin-bottom:8px"></div>
+    <div class="dm-match" id="dem-flds" role="group" aria-label="Feed fields a term is matched on" hidden></div>
     <div class="chips" id="dem-tabs" role="tablist" aria-label="AI shopping demand views"></div>
     <div id="dem-body"></div>
   </section>
@@ -1348,7 +1394,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   function onMarket() {
     var b = A.brand(), m = A.mkt();
     if (!b || !m || (b === D.brand && m === D.mkt)) return;
-    D.gen++; D.brand = b; D.mkt = m; D.ups = []; D.sel = {}; D.rows = null; D.cat = null; D.res = null; D.ints = null; D.ads = null; D.open = ''; D.st = 'loading'; D.msg = ''; D.unsaved = false;
+    D.gen++; D.brand = b; D.mkt = m; D.ups = []; D.sel = {}; D.rows = null; D.cat = null; D.res = null; D.ints = null; D.ads = null; D.open = ''; D.vf = ''; D.st = 'loading'; D.msg = ''; D.unsaved = false;
     render();
     var g = D.gen;
     A.load('/aivis/demand.js', 'FeedAiDemand').then(function (x) { E = x; return api('/api/aivis/demand' + mq()); }).then(function (d) {
@@ -1504,35 +1550,40 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       '<br><small data-tip="' + esc(money(m.ads.value) + ' conversion value on ' + money(m.ads.cost) + ' spend across ' + n0(m.ads.adv) + ' advertised products — a ratio of sums, never an average of ratios.') + '">vs ' + roasTxt(base) + ' catalogue</small>';
   }
   function srcLine() {
-    var h = '', any = D.ups.length;
-    if (D.st === 'loading') return 'Reading the stored reports…';
+    if (D.st === 'loading') return '<div class="dm-st">Reading the stored reports…</div>';
+    var h = '', pers = '';
+    var t = cur('terms') || cur('intents') || cur('attrs');
+    if (t) h = '<div class="dm-rep"><span class="dm-tag">Merchant Center · AI performance</span>' + (t.country ? '<span class="dm-m">' + esc(t.country) + '</span>' : '') + (t.category ? '<span class="dm-m">' + esc(t.category) + '</span>' : '')
+      + (t.filter ? '<span class="dm-m" data-tip="The column filter the export was downloaded with — rows under it are not in the file.">' + esc(t.filter) + '</span>' : '')
+      + '<span class="dm-by">' + (t.src === 'api' ? 'daily pull' : t.by ? 'uploaded by ' + esc(String(t.by).split('@')[0]) : '') + '</span></div>';
     ['terms', 'intents', 'attrs'].forEach(function (k) {
       var l = ofKind(k), c = cur(k); if (!c) return;
-      h += '<span><b>' + KW[k] + '</b> · ';
-      if (l.length > 1) h += '<select class="fld" data-per="' + k + '" aria-label="' + KW[k] + ' period" data-no-keep>' + l.map(function (u) { return '<option value="' + esc(u.id) + '"' + (u.id === c.id ? ' selected' : '') + '>' + esc(perLabel(u)) + '</option>'; }).join('') + '</select>';
-      else h += esc(perLabel(c));
-      h += (A.granted() ? ' <button class="btn" type="button" data-drop="' + esc(c.id) + '" title="Remove this reading" aria-label="Remove this reading">🗑</button>' : '') + '</span>';
+      pers += '<span class="dm-per"><span>' + KW[k] + '</span>'
+        + (l.length > 1 ? '<select data-per="' + k + '" aria-label="' + KW[k] + ' period" data-no-keep>' + l.map(function (u) { return '<option value="' + esc(u.id) + '"' + (u.id === c.id ? ' selected' : '') + '>' + esc(perLabel(u)) + '</option>'; }).join('') + '</select>' : '<b>' + esc(perLabel(c)) + '</b>')
+        + (A.granted() ? '<button class="x" type="button" data-drop="' + esc(c.id) + '" title="Remove this reading" aria-label="Remove the ' + KW[k].toLowerCase() + ' reading for ' + esc(perLabel(c)) + '">✕</button>' : '') + '</span>';
     });
-    var t = cur('terms') || cur('intents') || cur('attrs');
-    if (t) h = '<span>Merchant Center · AI performance · ' + esc(t.country || '—') + (t.category ? ' · ' + esc(t.category) : '') + (t.filter ? ' · <span data-tip="The column filter the export was downloaded with — rows under it are not in the file.">' + esc(t.filter) + '</span>' : '') + (t.src === 'api' ? ' · daily pull' : t.by ? ' · uploaded by ' + esc(String(t.by).split('@')[0]) : '') + '</span>' + h;
-    if (D.unsaved) h += '<span style="color:var(--risk)"><b>Not saved</b> — ' + esc(D.unsaved) + '. It shows on this screen only.</span>';
-    if (D.msg) h += '<span id="dem-state">' + esc(D.msg) + '</span>';
+    if (pers) h += '<div class="dm-pers">' + pers + '</div>';
+    var st = '';
+    if (D.unsaved) st += '<b>Not saved</b> — ' + esc(D.unsaved) + '. It shows on this screen only. ';
+    if (D.msg) st += '<span id="dem-state">' + esc(D.msg) + '</span>';
     else if (D.cat) {
       var X = D.ads || {};
-      h += '<span id="dem-state">Matched against ' + n0(D.cat.tot.n) + ' products' + (E.fieldSet(D.flds).length < E.FIELDS.length ? ' on ' + esc(E.fieldNames(D.flds).join(', ')) + ' only' : '') + (X.st === 'ready' ? ' · Google Ads ' + esc(X.range) + ', ' + n0(D.cat.tot.adv) + ' advertised' + (X.curMix ? ' · mixed currencies, money as reported' : '') : X.st === 'none' ? ' · <span data-tip="' + esc(X.why || '') + '">no Google Ads read</span>' : ' · reading Google Ads…') + '</span>';
+      st += '<span id="dem-state">Matched against ' + n0(D.cat.tot.n) + ' products' + (E.fieldSet(D.flds).length < E.FIELDS.length ? ' on ' + esc(E.fieldNames(D.flds).join(', ')) + ' only' : '') + (X.st === 'ready' ? ' · Google Ads ' + esc(X.range) + ', ' + n0(D.cat.tot.adv) + ' advertised' + (X.curMix ? ' · mixed currencies, money as reported' : '') : X.st === 'none' ? ' · <span data-tip="' + esc(X.why || '') + '">no Google Ads read</span>' : ' · reading Google Ads…') + '</span>';
     }
-    return h || (any ? '' : '');
+    return h + (st ? '<div class="dm-st">' + st + '</div>' : '');
   }
   function kpis() {
     var t = cur('terms'); if (!t) return '';
     var H = E.headline(t.rows, D.res), k = H.kinds, L = D.res ? E.labelSets(D.res, D.cat) : null;
-    var tile = function (a, b, c, tip) { return '<div class="k"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '><span>' + a + '</span><b>' + b + '</b><small>' + c + '</small></div>'; };
-    var h = tile('Terms shoppers ask', n0(H.terms), esc(perLabel(t)), '')
-      + tile('AI share of voice', pct(H.sov), 'weighted by how often each term is asked · ' + H.known + ' of ' + H.terms + ' terms report one', 'The share of AI answers in this category that show the brand, per term, weighted by term frequency. Terms with no share reported are left out, never counted as zero.');
-    if (D.res) h += tile('Hero terms', n0(k.hero), 'share of voice ' + pct(E.HERO_SOV, 0) + ' or more — protect', '')
-      + tile('Growth terms', n0(k.growth), 'asked for, products match, share is low', '')
-      + tile('Wording gaps', n0(k.wording), 'Google shows products, the feed never says it', '')
-      + tile('Range gaps', n0(k.range), 'asked for, nothing to sell — not a feed fix', '')
+    var tile = function (a, b, c, tip, cls) { return '<div class="k' + (cls ? ' ' + cls : '') + '"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '><span>' + a + '</span><b>' + b + '</b><small>' + c + '</small></div>'; };
+    // a verdict tile is a filter on the terms table
+    var vt = function (kind, a, n, c) { return '<button type="button" class="k ' + kind + (D.vf === kind ? ' on' : '') + '" data-vf="' + kind + '" aria-pressed="' + (D.vf === kind) + '" title="Show only these terms"><span>' + a + '</span><b>' + n0(n) + '</b><small>' + c + '</small></button>'; };
+    var h = '<div class="k lead" data-tip="' + esc('The share of AI answers in this category that show the brand, per term, weighted by term frequency. Terms with no share reported are left out, never counted as zero.') + '"><span>AI share of voice</span><b>' + pct(H.sov) + '</b><span class="meter"><i style="width:' + Math.round((H.sov || 0) * 100) + '%"></i></span><small>weighted by how often each term is asked · ' + H.known + ' of ' + H.terms + ' terms report one</small></div>'
+      + tile('Terms shoppers ask', n0(H.terms), esc(perLabel(t)), '');
+    if (D.res) h += vt('hero', 'Hero terms', k.hero, 'share ' + pct(E.HERO_SOV, 0) + '+ · protect')
+      + vt('growth', 'Growth terms', k.growth, 'products match, share is low')
+      + vt('wording', 'Wording gaps', k.wording, 'shown by Google, not said in the feed')
+      + vt('range', 'Range gaps', k.range, 'asked for, nothing to sell')
       + tile('SKUs to label', n0(L.hero + L.growth), n0(L.hero) + ' hero · ' + n0(L.growth) + ' growth', 'Products matching a hero term are AI_Hero_Terms; every other product matching a growth term is AI_Growth_Opportunity.');
     else h += tile('Catalogue match', '—', 'press ⚡ Match the catalogue', '');
     return h;
@@ -1547,7 +1598,9 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   function needMatch(what) { return '<small>' + (D.st === 'reading' ? 'reading…' : what || 'match to see') + '</small>'; }
   function termsTable() {
     var t = cur('terms'); if (!t) return '<p class="note">No shopping-terms export is held — upload the Shopping terms tab.</p>';
-    var list = t.rows.map(function (r, i) { return { r: r, x: D.res ? D.res[i] : null }; });
+    var list = t.rows.map(function (r, i) { return { r: r, x: D.res ? D.res[i] : null }; }), all = list.length;
+    var vf = D.res && D.vf ? D.vf : '';
+    if (vf) list = list.filter(function (o) { return o.x.v.kind === vf; });
     var S = D.srt;
     list.sort(function (a, b) {
       if (S === 'sov') return (b.r.sov == null ? -1 : b.r.sov) - (a.r.sov == null ? -1 : a.r.sov);
@@ -1556,7 +1609,13 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       return (b.r.f || 0) - (a.r.f || 0);
     });
     var th = function (k, l, num) { return '<th class="srt' + (num ? ' num' : '') + (S === k ? ' on' : '') + '" data-dsrt="' + k + '">' + l + '</th>'; };
-    var h = '<div class="tw"><table class="t" id="dem-terms"><thead><tr>' + th('f', 'Search term') + '<th>Asked</th>' + th('sov', 'Share of voice') + '<th class="num" data-tip="Google’s own count of the brand’s products shown for the term.">Google shows</th>'
+    var h = '';
+    if (D.res) {
+      var kc = E.headline(t.rows, D.res).kinds;
+      h += '<div class="dm-vf" role="group" aria-label="Show terms by verdict"><button class="chip' + (vf ? '' : ' on') + '" type="button" data-vf="">All <span class="k">' + all + '</span></button>'
+        + ['hero', 'growth', 'wording', 'range'].map(function (k) { return '<button class="chip' + (vf === k ? ' on' : '') + '" type="button" data-vf="' + k + '">' + E.KIND_LABEL[k] + ' <span class="k">' + kc[k] + '</span></button>'; }).join('') + '</div>';
+    }
+    h += '<div class="tw"><table class="t" id="dem-terms"><thead><tr>' + th('f', 'Search term') + '<th>Asked</th>' + th('sov', 'Share of voice') + '<th class="num" data-tip="Google’s own count of the brand’s products shown for the term.">Google shows</th>'
       + th('n', 'In the catalogue', 1) + '<th class="num">In the title</th><th class="num">ROAS · 30 days</th>' + th('score', 'Verdict') + '</tr></thead><tbody>';
     list.forEach(function (o) {
       var r = o.r, x = o.x, open = D.open === r.t;
@@ -1566,21 +1625,24 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       h += '</tr>';
       if (open) h += '<tr class="dm-x"><td colspan="8">' + termDetail(r, x) + '</td></tr>';
     });
-    return h + '</tbody></table></div><p class="note">“Google shows” is Google’s count of products it showed; “In the catalogue” is the products whose picked feed fields say the term — two different questions. Click a term for its products.</p>';
+    if (!list.length) h += '<tr><td colspan="8" class="empty">No term carries this verdict in this reading.</td></tr>';
+    return h + '</tbody></table></div><p class="note">Click a term for its products. “Google shows” is Google’s own count; “In the catalogue” counts the products whose picked fields say the term.</p>';
   }
   function termDetail(r, x) {
     if (!x) return '<p class="dm-act">Press <b>⚡ Match the catalogue</b> to see which products say “' + esc(r.t) + '”, where, and what they earn.</p>';
-    var h = '<p class="dm-act">' + esc(x.v.act) + '</p>';
+    var h = '<div class="dm-xw"><p class="dm-act">' + esc(x.v.act) + '</p>';
     if (x.v.fields.length) h += '<div>' + x.v.fields.map(function (f) { return '<span class="dm-f">g:' + f + '</span>'; }).join('') + '</div>';
     if (x.m.n) {
-      h += '<p class="note" style="margin:6px 0">Said in: title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt) + ' · product details ' + n0(x.m.pd) + ' · attributes ' + n0(x.m.at) + ' — of the ' + n0(x.m.n) + ' products matched on ' + esc(E.fieldNames(D.flds).join(', ')) + '.'
-        + (x.v.cmp === 'above' ? ' These products return more than the catalogue average — worth their own budget.' : x.v.cmp === 'below' ? ' These products return less than the catalogue average — fix the listing before adding budget.' : '') + '</p>';
+      var m = x.m;
+      h += '<h5>Where the ' + n0(m.n) + ' matching products say it</h5><div>' + [['Title', m.ti], ['Description', m.de], ['Product type', m.pt], ['Product highlights', m.hl], ['Product details', m.pd], ['Attributes', m.at]].map(function (f) { return '<span class="dm-in' + (f[1] ? '' : ' z') + '">' + f[0] + ' <b>' + n0(f[1]) + '</b></span>'; }).join('') + '</div>'
+        + (x.v.cmp === 'above' ? '<p class="note" style="margin:4px 0 0">These products return more than the catalogue average — worth their own budget.</p>' : x.v.cmp === 'below' ? '<p class="note" style="margin:4px 0 0">These products return less than the catalogue average — fix the listing before adding budget.</p>' : '')
+        + '<h5>Products</h5>';
       var ps = E.termProducts(x, D.cat, 8), ads = D.ads && D.ads.st === 'ready';
       h += '<div class="tw"><table class="t"><thead><tr><th>Product</th><th>ID</th><th>In the title</th>' + (ads ? '<th class="num">Spend</th><th class="num">Conv. value</th>' : '') + '</tr></thead><tbody>'
         + ps.map(function (p) { return '<tr><td>' + esc(p.ti || '—') + '</td><td><span class="mono">' + esc(p.id) + '</span></td><td>' + (p.inTi ? '✓ yes' : '✗ no') + '</td>' + (ads ? '<td class="num">' + money(p.cost) + '</td><td class="num">' + money(p.value) + '</td>' : '') + '</tr>'; }).join('')
         + '</tbody></table></div>' + (x.m.n > ps.length ? '<p class="note">' + ps.length + ' of ' + n0(x.m.n) + ' shown — the ones not saying it in the title first. The download carries them all.</p>' : '');
     }
-    return h + '<div class="toolbar" style="margin-top:8px">' + (x.m.n ? '<button class="btn" type="button" data-skus="' + esc(r.t) + '">⬇ These SKUs</button>' : '') + (x.v.kind !== 'range' ? '<button class="btn" type="button" data-tbrief="' + esc(r.t) + '">→ Brief this term</button>' : '') + '</div>';
+    return h + '<div class="toolbar" style="margin:12px 0 4px">' + (x.m.n ? '<button class="btn" type="button" data-skus="' + esc(r.t) + '">⬇ These SKUs</button>' : '') + (x.v.kind !== 'range' ? '<button class="btn" type="button" data-tbrief="' + esc(r.t) + '">→ Brief this term</button>' : '') + '</div></div>';
   }
   function actions() {
     if (!cur('terms')) return '<p class="note">Upload the Shopping terms export to get ranked actions.</p>';
@@ -1588,12 +1650,12 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     var list = D.res.slice().sort(function (a, b) { return b.v.score - a.v.score; });
     var top = list.filter(function (x) { return x.v.kind === 'growth' || x.v.kind === 'wording'; }).slice(0, 10), hero = list.filter(function (x) { return x.v.kind === 'hero'; }), range = list.filter(function (x) { return x.v.kind === 'range'; });
     var row = function (x, i) {
-      return '<div class="dm-rank"><span class="n">' + (i + 1) + '</span><span><span class="vk ' + x.v.kind + '">' + E.KIND_LABEL[x.v.kind] + '</span></span><span class="w"><b>' + esc(x.row.t) + ' <small>· asked ' + pct(x.row.f) + ' · share ' + (x.row.sov == null ? 'not reported' : pct(x.row.sov)) + ' · ' + n0(x.m.n) + ' products</small></b><span>' + esc(x.v.act) + '</span></span>'
+      return '<div class="dm-rank"><span class="n">' + (i + 1) + '</span><span><span class="vk ' + x.v.kind + '">' + E.KIND_LABEL[x.v.kind] + '</span></span><span class="w"><b>' + esc(x.row.t) + ' <small>&nbsp;asked ' + pct(x.row.f) + ' · share ' + (x.row.sov == null ? 'not reported' : pct(x.row.sov)) + ' · ' + n0(x.m.n) + (x.m.n === 1 ? ' product' : ' products') + '</small></b><span>' + esc(x.v.act) + '</span></span>'
         + '<span class="b">' + (x.m.n ? '<button class="btn" type="button" data-skus="' + esc(x.row.t) + '">⬇ SKUs</button>' : '') + '<button class="btn" type="button" data-tbrief="' + esc(x.row.t) + '">→ Brief</button></span></div>';
     };
-    var h = '<h4 style="margin:10px 0 2px">Do first — ranked by how often it is asked and how little of it the brand holds</h4>' + (top.length ? top.map(row).join('') : '<p class="note">Nothing to grow: every frequent term is either held or has no product behind it.</p>');
-    if (hero.length) h += '<h4 style="margin:16px 0 2px">Protect — the terms the brand already holds</h4>' + hero.map(row).join('');
-    if (range.length) h += '<h4 style="margin:16px 0 2px">For the client — asked for, nothing to sell</h4><p class="note" style="margin:4px 0">' + range.map(function (x) { return '<b>' + esc(x.row.t) + '</b> (asked ' + pct(x.row.f) + ')'; }).join(' · ') + '. No feed change answers these; they are range and buying questions.</p>';
+    var h = '<div class="dm-sec">Do first · most asked, least held</div>' + (top.length ? top.map(row).join('') : '<p class="note">Nothing to grow: every frequent term is either held or has no product behind it.</p>');
+    if (hero.length) h += '<div class="dm-sec">Protect · terms the brand already holds</div>' + hero.map(row).join('');
+    if (range.length) h += '<div class="dm-sec">For the client · asked for, nothing to sell</div><p class="note" style="margin:6px 0;line-height:1.6">' + range.map(function (x) { return '<b>' + esc(x.row.t) + '</b> (asked ' + pct(x.row.f) + ')'; }).join(' · ') + '. No feed change answers these; they are range and buying questions.</p>';
     return h;
   }
   function intentsTable() {
@@ -1637,7 +1699,8 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     $('#dem-sum').textContent = E && D.st !== 'loading' ? foldLine() : '';
     $('#dem-kpis').innerHTML = has && E ? kpis() : '';
     var on = E ? E.fieldSet(D.flds) : [];
-    $('#dem-flds').innerHTML = has && E ? '<span class="note" style="margin:0 4px 0 0" data-tip="A product matches a term when any of the picked fields says it. Change the pick and every count, verdict, label and brief follows — the feed is not read again.">Match on</span>' + E.FIELDS.map(function (f) {
+    $('#dem-flds').hidden = !(has && E);
+    $('#dem-flds').innerHTML = has && E ? '<span class="lb" data-tip="A product matches a term when any of the picked fields says it. Change the pick and every count, verdict, label and brief follows — the feed is not read again.">Match on</span>' + E.FIELDS.map(function (f) {
       var o = on.indexOf(f[0]) >= 0;
       return '<button class="chip' + (o ? ' on' : '') + '" type="button" data-dfld="' + f[0] + '" aria-pressed="' + o + '">' + f[1] + '</button>';
     }).join('') + (on.length < E.FIELDS.length ? '<button class="chip" type="button" data-dfld="*">All fields</button>' : '') : '';
@@ -1727,6 +1790,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       }
       lsSet('fcc-aivis-demflds', D.flds); if (D.cat) rematch(); render(); return;
     }
+    if ((el = t.closest('[data-vf]'))) { var vk = el.getAttribute('data-vf'); D.vf = D.vf === vk ? '' : vk; D.tab = 'terms'; lsSet('fcc-aivis-demtab', D.tab); D.open = ''; render(); return; }
     if ((el = t.closest('[data-drop]'))) { dropReading(el.getAttribute('data-drop')); return; }
     if ((el = t.closest('[data-skus]'))) { skusCsv(el.getAttribute('data-skus')); return; }
     if ((el = t.closest('[data-tbrief]'))) { termBrief(el.getAttribute('data-tbrief')); return; }
