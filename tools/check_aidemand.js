@@ -117,6 +117,26 @@ const NEXT = '﻿"Name: AI shopping terms, product attributes and search intents
     ok('its three products, the one NOT saying it in the title first', det.rows.length === 3 && det.rows[0][1] === 'N3' && /no/.test(det.rows[0][2]) && /yes/.test(det.rows[1][2]), det.rows);
     ok('the action is said in words and names the label', /Protect it/.test(det.act) && /AI_Hero_Terms/.test(det.act), det.act);
 
+    console.log('· Match on — the fields the AM picks');
+    const chips = () => pg.evaluate(() => [...document.querySelectorAll('#dem-flds [data-dfld]')].map((b) => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')));
+    ok('six fields, all on, no reset offered', (await chips()).join('|') === 'Title*|Description*|Product type*|Product highlights*|Product details*|Attributes*', await chips());
+    await pg.click('#dem-flds [data-dfld="de"]');
+    const woolD = await row(pg, 'wool coat'), rainD = await row(pg, 'rain jacket');
+    ok('Description off: the two products that say a term only in their description leave it (3 → 2, each)', /^2 /.test(woolD[4]) && /^2 /.test(rainD[4]) && /^2 100%$/.test(woolD[5]), [woolD, rainD]);
+    ok('the feed was not read again and the line says what is matched on', /on title, product type, product highlights, product details, attributes only/.test(await pg.innerText('#dem-src')));
+    ok('the labels follow: 5 SKUs, not 7', /SKUS TO LABEL 5 2 hero · 3 growth/i.test((await pg.innerText('#dem-kpis')).replace(/\s+/g, ' ')), (await pg.innerText('#dem-kpis')).replace(/\s+/g, ' ').slice(-60));
+    for (const k of ['pt', 'hl', 'pd', 'at']) await pg.click('#dem-flds [data-dfld="' + k + '"]');
+    ok('Title alone: every match says it in the title', /^2 100%$/.test((await row(pg, 'wool coat'))[5]) && (await chips()).filter((c) => /\*$/.test(c)).join() === 'Title*');
+    await pg.click('#dem-flds [data-dfld="ti"]');
+    ok('the last field cannot be switched off', (await chips()).filter((c) => /\*$/.test(c)).join() === 'Title*');
+    await pg.click('#dem-flds [data-dfld="ti"]'); await pg.click('#dem-flds [data-dfld="de"]');
+    await pg.reload(); await pg.waitForSelector('#dem-terms tbody tr', { timeout: 8000 });
+    ok('the pick is this device’s and survives a reload', (await chips()).filter((c) => /\*$/.test(c)).join('|') === 'Title*|Description*', await chips());
+    await pg.click('#dem-match');
+    await pg.waitForFunction(() => /500%/.test((document.querySelector('#dem-terms') || {}).innerText || ''), null, { timeout: 8000 });
+    await pg.click('#dem-flds [data-dfld="*"]');
+    ok('All fields puts every field back and the counts with it', (await chips()).length === 6 && /^3 /.test((await row(pg, 'wool coat'))[4]), await chips());
+    await pg.click('#dem-terms tr[data-term="wool coat"]');
     if (process.env.AIDEMAND_SHOT) await pg.screenshot({ path: path.join(process.env.AIDEMAND_SHOT, 'aidemand_terms.png'), fullPage: true });   // a visual pass, on request
     console.log('· activation');
     const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#dem-labels')]);

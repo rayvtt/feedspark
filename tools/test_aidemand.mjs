@@ -79,6 +79,20 @@ ok('ranking: asked often and held little outranks a hero and a range gap', rain.
 const noAds = E.indexProducts(FEED, null);
 ok('with no Google Ads read every ROAS is null and the match still stands', noAds.tot.roas === null && noAds.tot.ads === false && E.matchOne('wool coat', noAds).n === 3);
 
+// ---- 3b. the fields a term is matched on ----------------------------------------------------------------------
+ok('six fields, in order; nothing picked or an unknown pick means all of them', E.FIELDS.map((f) => f[0]).join() === 'ti,de,pt,hl,pd,at' && E.fieldSet(null).length === 6 && E.fieldSet([]).length === 6 && E.fieldSet(['nope']).length === 6 && E.fieldSet(['hl', 'ti']).join() === 'ti,hl');
+const tOnly = E.matchOne('wool coat', cat, ['ti']), dOnly = E.matchOne('wool coat', cat, ['de']);
+ok('title only: the product saying it in its description alone is not a match', tOnly.n === 2 && tOnly.ti === 2 && tOnly.notTi === 0 && tOnly.de === 0 && tOnly.fields.join() === 'ti', tOnly);
+ok('description only: that one product, and it is counted as NOT in the title', dOnly.n === 1 && dOnly.notTi === 1 && dOnly.idx.length === 1, dOnly);
+ok('a narrowed match still reports where else the matched products say it', E.matchOne('rain jacket', cat, ['ti']).hl === 1);
+ok('product details are their own field, apart from the attributes', E.matchOne('winter', cat, ['pd']).n === 1 && E.matchOne('winter', cat, ['at']).n === 0 && E.matchOne('winter', cat).pd === 1);
+ok('ROAS follows the pick: title only is still N1 + N2', near(tOnly.ads.roas, 5));
+const narrow = E.matchTerms(t.rows, cat, ['hl']);
+ok('the verdict follows the pick, and a gap names the fields it was matched on', narrow[0].m.n === 0 && narrow[0].v.kind === 'hero' && narrow[2].v.kind === 'wording' && /none of the fields matched on \(product highlights\)/.test(narrow[2].v.act) && /on the fields picked/.test(narrow[3].v.act), narrow.map((x) => x.v.act));
+ok('with every field on the gap says so plainly', /no field in the feed uses the words/.test(storm.v.act));
+ok('intents are matched on the same pick', E.matchIntents([{ t: 'dressing for winter', f: 1 }], cat, ['ti'])[0].m.n === 0 && E.matchIntents([{ t: 'dressing for winter', f: 1 }], cat, ['pd'])[0].m.n === 1);
+ok('the page keeps the pick per device and re-matches without re-reading the feed', /fcc-aivis-demflds/.test(read('docs/FeedSpark_AIVisibility.html')) && /E\.matchTerms\(t\.rows, D\.cat, D\.flds\)/.test(read('docs/FeedSpark_AIVisibility.html')));
+
 // ---- 4. activation ------------------------------------------------------------------------------------------
 const L = E.labelSets(res, cat);
 ok('labels: products of a hero term are AI_Hero_Terms, of a growth term AI_Growth_Opportunity', L.hero === 3 && L.growth === 3 && L.rows.filter((r) => r.label === 'AI_Hero_Terms').map((r) => r.id).sort().join() === 'N1,N2,N3', L);

@@ -432,6 +432,7 @@ window.addEventListener('load',restore);
       </div></div>
     <div class="dm-src" id="dem-src"></div>
     <div class="dk" id="dem-kpis"></div>
+    <div class="chips" id="dem-flds" role="group" aria-label="Feed fields a term is matched on" style="margin-bottom:8px"></div>
     <div class="chips" id="dem-tabs" role="tablist" aria-label="AI shopping demand views"></div>
     <div id="dem-body"></div>
   </section>
@@ -1334,7 +1335,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
 
   var E = null;
   var D = { gen: 0, brand: '', mkt: '', ups: [], sel: {}, tab: lsGet('fcc-aivis-demtab', 'terms'), st: 'idle', msg: '',
-    rows: null, cat: null, res: null, ints: null, ads: null, open: '', srt: 'f', unsaved: false };
+    rows: null, cat: null, res: null, ints: null, ads: null, open: '', srt: 'f', unsaved: false, flds: lsGet('fcc-aivis-demflds', null) };
   var TABS = [['act', 'Actions'], ['terms', 'Shopping terms'], ['intents', 'Search intents'], ['attrs', 'Product attributes'], ['time', 'Over time']];
   var KW = { terms: 'Shopping terms', intents: 'Search intents', attrs: 'Product attributes' };
 
@@ -1426,7 +1427,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
           n++;
           if (rows.length >= 120000 || c.id < 0 || !row[c.id]) return;
           rows.push({ id: v(row, c.id), gid: v(row, c.gid), ti: v(row, c.ti), de: v(row, c.de), pt: v(row, c.pt), hl: join(row, c.hl), pd: join(row, c.pd),
-            at: [v(row, c.color), v(row, c.material), v(row, c.pattern), v(row, c.gender)].join(' '),
+            at: [v(row, c.color), v(row, c.material), v(row, c.pattern), v(row, c.gender), v(row, c.size), v(row, c.age_group)].join(' '),
             has: { gender: !!v(row, c.gender), color: !!v(row, c.color), size: !!v(row, c.size), material: !!v(row, c.material), pattern: !!v(row, c.pattern), age_group: !!v(row, c.age_group) } });
           if (n % 2000 === 0 && g === D.gen) { D.msg = 'Reading the ' + A.label(m) + ' feed… ' + n0(n) + ' products'; var el = $('#dem-state'); if (el) el.textContent = D.msg; }
         }
@@ -1474,8 +1475,8 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     if (!D.rows || !E) return;
     D.cat = E.indexProducts(D.rows, D.ads && D.ads.st === 'ready' ? D.ads.rows : null);
     var t = cur('terms'), it = cur('intents');
-    D.res = t ? E.matchTerms(t.rows, D.cat) : null;
-    D.ints = it ? E.matchIntents(it.rows, D.cat) : null;
+    D.res = t ? E.matchTerms(t.rows, D.cat, D.flds) : null;
+    D.ints = it ? E.matchIntents(it.rows, D.cat, D.flds) : null;
   }
   function money(v) {
     var X = D.ads, c = X && !X.curMix && /^[A-Z]{3}$/.test(X.cur || '') ? X.cur : '';
@@ -1518,7 +1519,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     if (D.msg) h += '<span id="dem-state">' + esc(D.msg) + '</span>';
     else if (D.cat) {
       var X = D.ads || {};
-      h += '<span id="dem-state">Matched against ' + n0(D.cat.tot.n) + ' products' + (X.st === 'ready' ? ' · Google Ads ' + esc(X.range) + ', ' + n0(D.cat.tot.adv) + ' advertised' + (X.curMix ? ' · mixed currencies, money as reported' : '') : X.st === 'none' ? ' · <span data-tip="' + esc(X.why || '') + '">no Google Ads read</span>' : ' · reading Google Ads…') + '</span>';
+      h += '<span id="dem-state">Matched against ' + n0(D.cat.tot.n) + ' products' + (E.fieldSet(D.flds).length < E.FIELDS.length ? ' on ' + esc(E.fieldNames(D.flds).join(', ')) + ' only' : '') + (X.st === 'ready' ? ' · Google Ads ' + esc(X.range) + ', ' + n0(D.cat.tot.adv) + ' advertised' + (X.curMix ? ' · mixed currencies, money as reported' : '') : X.st === 'none' ? ' · <span data-tip="' + esc(X.why || '') + '">no Google Ads read</span>' : ' · reading Google Ads…') + '</span>';
     }
     return h || (any ? '' : '');
   }
@@ -1565,14 +1566,14 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       h += '</tr>';
       if (open) h += '<tr class="dm-x"><td colspan="8">' + termDetail(r, x) + '</td></tr>';
     });
-    return h + '</tbody></table></div><p class="note">“Google shows” is Google’s count of products it showed; “In the catalogue” is the products whose own feed text says the term — two different questions. Click a term for its products.</p>';
+    return h + '</tbody></table></div><p class="note">“Google shows” is Google’s count of products it showed; “In the catalogue” is the products whose picked feed fields say the term — two different questions. Click a term for its products.</p>';
   }
   function termDetail(r, x) {
     if (!x) return '<p class="dm-act">Press <b>⚡ Match the catalogue</b> to see which products say “' + esc(r.t) + '”, where, and what they earn.</p>';
     var h = '<p class="dm-act">' + esc(x.v.act) + '</p>';
     if (x.v.fields.length) h += '<div>' + x.v.fields.map(function (f) { return '<span class="dm-f">g:' + f + '</span>'; }).join('') + '</div>';
     if (x.m.n) {
-      h += '<p class="note" style="margin:6px 0">Said in: title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt) + ' · attributes &amp; details ' + n0(x.m.at) + ' — of ' + n0(x.m.n) + ' products.'
+      h += '<p class="note" style="margin:6px 0">Said in: title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt) + ' · product details ' + n0(x.m.pd) + ' · attributes ' + n0(x.m.at) + ' — of the ' + n0(x.m.n) + ' products matched on ' + esc(E.fieldNames(D.flds).join(', ')) + '.'
         + (x.v.cmp === 'above' ? ' These products return more than the catalogue average — worth their own budget.' : x.v.cmp === 'below' ? ' These products return less than the catalogue average — fix the listing before adding budget.' : '') + '</p>';
       var ps = E.termProducts(x, D.cat, 8), ads = D.ads && D.ads.st === 'ready';
       h += '<div class="tw"><table class="t"><thead><tr><th>Product</th><th>ID</th><th>In the title</th>' + (ads ? '<th class="num">Spend</th><th class="num">Conv. value</th>' : '') + '</tr></thead><tbody>'
@@ -1635,6 +1636,11 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     var has = D.ups.length > 0;
     $('#dem-sum').textContent = E && D.st !== 'loading' ? foldLine() : '';
     $('#dem-kpis').innerHTML = has && E ? kpis() : '';
+    var on = E ? E.fieldSet(D.flds) : [];
+    $('#dem-flds').innerHTML = has && E ? '<span class="note" style="margin:0 4px 0 0" data-tip="A product matches a term when any of the picked fields says it. Change the pick and every count, verdict, label and brief follows — the feed is not read again.">Match on</span>' + E.FIELDS.map(function (f) {
+      var o = on.indexOf(f[0]) >= 0;
+      return '<button class="chip' + (o ? ' on' : '') + '" type="button" data-dfld="' + f[0] + '" aria-pressed="' + o + '">' + f[1] + '</button>';
+    }).join('') + (on.length < E.FIELDS.length ? '<button class="chip" type="button" data-dfld="*">All fields</button>' : '') : '';
     $('#dem-tabs').innerHTML = has ? TABS.map(function (t) {
       var n = t[0] === 'act' ? '' : t[0] === 'time' ? (ofKind('terms').length || '') : ((cur(t[0]) || { rows: [] }).rows.length || '');
       return '<button class="chip' + (D.tab === t[0] ? ' on' : '') + '" type="button" role="tab" aria-selected="' + (D.tab === t[0]) + '" data-dtab="' + t[0] + '">' + t[1] + (n ? ' <span class="k">' + n + '</span>' : '') + '</button>';
@@ -1657,8 +1663,8 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   function skusCsv(t) {
     var x = findX(t); if (!x) return;
     var ps = E.termProducts(x, D.cat, 0);
-    A.csv('AI_demand_' + t.replace(/[^A-Za-z0-9]+/g, '_') + '_' + stamp() + '.csv', ['id', 'title', 'search_term', 'in_title', 'verdict', 'spend_30d', 'conversion_value_30d'],
-      ps.map(function (p) { return [p.id, p.ti, t, p.inTi ? 'yes' : 'no', E.KIND_LABEL[x.v.kind], p.cost || 0, p.value || 0]; }));
+    A.csv('AI_demand_' + t.replace(/[^A-Za-z0-9]+/g, '_') + '_' + stamp() + '.csv', ['id', 'title', 'search_term', 'in_title', 'verdict', 'matched_on', 'spend_30d', 'conversion_value_30d'],
+      ps.map(function (p) { return [p.id, p.ti, t, p.inTi ? 'yes' : 'no', E.KIND_LABEL[x.v.kind], E.fieldNames(D.flds).join(' | '), p.cost || 0, p.value || 0]; }));
   }
   function labelsCsv() {
     if (!D.res) return;
@@ -1674,7 +1680,8 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     var lines = [srcWords(), '',
       'Search term: "' + r.t + '" — asked ' + pct(r.f) + ' as often as the most-asked term in the category',
       'Share of voice: ' + (r.sov == null ? 'not reported by Google' : pct(r.sov)) + ' · Google shows ' + (r.ps == null ? '—' : n0(r.ps)) + ' of our products',
-      'In the catalogue: ' + n0(x.m.n) + ' products (' + n0(x.m.groups) + ' styles) say it — title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt)];
+      'In the catalogue: ' + n0(x.m.n) + ' products (' + n0(x.m.groups) + ' styles) say it — title ' + n0(x.m.ti) + ' · highlights ' + n0(x.m.hl) + ' · description ' + n0(x.m.de) + ' · product type ' + n0(x.m.pt) + ' · product details ' + n0(x.m.pd),
+      'Matched on: ' + E.fieldNames(D.flds).join(', ')];
     if (ads && x.m.n) lines.push('Google Ads, ' + D.ads.range + ': these products return ' + roasTxt(x.m.ads.roas) + ' against ' + roasTxt(D.cat.tot.roas) + ' for the catalogue');
     lines.push('', 'Verdict: ' + E.KIND_LABEL[x.v.kind], 'Action: ' + x.v.act);
     if (x.v.fields.length) lines.push('Fields: ' + x.v.fields.map(function (f) { return 'g:' + f; }).join(', '));
@@ -1695,7 +1702,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     if (!D.res) return;
     var t = cur('terms'), H = E.headline(t.rows, D.res), L = E.labelSets(D.res, D.cat);
     var list = D.res.slice().sort(function (a, b) { return b.v.score - a.v.score; });
-    var lines = [srcWords(), '', 'AI share of voice (weighted by term frequency): ' + pct(H.sov) + ' over ' + H.known + ' of ' + H.terms + ' terms',
+    var lines = [srcWords(), 'Products matched on: ' + E.fieldNames(D.flds).join(', '), '', 'AI share of voice (weighted by term frequency): ' + pct(H.sov) + ' over ' + H.known + ' of ' + H.terms + ' terms',
       H.kinds.hero + ' hero · ' + H.kinds.growth + ' growth · ' + H.kinds.wording + ' wording gaps · ' + H.kinds.range + ' range gaps', '', 'DO FIRST'];
     list.filter(function (x) { return x.v.kind === 'growth' || x.v.kind === 'wording'; }).slice(0, 10).forEach(function (x, i) { lines.push((i + 1) + '. "' + x.row.t + '" (share ' + (x.row.sov == null ? 'not reported' : pct(x.row.sov)) + ', ' + n0(x.m.n) + ' products) — ' + x.v.act); });
     var hero = list.filter(function (x) { return x.v.kind === 'hero'; });
@@ -1710,6 +1717,16 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   card.addEventListener('click', function (e) {
     var t = e.target, el;
     if ((el = t.closest('[data-dtab]'))) { D.tab = el.getAttribute('data-dtab'); lsSet('fcc-aivis-demtab', D.tab); render(); return; }
+    if ((el = t.closest('[data-dfld]'))) {
+      var k = el.getAttribute('data-dfld'), cur0 = E.fieldSet(D.flds);
+      if (k === '*') D.flds = null;
+      else {
+        var nx = cur0.indexOf(k) >= 0 ? cur0.filter(function (x) { return x !== k; }) : cur0.concat([k]);
+        if (!nx.length) { A.toast('A term has to be matched on at least one field'); return; }
+        D.flds = nx.length === E.FIELDS.length ? null : E.fieldSet(nx);
+      }
+      lsSet('fcc-aivis-demflds', D.flds); if (D.cat) rematch(); render(); return;
+    }
     if ((el = t.closest('[data-drop]'))) { dropReading(el.getAttribute('data-drop')); return; }
     if ((el = t.closest('[data-skus]'))) { skusCsv(el.getAttribute('data-skus')); return; }
     if ((el = t.closest('[data-tbrief]'))) { termBrief(el.getAttribute('data-tbrief')); return; }
