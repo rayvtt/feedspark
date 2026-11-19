@@ -1381,7 +1381,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
 
   var E = null;
   var D = { gen: 0, brand: '', mkt: '', ups: [], sel: {}, tab: lsGet('fcc-aivis-demtab', 'terms'), st: 'idle', msg: '',
-    rows: null, cat: null, res: null, ints: null, ads: null, open: '', srt: 'f', unsaved: false, flds: lsGet('fcc-aivis-demflds', null) };
+    rows: null, cat: null, res: null, ints: null, ads: null, open: '', srt: {}, unsaved: false, flds: lsGet('fcc-aivis-demflds', null) };
   var TABS = [['act', 'Actions'], ['terms', 'Shopping terms'], ['intents', 'Search intents'], ['attrs', 'Product attributes'], ['time', 'Over time']];
   var KW = { terms: 'Shopping terms', intents: 'Search intents', attrs: 'Product attributes' };
 
@@ -1595,28 +1595,46 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       + '<li>Press <b>⇪ Upload report</b> here and choose the files (one, two or all three). Upload each new week to build the trend.</li></ol>'
       + '<p class="note" style="margin-top:10px">Google publishes this report for the US only so far, and at category level — it says what shoppers ask for, never which product was shown.</p></div>';
   }
+  /* FCC-AIDEMAND-SORT — every column of every demand table sorts: a click sorts, a second click flips.
+     A value the report or the match does not carry (not reported, not matched yet) stays LAST in
+     either direction — a blank is not a zero, so it never leads a sort. */
+  var SRT0 = { terms: 'f' }, SRT_ASC = { t: 1, where: 1 };
+  function srtOf(tb) { return D.srt[tb] || (D.srt[tb] = { k: SRT0[tb] || '', d: -1 }); }
+  function srtSet(tb, k) { var c = srtOf(tb); if (c.k === k) c.d = -c.d; else { c.k = k; c.d = SRT_ASC[k] ? 1 : -1; } }
+  function sorted(tb, list, val) {
+    var c = srtOf(tb), f = val[c.k]; if (!f) return list;
+    return list.map(function (o, i) { return { o: o, i: i, v: f(o) }; }).sort(function (a, b) {
+      var an = a.v == null || a.v !== a.v, bn = b.v == null || b.v !== b.v;
+      if (an || bn) return an && bn ? a.i - b.i : an ? 1 : -1;
+      var d = typeof a.v === 'string' ? a.v.localeCompare(b.v) : a.v - b.v;
+      return d ? d * c.d : a.i - b.i;
+    }).map(function (x) { return x.o; });
+  }
+  function sth(tb, k, l, num, tip) {
+    var c = srtOf(tb), on = c.k === k;
+    return '<th class="srt' + (num ? ' num' : '') + (on ? ' on' + (c.d > 0 ? ' asc' : '') : '') + '" data-dsrt="' + tb + ':' + k + '" aria-sort="' + (on ? (c.d > 0 ? 'ascending' : 'descending') : 'none') + '"' + (tip ? ' data-tip="' + tip + '"' : '') + '>' + l + '</th>';
+  }
   function needMatch(what) { return '<small>' + (D.st === 'reading' ? 'reading…' : what || 'match to see') + '</small>'; }
   function termsTable() {
     var t = cur('terms'); if (!t) return '<p class="note">No shopping-terms export is held — upload the Shopping terms tab.</p>';
     var list = t.rows.map(function (r, i) { return { r: r, x: D.res ? D.res[i] : null }; }), all = list.length;
     var vf = D.res && D.vf ? D.vf : '';
     if (vf) list = list.filter(function (o) { return o.x.v.kind === vf; });
-    var S = D.srt;
-    list.sort(function (a, b) {
-      if (S === 'sov') return (b.r.sov == null ? -1 : b.r.sov) - (a.r.sov == null ? -1 : a.r.sov);
-      if (S === 'n' && D.res) return b.x.m.n - a.x.m.n;
-      if (S === 'score' && D.res) return b.x.v.score - a.x.v.score;
-      return (b.r.f || 0) - (a.r.f || 0);
+    var roasOn = D.ads && D.ads.st === 'ready';
+    list = sorted('terms', list, {
+      t: function (o) { return o.r.t.toLowerCase(); }, f: function (o) { return o.r.f; }, sov: function (o) { return o.r.sov; }, ps: function (o) { return o.r.ps; },
+      n: function (o) { return o.x ? o.x.m.n : null; }, ti: function (o) { return o.x && o.x.m.n ? o.x.m.ti : null; },
+      roas: function (o) { return o.x && roasOn && o.x.m.n ? o.x.m.ads.roas : null; }, score: function (o) { return o.x ? o.x.v.score : null; }
     });
-    var th = function (k, l, num) { return '<th class="srt' + (num ? ' num' : '') + (S === k ? ' on' : '') + '" data-dsrt="' + k + '">' + l + '</th>'; };
+    var th = function (k, l, num, tip) { return sth('terms', k, l, num, tip); };
     var h = '';
     if (D.res) {
       var kc = E.headline(t.rows, D.res).kinds;
       h += '<div class="dm-vf" role="group" aria-label="Show terms by verdict"><button class="chip' + (vf ? '' : ' on') + '" type="button" data-vf="">All <span class="k">' + all + '</span></button>'
         + ['hero', 'growth', 'wording', 'range'].map(function (k) { return '<button class="chip' + (vf === k ? ' on' : '') + '" type="button" data-vf="' + k + '">' + E.KIND_LABEL[k] + ' <span class="k">' + kc[k] + '</span></button>'; }).join('') + '</div>';
     }
-    h += '<div class="tw"><table class="t" id="dem-terms"><thead><tr>' + th('f', 'Search term') + '<th>Asked</th>' + th('sov', 'Share of voice') + '<th class="num" data-tip="Google’s own count of the brand’s products shown for the term.">Google shows</th>'
-      + th('n', 'In the catalogue', 1) + '<th class="num">In the title</th><th class="num">ROAS · 30 days</th>' + th('score', 'Verdict') + '</tr></thead><tbody>';
+    h += '<div class="tw"><table class="t" id="dem-terms"><thead><tr>' + th('t', 'Search term') + th('f', 'Asked') + th('sov', 'Share of voice') + th('ps', 'Google shows', 1, 'Google’s own count of the brand’s products shown for the term.')
+      + th('n', 'In the catalogue', 1) + th('ti', 'In the title', 1) + th('roas', 'ROAS · 30 days', 1) + th('score', 'Verdict', 0, 'Sorted by priority: most asked, least held first.') + '</tr></thead><tbody>';
     list.forEach(function (o) {
       var r = o.r, x = o.x, open = D.open === r.t;
       h += '<tr class="cl' + (open ? ' sel' : '') + '" data-term="' + esc(r.t) + '"><td><b>' + esc(r.t) + '</b></td><td>' + bar(r.f) + '<small>' + pct(r.f) + '</small></td><td>' + sovCell(r, prevRow('terms', r.t)) + '</td><td class="num">' + (r.ps == null ? '—' : n0(r.ps)) + '</td>';
@@ -1626,7 +1644,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
       if (open) h += '<tr class="dm-x"><td colspan="8">' + termDetail(r, x) + '</td></tr>';
     });
     if (!list.length) h += '<tr><td colspan="8" class="empty">No term carries this verdict in this reading.</td></tr>';
-    return h + '</tbody></table></div><p class="note">Click a term for its products. “Google shows” is Google’s own count; “In the catalogue” counts the products whose picked fields say the term.</p>';
+    return h + '</tbody></table></div><p class="note">Click a column to sort by it, again to reverse; click a term for its products. “Google shows” is Google’s own count; “In the catalogue” counts the products whose picked fields say the term.</p>';
   }
   function termDetail(r, x) {
     if (!x) return '<p class="dm-act">Press <b>⚡ Match the catalogue</b> to see which products say “' + esc(r.t) + '”, where, and what they earn.</p>';
@@ -1660,8 +1678,12 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   }
   function intentsTable() {
     var t = cur('intents'); if (!t) return '<p class="note">No search-intent export is held — upload the Search intent tab.</p>';
-    var ints = D.ints || E.matchIntents(t.rows, null);
-    return '<div class="tw"><table class="t" id="dem-intents"><thead><tr><th>Search intent</th><th>Asked</th><th>Share of voice</th><th class="num">Google shows</th><th class="num" data-tip="Products whose feed text uses the intent’s own key words.">In the catalogue</th><th>What to write</th><th></th></tr></thead><tbody>'
+    var ints = sorted('intents', D.ints || E.matchIntents(t.rows, null), {
+      t: function (x) { return x.row.t.toLowerCase(); }, f: function (x) { return x.row.f; }, sov: function (x) { return x.row.sov; }, ps: function (x) { return x.row.ps; },
+      n: function (x) { return x.key && x.m ? x.m.n : null; }, say: function (x) { return String(x.play.say || '').toLowerCase(); }
+    });
+    var th = function (k, l, num, tip) { return sth('intents', k, l, num, tip); };
+    return '<div class="tw"><table class="t" id="dem-intents"><thead><tr>' + th('t', 'Search intent') + th('f', 'Asked') + th('sov', 'Share of voice') + th('ps', 'Google shows', 1) + th('n', 'In the catalogue', 1, 'Products whose feed text uses the intent’s own key words.') + th('say', 'What to write') + '<th></th></tr></thead><tbody>'
       + ints.map(function (x) {
         var r = x.row;
         return '<tr><td><b>' + esc(r.t) + '</b></td><td>' + bar(r.f) + '<small>' + pct(r.f) + '</small></td><td>' + sovCell(r, prevRow('intents', r.t)) + '</td><td class="num">' + (r.ps == null ? '—' : n0(r.ps)) + '</td><td class="num">'
@@ -1670,8 +1692,12 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   }
   function attrsTable() {
     var t = cur('attrs'); if (!t) return '<p class="note">No product-attributes export is held — upload the Product attributes tab.</p>';
-    var plan = E.attrPlan(t.rows, D.cat);
-    return '<div class="tw"><table class="t" id="dem-attrs"><thead><tr><th>Attribute</th><th>Search popularity</th><th class="num">Google shows</th><th>Lives in</th><th class="num">In the feed</th><th>What to do</th></tr></thead><tbody>'
+    var plan = sorted('attrs', E.attrPlan(t.rows, D.cat), {
+      t: function (x) { return x.row.t.toLowerCase(); }, f: function (x) { return x.row.f; }, ps: function (x) { return x.row.ps; },
+      where: function (x) { return String(x.where || '').toLowerCase(); }, fill: function (x) { return x.fill; }, how: function (x) { return String(x.how || '').toLowerCase(); }
+    });
+    var th = function (k, l, num) { return sth('attrs', k, l, num); };
+    return '<div class="tw"><table class="t" id="dem-attrs"><thead><tr>' + th('t', 'Attribute') + th('f', 'Search popularity') + th('ps', 'Google shows', 1) + th('where', 'Lives in') + th('fill', 'In the feed', 1) + th('how', 'What to do') + '</tr></thead><tbody>'
       + plan.map(function (x) {
         return '<tr><td><b>' + esc(x.row.t) + '</b></td><td>' + bar(x.rel) + '<small>' + (x.row.f == null ? '—' : n0(x.row.f)) + '</small></td><td class="num">' + (x.row.ps == null ? '—' : n0(x.row.ps)) + '</td><td><span class="dm-f">' + x.where + '</span></td><td class="num">'
           + (x.fill == null ? needMatch() : '<b>' + pct(x.fill, 0) + '</b><br><small>' + (x.field ? 'of products state it' : 'name it in a detail') + '</small>') + '</td><td style="white-space:normal;min-width:260px">' + esc(x.how) + '</td></tr>';
@@ -1680,8 +1706,12 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
   function timeTable() {
     var l = ofKind('terms');
     if (l.length < 2) return '<div class="dm-empty"><b>One reading is held' + (l[0] ? ' — ' + esc(perLabel(l[0])) : '') + '.</b> Share of voice moves week to week; upload the next export and each term shows where it started, where it is and the move in points. That before-and-after is the proof of the work.</div>';
-    var tr = E.trend(l).filter(function (o) { return o.pts.length > 1; });
-    return '<div class="tw"><table class="t" id="dem-time"><thead><tr><th>Search term</th><th>First reading</th><th>Latest</th><th class="num">Move</th><th class="num">Readings</th></tr></thead><tbody>'
+    var tr = sorted('time', E.trend(l).filter(function (o) { return o.pts.length > 1; }), {
+      t: function (o) { return String(o.t).toLowerCase(); }, first: function (o) { return o.first ? o.first.sov : null; }, last: function (o) { return o.last ? o.last.sov : null; },
+      delta: function (o) { return o.delta; }, n: function (o) { return o.pts.length; }
+    });
+    var th = function (k, l, num) { return sth('time', k, l, num); };
+    return '<div class="tw"><table class="t" id="dem-time"><thead><tr>' + th('t', 'Search term') + th('first', 'First reading') + th('last', 'Latest') + th('delta', 'Move', 1) + th('n', 'Readings', 1) + '</tr></thead><tbody>'
       + tr.map(function (o) {
         return '<tr><td><b>' + esc(o.t) + '</b></td><td>' + (o.first ? pct(o.first.sov) + ' <small>' + esc(dshort(o.first.to)) + '</small>' : '— <small>not reported</small>') + '</td><td>' + (o.last ? pct(o.last.sov) + ' <small>' + esc(dshort(o.last.to)) + '</small>' : '—') + '</td><td class="num">'
           + (o.delta == null ? '<span data-tip="A move needs two readings that both report a share.">—</span>' : '<span class="dm-dl ' + (o.delta >= 0 ? 'up' : 'dn') + '">' + (o.delta > 0 ? '▲ +' : o.delta < 0 ? '▼ ' : '') + o.delta + ' pts</span>') + '</td><td class="num">' + o.pts.length + '</td></tr>';
@@ -1795,7 +1825,7 @@ if (document.readyState !== 'loading') boot(); else document.addEventListener('D
     if ((el = t.closest('[data-skus]'))) { skusCsv(el.getAttribute('data-skus')); return; }
     if ((el = t.closest('[data-tbrief]'))) { termBrief(el.getAttribute('data-tbrief')); return; }
     if ((el = t.closest('[data-ibrief]'))) { intentBrief(el.getAttribute('data-ibrief')); return; }
-    if ((el = t.closest('[data-dsrt]'))) { D.srt = el.getAttribute('data-dsrt'); render(); return; }
+    if ((el = t.closest('[data-dsrt]'))) { var sk = el.getAttribute('data-dsrt').split(':'); srtSet(sk[0], sk[1]); render(); return; }
     if ((el = t.closest('tr[data-term]'))) { var k = el.getAttribute('data-term'); D.open = D.open === k ? '' : k; render(); return; }
   });
   card.addEventListener('change', function (e) {

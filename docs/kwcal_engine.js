@@ -173,9 +173,16 @@
     keyword:1,keywords:1,kw:1,optimisation:1,optimization:1,optimise:1,optimize:1,ai:1,opt:1,
     marketing:1,planner:1,calendar:1,brief:1,briefing:1,task:1,feed:1,test:1,update:1,new:1,fix:1};
   function taskWords(s){ return normTask(s).split(/[^a-z0-9]+/).filter(Boolean); }
+  /* A NUMBER IN A MOMENT'S NAME IS USUALLY THE POINT OF IT (Ray, 19 Nov 2026, over a new Reiss
+     moment taking the ticket of the one above it: "this team overtook the ticket that was assigned
+     to gifting or accessories. (status is stolen too)"). Every pure number was dropped, which is
+     right for the MMYY and year stamps the house task name ends with (… - 1126) and wrong for the
+     only word that said what "Gifting <£150" is: it reduced to a bare "gifting" that matched any
+     gifting ticket perfectly. A four-digit number is a date stamp and still goes; anything else is
+     a word. */
   function sigWords(s,drop){
     var out=[], seen={};
-    taskWords(s).forEach(function(w){ if(w.length<3||/^\d+$/.test(w)||TASK_STOP[w]||(drop&&drop[w])||seen[w])return;
+    taskWords(s).forEach(function(w){ if(w.length<3||/^\d{4}$/.test(w)||TASK_STOP[w]||(drop&&drop[w])||seen[w])return;
       seen[w]=1; out.push(w); });
     return out;
   }
@@ -224,6 +231,17 @@
     // never drift onto a moment on one shared word.
     var drop={}; taskWords(brand).forEach(function(w){ drop[w]=1; });
     var sig={}; E.forEach(function(e){ sig[e.id]=sigWords(e.name,drop); });
+    /* AND THE WORD IT WINS ON HAS TO BE ITS OWN. Two moments on one board routinely share the
+       word they are both about — Gifting (all Accessories) and Gifting <£150 — so a ticket saying
+       only "Gifting" names neither, and the shorter name wins purely for having fewer words left
+       over. A claim therefore needs one word SOLE to the winner among the moments still in play,
+       unless the ticket accounts for the winner's whole name (the exact-name case, where there is
+       nothing left to distinguish). Otherwise it joins the unlinked strip, where one click links
+       it — a confidently wrong tie is worse than an honest gap, and it silently moves another
+       moment's stage with it. */
+    var owners={};
+    E.forEach(function(e){ if(done[e.id])return;
+      (sig[e.id]||[]).forEach(function(w){ owners[w]=(owners[w]||0)+1; }); });
     var near={};
     mine.forEach(function(b){ if(taken[b.id])return;
       var tw=sigWords(b.task,drop);
@@ -233,7 +251,11 @@
         if(sc>topS){ second=topS; topS=sc; top=e; } else if(sc>second) second=sc; });
       near[b.id]=topS;
       var floor=isKwTicket(b)?0.5:1;
-      if(top&&topS>=floor&&topS>second) assign(top,b,'words'); });
+      if(!(top&&topS>=floor&&topS>second))return;
+      var mw=sig[top.id]||[], has={}; tw.forEach(function(w){ has[w]=1; });
+      var whole=mw.every(function(w){ return has[w]; });
+      var sole=mw.some(function(w){ return has[w]&&owners[w]===1; });
+      if(whole||sole) assign(top,b,'words'); });
 
     return { map:out, loose:mine.filter(function(b){ return !taken[b.id]; })
       .map(function(b){ return {b:b, near:near[b.id]||0}; }) };
