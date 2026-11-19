@@ -246,3 +246,6 @@ ASPL, London AM and the team each have a short list (below); the "Next" and "Lat
   *What changes in the feed*. Today none run; each tier switches on its own items and the tiers below it, marked
   ✦ T2 / ✦ T3 ("run by Tier 3"), and a tier that does not carry one says which tier adds it. A service writes no feed
   field, so its row says what it does instead of drawing a share of products.
+
+## GMC visibility-led services (19 Nov 2026)
+Ray: "with the new GMC visibility report … be more inclusive within this pricing module … the entire AI proposal package". Three services seeded into the optimisation bank, status **planned**, no price (they read "coming — included when live" until Management sets status + monthly £ in ⚙ Customise): **AI Visibility & Share of Voice** (Tier 3), **Dynamic AI custom labels** (AI_Hero_Terms / AI_Growth_Opportunity, Tier 3), **Intent & attribute mapping** (Tier 2). Tiers movable per the bank rules.

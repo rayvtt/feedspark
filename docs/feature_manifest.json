@@ -17165,6 +17165,7 @@
   {"name": "AI demand: the worker route sits inside the scoped aivis block", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/api/aivis/demand') {"},
   {"name": "AI demand: the worker serves the engine", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "if (path === '/aivis/demand.js' && request.method === 'GET') {"},
   {"name": "AI demand: the section on the AI visibility page", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "FCC-AIDEMAND"},
-  {"name": "AI visibility: every section folds, per device", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "var FKEY = 'fcc-aivis-fold'"}
+  {"name": "AI visibility: every section folds, per device", "file": "docs/FeedSpark_AIVisibility.html", "pattern": "var FKEY = 'fcc-aivis-fold'"},
+  {"name": "Pricer bank: the three GMC-visibility services (AI SoV dashboard, Dynamic AI custom labels, Intent & attribute mapping) seeded planned + unpriced", "file": "docs/pricer_engine.js", "pattern": "x_intent_map: { label: 'Intent & attribute mapping'", "pr": 0}
  ]
 }
