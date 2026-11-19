@@ -1795,7 +1795,9 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   $('#lev-csv').addEventListener('click', function () { if (LV.M) lvCsv(); else toast('Pick a brand first'); });
   function load() {
     $('#mstate').textContent = 'Loading…';
+    var tok = S.loadTok = {};   // the newest pick wins — a slower answer for the brand before is dropped
     api('/api/rules/stock' + (S.brand ? '?brand=' + encodeURIComponent(S.brand) : '')).then(function (d) {
+      if (S.loadTok !== tok) return;
       if (d && d.error === 'out of scope' && S.brand) { S.brand = ''; remember('fcc-stock-brand', ''); return load(); }
       S.d = d;
       (d.mechanisms || []).forEach(function (m) { MK[m.k] = m; });
@@ -2646,8 +2648,10 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (fid && fid !== (foc.getAttribute('data-rng') || '')) { var back = fid === 'sim-bq' ? $('#sim-bq') : $('#sim-ctl [data-num="' + fid + '"]'); if (back) { back.focus(); if (caret != null) try { back.setSelectionRange(caret, caret); } catch (e) {} } }
     $('#sim-sum').innerHTML = '<div class="it"><span>In stock in the master</span><b>' + n0(res.inStock) + '</b>' + (res.pre ? '<span title="Backorder and pre-order rows are a size the style is made in, never one counted in stock">+ ' + n0(res.pre) + ' on backorder / pre-order, not counted</span>' : '') + '</div>'
       + '<div class="it"><span>Held back by these rules</span><b>' + n0(res.held) + '</b><span>' + share(res.held, res.inStock) + ' of in stock' + (res.casc && res.casc.extra ? ' · +' + n0(res.casc.extra) + ' from the cascade' : '') + '</span></div>'
-      + '<div class="it"><span>Stays live</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + '</span></div>'
-      + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ', not live in the Google feed' : 'not joined to the Google feed') + '</span></div>';
+      // a WHAT-IF beside TODAY (Ray, 19 Nov 2026: "live in US shopping feed today is 27542 instock? compared with 27,010 as
+      // you shown?") — the simulated figure says it is one, and today's live count sits under today's held-back
+      + '<div class="it"><span>Would stay live with these rules</span><b>' + n0(res.live) + '</b><span>' + share(res.live, res.inStock) + ' · a simulation, not today’s feed</span></div>'
+      + '<div class="it"><span>Held back today</span><b>' + (res.today ? n0(res.today.held) : '—') + '</b><span>' + (res.today ? 'of these ' + n0(res.today.joined) + ' · live in Google today: ' + n0(res.today.joined - res.today.held) : 'not joined to the Google feed') + '</span></div>';
     var t = res.today, dlt = t ? t.sim - t.held : 0;
     // COMPARED WITH TODAY, in three plain lines (Ray, 10 Nov 2026, crossing out the one long sentence this used to be: "i dont
     // understand this - rewrite and have option to hide") — held back today vs with these rules, then the two ways a product
@@ -2719,6 +2723,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
   // a slider dragged off and released lands its control again (simDraw skips rebuilding the panel while one has focus)
   $('#sim-ctl').addEventListener('focusout', function (e) { if (e.target.getAttribute && e.target.getAttribute('data-rng')) setTimeout(simDraw, 0); });
   $('#sim-csv').addEventListener('click', function () {
+    if (!SIM.D || SIM.D.cmpid !== SIM.cmpid) return;
     var D = SIM.D, m = simMkt(); if (!D || !m) return;
     var E = SIM.E, held = E.simHeld(D, SIM.rules.hero.on && !simHeroWhy() ? SIM.rules : Object.assign({}, SIM.rules, { hero: { on: false } }), SIM.mode), BY = { block: 'category block', qty: 'stock quantity', rc: 'range completion', sz: 'sizes in stock', hero: 'hero sizes' }, TD = { 1: 'live', 2: 'sent out of stock', 3: 'not in the feed' };
     csvDownload((m.client + '_' + m.market).toLowerCase().replace(/\W+/g, '_') + '_simulated_held_back.csv',
@@ -2786,7 +2791,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     stockRead(m, say).then(function () { PID.busy = ''; pidFind(); renderPid(); })
       .catch(function (e) { PID.busy = ''; PID.err = String((e && e.message) || e); renderPid(); });
   }
-  function pidFind() { var x = pidRead(); PID.hit = x ? x.E.productFind(x.D, PID.q, 12) : null; if (x) PID.hit.cmpid = PID.cmpid; }
+  function pidFind() { var x = pidRead(); PID.hit = x ? x.E.productFind(x.D, PID.q, 12) : null; if (x) { PID.hit.cmpid = PID.cmpid; PID.hit.D = x.D; } }
   var PID_TD = { 0: 'not joined', 1: 'live', 2: 'sent out of stock', 3: 'not in the feed' };
   var PID_ST = { 1: 'In stock', 0: 'Out of stock', 2: 'Backorder / pre-order', '-1': 'Not stated' };
   function pidPct(v) { return v == null ? '—' : (Math.round(v * 10) / 10) + '%'; }
@@ -2820,7 +2825,7 @@ function mechTag(sk) { return '<span class="tg">' + (sk === 'hero' ? heroIcon() 
     if (!m) { box.hidden = true; st.textContent = 'No market with a Google feed in view — pick a brand or market above.'; fsum('pid-card', 'no market in view'); return; }
     if (!PID.q) { box.hidden = true; st.textContent = 'Type a product ID or a style for ' + m.client + ' ' + m.market + (x ? ' — its products are read (' + n0(x.D.n) + ')' : ' — the master and the Google feed are read in this browser on the first check') + '.'; fsum('pid-card', 'type a product ID'); return; }
     if (!x) { box.hidden = true; st.textContent = 'Press Check to read ' + m.client + ' ' + m.market + '’s products and find “' + PID.q + '”.'; fsum('pid-card', 'press Check'); return; }
-    if (!PID.hit || PID.hit.cmpid !== PID.cmpid) pidFind();
+    var xr = pidRead(); if (!PID.hit || PID.hit.cmpid !== PID.cmpid || (xr && PID.hit.D !== xr.D)) pidFind();   // a re-read is a new set of rows — find the product again
     var D = x.D, E = x.E, hit = PID.hit;
     heroMarkFor(D, x.H, E);
     st.textContent = m.client + ' ' + m.market + ' · ' + n0(D.n) + ' master products' + (D.join ? ', joined to the Google feed on ' + D.join.h : ', not joined to the Google feed') + ' · read ' + since(D.at) + ' · ';

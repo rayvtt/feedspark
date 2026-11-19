@@ -1252,7 +1252,9 @@ window.addEventListener('load',restore);
   function portMkts(name){ var b=B[name]||{}, ks={};
     if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;});
     (FEEDWIRED[name]||[]).forEach(function(k){ks[k]=1;});
-    return Object.keys(ks).filter(function(m){return m.indexOf('-fb')<0}).slice(0,8); }
+    // EVERY Google market — the brand's AI-readiness average, its worst market and "never scanned" read the whole estate,
+    // not the first eight it happened to list (19 Nov 2026: Reiss has 28); the table shows eight and names the rest
+    return Object.keys(ks).filter(function(m){return m.indexOf('-fb')<0}); }
   function portLoad(name,cb){
     portData(function(){
       var mkts=portMkts(name), pend=mkts.length;
@@ -2003,7 +2005,7 @@ window.addEventListener('load',restore);
        muted suffix; the averages and the guard alerts sit under the rule, the way Activity's foot
        does. */
     var satAvgA=satL.length?Math.round(satL.reduce(function(s,x){return s+x.pct;},0)/satL.length*10)/10:null;
-    var arows=audL.map(function(a){
+    var arows=audL.slice(0,8).map(function(a){
       var sat=null; satL.forEach(function(x){ if(x.m===a.m)sat=x.pct; });
       var b=a.score==null?'':(a.score>=80?'good':a.score>=65?'warn':'bad');
       var col=b==='good'?'#15803D':b==='warn'?'#ED6F0B':'#C0392B';
@@ -2012,7 +2014,8 @@ window.addEventListener('load',restore);
           +'<i style="width:'+a.score+'%;background:'+col+'"></i></span>';
       var sc=a.score==null?'<span class="sc" style="color:var(--muted);font-size:10.5px;font-weight:800">not scanned</span>'
         :'<span class="sc dzp-as '+b+'">'+a.score+(sat!=null?'<em>· '+sat+'% kw</em>':'')+'</span>';
-      return '<div class="dzp-mrow"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'+bar+sc+'</div>'; }).join('');
+      return '<div class="dzp-mrow"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'+bar+sc+'</div>'; }).join('')
+      +(audL.length>8?'<div class="dzp-mrow"><span class="mk" style="color:var(--muted)">+'+(audL.length-8)+' more</span></div>':'');
     /* the foot says what the rows can't: how much of the estate has actually been read, and the
        one cross-market number. The average is already in the heading and the alerts get their own
        pill, so neither is repeated here. */
@@ -3064,7 +3067,7 @@ window.addEventListener('load',restore);
         var wired=FEEDWIRED[name]||[];
         var mk=prompt('Market code for this feed (gb, de, fr, us… — leave as gb for the main market):'
           +(wired.length?'\nAlready wired-in from the master feed sheet: '+wired.join(', ').toUpperCase():''),'gb');
-        if(mk===null)return; mk=(mk||'gb').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,6)||'gb';
+        if(mk===null)return; mk=(mk||'gb').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,12)||'gb';
         var cur=(mk==='gb'?(b.feed||(b.feeds||{}).gb):(b.feeds||{})[mk])||'';
         var wiredHere=wired.indexOf(mk)>=0&&!cur;
         var u=prompt('Paste the LIVE '+mk.toUpperCase()+' feed Google-Sheet URL (link-shared, daily-refreshed). '

@@ -17561,6 +17561,46 @@
       "name": "AI demand: a header click sorts its own table, a second click reverses it",
       "file": "docs/FeedSpark_AIVisibility.html",
       "pattern": "srtSet(sk[0], sk[1]); render(); return;"
+    },
+    {
+      "name": "Market reads: Social reads answer only for their brand + market (S.gen)",
+      "file": "docs/FeedSpark_Social.html",
+      "pattern": "if (g !== S.gen) return;"
+    },
+    {
+      "name": "Market reads: Volume stores a scan under the market it streamed",
+      "file": "docs/FeedSpark_Volume.html",
+      "pattern": "fetch('/api/volume/dobpush?client='+enc(sc)+'&market='+enc(sm)"
+    },
+    {
+      "name": "Market reads: Images audit saved to the market it read",
+      "file": "docs/FeedSpark_Images.html",
+      "pattern": "fetch('/api/images/audit?client='+encodeURIComponent(ac)+'&market='+encodeURIComponent(am)"
+    },
+    {
+      "name": "Market reads: guard pages never repaint another market (SEL)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (SEL !== k) return;   // another market"
+    },
+    {
+      "name": "Market reads: Quote files a pulled feed under the market it read",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "IDX[pm]={map:map"
+    },
+    {
+      "name": "Market reads: a module brief carries its market into the composer",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "bm.value=moduleMkt(j)"
+    },
+    {
+      "name": "Market reads: worker keeps market keys whole (Meta -fb never folded)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "replace(/[^a-z0-9-]/g, '').slice(0, 12) || 'gb';"
+    },
+    {
+      "name": "Market reads: KWCal sync writes the brand it read",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='"
     }
   ]
 }

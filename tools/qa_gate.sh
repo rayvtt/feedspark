@@ -61,6 +61,13 @@ else
   echo "   ✗ brief-recovery harness FAILED — see node tools/test_briefrecover.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3b/7: every read answers for its own market"
+if node tools/test_marketreads.mjs >/dev/null 2>&1; then
+  echo "   ✓ every wired feed is its own company; no read lands on another market"
+else
+  echo "   ✗ market-reads harness FAILED — see node tools/test_marketreads.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3b/7: keyword-result parsing + verdict"
 if node tools/test_kwresult.mjs >/dev/null 2>&1; then
   echo "   ✓ subject shape, verdict direction + inverted cost metrics hold"

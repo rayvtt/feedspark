@@ -1019,12 +1019,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     .then(function(a){ ME=(a&&(a.email||a.name))||''; });
 
   function pickClient(){ if(!CLIENT)return; rec(); loadMkts(); render(); }
-  $('#brand').addEventListener('change',function(){ CLIENT=this.value; rec(); IDX={}; EDITING=null; loadMkts(); render();
+  $('#brand').addEventListener('change',function(){ CLIENT=this.value; MKT=(STORE[CLIENT]&&STORE[CLIENT].mkt)||'gb'; rec(); IDX={}; EDITING=null; loadMkts(); render();
     try{localStorage.setItem('fcc-aiq-client',CLIENT)}catch(e){} });
   $('#edit-stop').addEventListener('click',function(){ EDITING=null; render(); });
 
-  function loadMkts(){ MKT='gb'; MKTLIST=['gb'];
+  function loadMkts(){ MKT='gb'; MKTLIST=['gb']; var c=CLIENT;
     fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+      if(c!==CLIENT)return;
       var ks=d&&d.markets?Object.keys(d.markets):(d&&typeof d==='object'?Object.keys(d).filter(function(k){return k!=='client'}):[]);
       if(ks&&ks.length)MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)});
       if(MKTLIST.indexOf('gb')<0)MKT=MKTLIST[0]; var rr=STORE[CLIENT]; if(rr&&rr.mkt&&MKTLIST.indexOf(rr.mkt)>=0)MKT=rr.mkt;
@@ -1041,7 +1042,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function pullFeed(){
     if(!CLIENT)return; err('');
     if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — pulling needs the live worker.'); return; }
-    var key=CLIENT+'|'+MKT; if(CACHING[key])return; CACHING[key]=1;
+    var key=CLIENT+'|'+MKT, pc=CLIENT, pm=MKT; if(CACHING[key])return; CACHING[key]=1;   // the feed pulled is the market it is filed under (19 Nov 2026)
     $('#mstate').textContent='Pulling '+CLIENT+' '+MKT.toUpperCase()+'…';
     var header=null,cands=[],kwc=[],buf=[],parser=null,igc=-1,idc=-1,dbc=-1,dbName='';
     function onRow(r){
@@ -1093,16 +1094,18 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       /* pkeys = per product type, its parent keys as an ARRAY: a scope's unique-product count is
          the UNION across its types, so a parent split over two types is never counted twice */
       Object.keys(pkeys).forEach(function(pt){ pkeys[pt]=Object.keys(pkeys[pt]); });
-      IDX[MKT]={map:map,pmap:pmap,pkeys:pkeys,total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now(),
+      delete CACHING[key];
+      if(pc!==CLIENT)return;   // another brand is on screen — its index is not this brand's
+      IDX[pm]={map:map,pmap:pmap,pkeys:pkeys,total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now(),
         dob:(dbc>=0?{col:dbName,cut:cut,rows:{total:tot,dated:dRowD,recent:dRowR},
           pars:{total:prod,dated:dParD,recent:dParR},pt:dPt,pk:dPk,
           rowsM:dRowM,parsM:dParM,ptM:dPtM}:null)};
       _aimDob={}; _aimCo={};
-      delete CACHING[key];
+      if(pm!==MKT)return;
       $('#mstate').textContent=fmt(tot)+' SKUs · '+Object.keys(map).length+' product types';
       render();
     }
-    fetch('/api/feed/proxy?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)).then(function(res){
+    fetch('/api/feed/proxy?client='+encodeURIComponent(pc)+'&market='+encodeURIComponent(pm)).then(function(res){
       if(!res.ok)throw new Error('feed proxy said '+res.status);
       var reader=res.body.getReader(),dec=new TextDecoder();
       function step(){ return reader.read().then(function(x){

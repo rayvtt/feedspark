@@ -311,8 +311,10 @@ window.addEventListener('load',restore);
     this.classList.toggle('on',t); this.setAttribute('aria-pressed',t?'true':'false');
   });
 
-  function loadMkts(want){ MKT=want||'gb'; MKTLIST=[MKT];
+  // every read answers for the brand + market it was asked for (19 Nov 2026) — a slower answer for the one before is dropped
+  function loadMkts(want){ MKT=want||'gb'; MKTLIST=[MKT]; var c=CLIENT;
     fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+      if(c!==CLIENT)return;
       var ks=d&&d.markets?Object.keys(d.markets):[];
       if(ks&&ks.length)MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)});
       if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST.indexOf('gb')>=0?'gb':MKTLIST[0];
@@ -326,8 +328,10 @@ window.addEventListener('load',restore);
   function load(){
     if(!CLIENT)return;
     $('#mstate').textContent='Loading…';
+    var c=CLIENT,m=MKT;
     fetch('/api/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT))
       .then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+        if(c!==CLIENT||m!==MKT)return;
         DATA=(d&&d.ok)?d:null;
         $('#mstate').textContent=DATA?'':'Volume history is unavailable — this needs the live worker.';
         render(); renderArrivals();
@@ -387,6 +391,7 @@ window.addEventListener('load',restore);
      engine the agent runs) — and stores the histogram, so nobody waits for the 4×-daily pass */
   function scanNow(){
     if(!CLIENT||/-fb$/.test(MKT))return;
+    var sc=CLIENT,sm=MKT;   // the feed streamed is the one stored — never the market on screen when it finishes
     if(window.__engineFail||typeof FeedAudit==='undefined'||typeof FeedArrivals==='undefined'){ astate('The scan engines are unavailable — this needs the live worker.'); return; }
     var btn=$('#arr-scan'); btn.disabled=true; astate('Streaming the live feed…');
     var header=null,di=-1,idi=-1,rows=0,col=FeedArrivals.dobCollector(),parser=null;
@@ -394,14 +399,14 @@ window.addEventListener('load',restore);
       var k=String(h==null?'':h).replace(/\s+type=.*$/i,'').replace(/^[gc]:/i,'').trim().toLowerCase(); if(idi<0&&(k==='id'||k==='item_id'||k==='offer_id'))idi=i; }); if(idi<0)idi=0; }
     var onRow=function(r,live){ if(!header){ header=r; resolve(); return; } if(live&&live.length!==header.length){ header=live.slice(); resolve(); }
       var id=String(r[idi]==null?'':r[idi]).trim(); if(!id)return; rows++; if(di>=0)col.add(r[di]); if(rows%2000===0)astate('Streaming… '+fmt(rows)+' SKUs'); };
-    fetch('/api/feed/proxy?client='+enc(CLIENT)+'&market='+enc(MKT)).then(function(r){
+    fetch('/api/feed/proxy?client='+enc(sc)+'&market='+enc(sm)).then(function(r){
       if(!r.ok||!r.body)throw new Error('HTTP '+r.status); var reader=r.body.getReader(), dec=new TextDecoder();
       function pump(){ return reader.read().then(function(x){ if(x.done){ if(parser){ parser.push(dec.decode()); parser.end(); } return; }
         var t=dec.decode(x.value,{stream:true}); if(!parser)parser=/^\s*</.test(t)?FeedAudit.createXmlParser(onRow):FeedAudit.createParser(onRow); parser.push(t); return pump(); }); }
       return pump();
     }).then(function(){ var dob=col.finish(); if(di<0)throw new Error('nofield');
-      return fetch('/api/volume/dobpush?client='+enc(CLIENT)+'&market='+enc(MKT),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rows:rows,dob:dob})})
-        .then(function(r){return r.json()}).then(function(j){ if(!j||!j.ok)throw new Error((j&&j.error)||'store failed'); astate('Read '+fmt(dob.n)+' first-seen dates across '+fmt(rows)+' SKUs.'); load(); loadEstate(); });
+      return fetch('/api/volume/dobpush?client='+enc(sc)+'&market='+enc(sm),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rows:rows,dob:dob})})
+        .then(function(r){return r.json()}).then(function(j){ if(!j||!j.ok)throw new Error((j&&j.error)||'store failed'); astate('Read '+fmt(dob.n)+' first-seen dates across '+fmt(rows)+' SKUs of '+sc+' '+sm.toUpperCase()+'.'); if(sc===CLIENT&&sm===MKT)load(); loadEstate(); });
     }).catch(function(e){ astate(e&&e.message==='nofield'?'This feed carries no fs_date_of_birth field — nothing to read.':'Scan failed: '+((e&&e.message)||e)); })
       .then(function(){ btn.disabled=false; });
   }

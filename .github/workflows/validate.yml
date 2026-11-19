@@ -123,6 +123,8 @@ jobs:
         run: node tools/test_stocklevers.mjs
       - name: Catalogue harness (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)
         run: node tools/test_catalog.mjs
+      - name: Every read answers for its own market
+        run: node tools/test_marketreads.mjs
       - name: Spend Lens engine (the cut read, the tactics, the lifted route wiring)
         run: node tools/test_spendlens.mjs
       - name: Test Lab harness (library, book-wide evidence, competitor Shopping read, lifted routes)

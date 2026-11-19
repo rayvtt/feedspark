@@ -767,8 +767,13 @@ table.est td.feed{min-width:110px}
      being typed into (that steals the caret mid-word), so those saves refresh the dropdowns
      and the estate but leave the editor exactly as it is. */
   function saveTags(patch,clear,opts){
-    if(!CLIENT)return Promise.resolve();
     opts=opts||{};
+    // a verdict that answers after a brand switch is saved to the brand it was asked for — never into the one on screen
+    if(opts.client&&opts.client!==CLIENT){
+      return fetch('/api/images/tags?client='+encodeURIComponent(opts.client),{method:'PUT',headers:{'content-type':'application/json'},
+        body:JSON.stringify({tags:patch,clear:clear||{}})}).catch(function(){});
+    }
+    if(!CLIENT)return Promise.resolve();
     TAGS=TAGS||{v:1,tok:{},img:{}};
     TAGS.tok=TAGS.tok||{}; TAGS.img=TAGS.img||{};
     Object.keys((patch&&patch.tok)||{}).forEach(function(k){ TAGS.tok[k]=patch.tok[k]; });
@@ -816,10 +821,11 @@ table.est td.feed{min-width:110px}
     });
     return PIXP;
   }
-  function readPixels(url){
+  function readPixels(url,c,m){
+    c=c||CLIENT; m=m||MKT;
     return new Promise(function(res){
       var P=window.FeedPixels; if(!P)return res({err:'the pixel engine did not load'});
-      var proxied='/api/catalog/img?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'&url='+encodeURIComponent(url);
+      var proxied='/api/catalog/img?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(m)+'&url='+encodeURIComponent(url);
       var im=new Image(), done=false;
       var fin=function(v){ if(done)return; done=true; res(v); };
       var to=setTimeout(function(){ fin({err:'timed out'}); },15000);
@@ -851,6 +857,7 @@ table.est td.feed{min-width:110px}
     var codes=(cap.tokens||[]).filter(function(t){ return !t.weak&&t.samples&&t.samples.length; });
     if(!codes.length){ setState('This feed has no repeating shot code to audit — its images are named one at a time.'); return; }
     AUDBUSY=true; AUDSTOP=false; $('#tyaudit').textContent='■ Stop';
+    var ac=CLIENT,am=MKT,here=function(){ return ac===CLIENT&&am===MKT; };   // the feed audited is the feed saved
     loadPixels().then(function(ok){
       if(!ok){ AUDBUSY=false; $('#tyaudit').textContent='⚡ Audit the shot codes';
         setState('The pixel engine did not load, so the codes cannot be checked.'); return; }
@@ -858,22 +865,21 @@ table.est td.feed{min-width:110px}
       var next=function(){
         if(AUDSTOP||i>=codes.length){
           AUDBUSY=false; $('#tyaudit').textContent='⚡ Audit the shot codes';
-          AUDIT=Object.assign(AUDIT||{},out);
-          renderTypes();
+          if(here()){ AUDIT=Object.assign(AUDIT||{},out); renderTypes(); }
           var mixed=Object.keys(out).filter(function(k){ return out[k].state==='mixed'; }).length;
           setState((AUDSTOP?'Stopped — ':'Done — ')+Object.keys(out).length+' shot code'+(Object.keys(out).length===1?'':'s')+' checked on '+fmt(read)+' images'
             +(mixed?' · '+mixed+' hold more than one kind of shot':' · all consistent')+'.');
           if(!Object.keys(out).length)return;
-          return fetch('/api/images/audit?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT),
+          return fetch('/api/images/audit?client='+encodeURIComponent(ac)+'&market='+encodeURIComponent(am),
             {method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({audit:out})})
             .then(function(r){return r.json()})
-            .then(function(d){ if(d&&d.ok&&d.audit){ AUDIT=d.audit; renderTypes(); } })
+            .then(function(d){ if(d&&d.ok&&d.audit&&here()){ AUDIT=d.audit; renderTypes(); } })
             .catch(function(){ setState('Checked on screen but not saved to the server — this needs the live worker.'); });
         }
         var t=codes[i++];
         setState('Reading shot code '+t.tok+' — '+i+' of '+codes.length+'…',true);
         var pick=t.samples.slice(0,AUD_SAMPLES);
-        return Promise.all(pick.map(function(s){ return readPixels(s.url).then(function(r){ read++; return {url:s.url,r:r}; }); }))
+        return Promise.all(pick.map(function(s){ return readPixels(s.url,ac,am).then(function(r){ read++; return {url:s.url,r:r}; }); }))
           .then(function(reads){ out[t.tok]=T.codeAudit(reads); return next(); });
       };
       return next();
@@ -1034,7 +1040,7 @@ table.est td.feed{min-width:110px}
         if(!v||!v.tag||!taxonomy().some(function(x){return x.id===v.tag})){ setState('The model did not name a shot type from the list — tag '+tok+' by hand.'); render(); return; }
         var patch={tok:{}}; patch.tok[tok]={tag:v.tag,by:'ai',t:Date.now(),note:String(v.note||'').slice(0,300),conf:Math.max(0,Math.min(1,+v.conf||0))};
         setState('Shot code '+tok+' → '+taxLabel(v.tag)+' — '+fmt(t.n)+' images named.');
-        return saveTags(patch);
+        return saveTags(patch,null,{client:c});
       })
       .catch(function(e){ AIBUSY[tok]=false; setState('AI tagging failed: '+((e&&e.message)||e)); render(); });
   }
@@ -1043,8 +1049,9 @@ table.est td.feed{min-width:110px}
     var todo=cap.tokens.filter(function(t){ return !ruleFor(t.tok)&&!t.weak&&t.samples&&t.samples.length; });
     if(!todo.length){ setState('Every shot code on this feed already has a tag.'); return; }
     ABORT=false; $('#aiall').textContent='■ Stop';
-    var i=0;
+    var i=0,ac=CLIENT;
     (function next(){
+      if(CLIENT!==ac)ABORT=true;   // the brand changed — this brand's codes are not that brand's
       if(ABORT||i>=todo.length){ $('#aiall').textContent='✦ AI tag every shot code';
         setState((ABORT?'Stopped — ':'Done — ')+i+' shot code'+(i===1?'':'s')+' tagged.'); return; }
       var t=todo[i++];
@@ -1107,8 +1114,7 @@ table.est td.feed{min-width:110px}
           .then(function(r){return r.json()}).catch(function(){return null})
           .then(function(d){
             if(!d||!d.ok){ /* the worker refused the save — still show the live reading */
-              DATA={ok:true,snap:cap,hist:(DATA&&DATA.hist)||[],kind:(DATA&&DATA.kind)||null};
-              if(client===CLIENT&&mkt===MKT)render();
+              if(client===CLIENT&&mkt===MKT){ DATA={ok:true,snap:cap,hist:(DATA&&DATA.hist)||[],kind:(DATA&&DATA.kind)||null}; render(); }
               setState(who+' — scanned live (not saved: '+((d&&d.error)||'worker unavailable')+')'); return; }
             setState(who+' — scanned: '+fmt(cap.imgs)+' images, '+fmt(cap.tokens.length)+' shot code'+(cap.tokens.length===1?'':'s')
               +(cap.learnable?'':' (unpatterned — tag per image)')+'.');
@@ -1183,17 +1189,20 @@ table.est td.feed{min-width:110px}
   function loadPhotos(client){
     if(!client)return Promise.resolve(null);
     return fetch('/api/images/photos?client='+encodeURIComponent(client)).then(function(r){return r.json()})
-      .then(function(d){ if(d&&d.ok)PHOTOS=d.photos||{v:1,p:{}}; return PHOTOS; })
+      .then(function(d){ if(client!==CLIENT)return PHOTOS; if(d&&d.ok)PHOTOS=d.photos||{v:1,p:{}}; return PHOTOS; })
       .catch(function(){ PHOTOS=PHOTOS||{v:1,p:{}}; return PHOTOS; });
   }
   /* Saved in DELTAS, not as a whole map: a run names thousands of photographs and
      re-sending every one of them on every flush would cost megabytes a batch. */
-  function savePhotos(patch,clear){
-    PHOTOS=PHOTOS||{v:1,p:{}}; PHOTOS.p=PHOTOS.p||{};
-    Object.keys(patch||{}).forEach(function(k){ PHOTOS.p[k]=patch[k]; });
-    (clear||[]).forEach(function(k){ delete PHOTOS.p[k]; });
-    if(!CLIENT)return Promise.resolve();
-    return fetch('/api/images/photos?client='+encodeURIComponent(CLIENT),{method:'PUT',
+  function savePhotos(patch,clear,client){
+    var to=client||CLIENT;
+    if(to===CLIENT){
+      PHOTOS=PHOTOS||{v:1,p:{}}; PHOTOS.p=PHOTOS.p||{};
+      Object.keys(patch||{}).forEach(function(k){ PHOTOS.p[k]=patch[k]; });
+      (clear||[]).forEach(function(k){ delete PHOTOS.p[k]; });
+    }
+    if(!to)return Promise.resolve();
+    return fetch('/api/images/photos?client='+encodeURIComponent(to),{method:'PUT',
       headers:{'content-type':'application/json'},
       body:JSON.stringify({photos:{p:patch||{}},clear:clear||[]})})
       .then(function(r){return r.json()})
@@ -1344,8 +1353,10 @@ table.est td.feed{min-width:110px}
    * never by a guess, and stays on for the rest of the run. */
   var PHB64=false;
   function phUrl(u){ return String(u||'').replace(/&amp;/g,'&').replace(/^http:\/\//i,'https://'); }
+  var PHCTX=null;                 // the brand + market a photograph run was started on
   function phData(u){
-    return fetch('/api/catalog/img?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)
+    var c=PHCTX?PHCTX.c:CLIENT,m=PHCTX?PHCTX.m:MKT;
+    return fetch('/api/catalog/img?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(m)
       +'&url='+encodeURIComponent(phUrl(u)))
       .then(function(r){ if(!r.ok)throw new Error('the image proxy said '+r.status); return r.blob(); })
       .then(function(bl){ return new Promise(function(res,rej){
@@ -1413,7 +1424,7 @@ table.est td.feed{min-width:110px}
       kept++;
     });
     PHSPEND.named+=r.named; PHSPEND.missed+=r.missed;
-    return kept?savePhotos(r.patch):Promise.resolve();
+    return kept?savePhotos(r.patch,null,PHCTX&&PHCTX.c):Promise.resolve();
   }
   function phRun(){
     if(PHBUSY){ PHSTOP=true; return; }
@@ -1427,6 +1438,7 @@ table.est td.feed{min-width:110px}
       +', roughly $'+e.usd.toFixed(2)+', and about '+e.minutes+' minute'+(e.minutes===1?'':'s')
       +' at the rate the worker allows.\n\n⏹ Stop finishes the batch in hand and keeps every tag already named.'))return;
     PHBUSY=true; PHSTOP=false; $('#ptai').textContent='⏹ Stop';
+    PHCTX={c:CLIENT,m:MKT};
     var i=0,waits=0;
     /* THE THROTTLE IS A WAIT, NOT AN END. The worker allows 120 calls per 10 minutes on
        /api/claude, and a library this size is more calls than that — so a 429 pauses the
@@ -1444,8 +1456,9 @@ table.est td.feed{min-width:110px}
       })();
     };
     (function next(){
+      if(PHCTX&&(PHCTX.c!==CLIENT||PHCTX.m!==MKT))PHSTOP=true;   // another feed is on screen — stop, keeping what was named
       if(PHSTOP||i>=todo.length){
-        PHBUSY=false; $('#ptai').textContent='✦ AI tag the photographs';
+        PHBUSY=false; PHCTX=null; $('#ptai').textContent='✦ AI tag the photographs';
         Object.keys(PHPEND).forEach(function(k){ delete PHPEND[k]; });
         setState((PHSTOP?'Stopped — ':'Done — ')+fmt(PHSPEND.named)+' photograph'+(PHSPEND.named===1?'':'s')+' named'
           +(PHSPEND.missed?', '+fmt(PHSPEND.missed)+' the model left unnamed (they are offered again)':'')

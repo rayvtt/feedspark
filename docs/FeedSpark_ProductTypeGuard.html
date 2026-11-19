@@ -1243,6 +1243,7 @@ window.addEventListener('load',restore);
       .then(function (r) { return r.json(); })
       .then(function (d) {
         CACHE[k] = d;
+        if (SEL !== k) return;   // another market was picked while this one loaded (19 Nov 2026)
         if (!d.snapshot || (Date.now() - d.snapshot.t) > STALE_MS) { scan(k, true); }
         else renderDetail(k);
       })
@@ -1302,13 +1303,13 @@ window.addEventListener('load',restore);
   function scan(k, thenRender) {
     var p = parts(k);
     var who = esc(p.client) + ' · ' + esc(p.mkt.toUpperCase());
-    var st = function (m) { $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>' + who + ' — ' + esc(m) + '</span>'; };
+    var st = function (m) { if (SEL !== k) return; $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>' + who + ' — ' + esc(m) + '</span>'; };
     st('scanning live feed (Google is aggregating the pivot)…');
     var after = function (d) {
-      if (!d || d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc((d && d.error) || 'no response') + '</span>'; return refreshEstate(); }
+      if (!d || d.error) { if (SEL === k) $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc((d && d.error) || 'no response') + '</span>'; return refreshEstate(); }
       return fetch(API + '/api/ptypes/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (r) { return r.json(); })
-        .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+        .then(function (full) { CACHE[k] = full; if (thenRender !== false && SEL === k) renderDetail(k); return refreshEstate(); });
     };
     return fetch(API + '/api/ptypes/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (r) { return r.json(); })
@@ -1320,7 +1321,7 @@ window.addEventListener('load',restore);
         }
         return after(d);
       })
-      .catch(function () { $('det-panel').innerHTML = '<span class="muted">Scan failed — network.</span>'; });
+      .catch(function () { if (SEL === k) $('det-panel').innerHTML = '<span class="muted">Scan failed — network.</span>'; });
   }
 
   function ack(k, btn) {
@@ -1714,7 +1715,7 @@ window.addEventListener('load',restore);
     var blob = new Blob([out.join('\n')], { type: 'text/csv' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'ptguard_' + s.client.replace(/\W+/g, '') + '_' + (s.market || 'gb') + '_' + new Date(s.t).toISOString().slice(0, 10) + '.csv';
+    a.download = 'ptguard_' + s.client.replace(/\W+/g, '') + '_' + parts(k).mkt + '_' + new Date(s.t).toISOString().slice(0, 10) + '.csv';
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 

@@ -617,6 +617,10 @@ window.addEventListener('load',restore);
       var names = Object.keys(S.roster).filter(function (c) { return S.roster[c].length; }).sort();
       $('#brand').innerHTML = '<option value="">Pick a brand</option>' + names.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
       if (!S.roster[S.brand]) S.brand = names[0] || '';
+      // a link may name the market as the roster writes it ("GB", "BE-FR") — matched to its wired key, never swapped for
+      // whichever market sorts first (19 Nov 2026: Workflow's link opened Reiss AT)
+      if (!entry() && S.mkt) { var nk = function (x) { return String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }, want = nk(S.mkt);
+        var hitM = (S.roster[S.brand] || []).filter(function (m) { return !m.meta && nk(m.mkt) === want; })[0]; if (hitM) S.mkt = hitM.mkt; }
       if (!entry()) { var ms = S.roster[S.brand] || []; var g = ms.filter(function (m) { return !m.meta; })[0] || ms[0]; S.mkt = g ? g.mkt : ''; }
       $('#brand').value = S.brand;
       renderChips(); load();

@@ -2364,11 +2364,14 @@ aside.ck[hidden]{display:none}
     if(wins.length) h+='<h4>Test wins — proof points</h4>'+wins.map(function(w){
       return '<div class="bs-line">'+esc(String(w.name||'').slice(0,60))+' <b class="bs-win">'+esc(w.result)+'</b></div>'; }).join('');
     host.innerHTML=h+'<div id="bs-feed"></div>';
-    fetch('/api/feed/audit?client='+encodeURIComponent(c)).then(function(r){ return r.json(); }).then(function(a){
+    // the brief's OWN market (19 Nov 2026) — without one the worker answers GB's reading, which used to sit unlabelled
+    // beside a US or CA brief
+    var bmk=String((document.getElementById('bg-market')||{}).value||'gb').toLowerCase().replace(/[^a-z0-9-]/g,'')||'gb';
+    fetch('/api/feed/audit?client='+encodeURIComponent(c)+'&market='+encodeURIComponent(bmk)).then(function(r){ return r.json(); }).then(function(a){
       var el=document.getElementById('bs-feed');
       if(!el||!a||!a.score||typeof a.score.total!=='number')return;
       if(document.getElementById('bg-client').value!==c)return;   // client changed while fetching
-      el.innerHTML='<h4>Feed Lab</h4><div class="bs-line">AI-readiness <b>'+Math.round(a.score.total)+'</b>'+(a.score.tier?' · '+esc(String(a.score.tier)):'')+'</div>';
+      el.innerHTML='<h4>Feed Lab · '+esc(bmk.toUpperCase())+'</h4><div class="bs-line">AI-readiness <b>'+Math.round(a.score.total)+'</b>'+(a.score.tier?' · '+esc(String(a.score.tier)):'')+'</div>';
     }).catch(function(){});
   }
   (function(){ var cs=document.getElementById('bg-client'); if(cs)cs.addEventListener('change',function(){ window.__bsRow=null; renderCtx(null); }); })();
@@ -2415,7 +2418,7 @@ aside.ck[hidden]{display:none}
     // anyone inside the company, either Ray, Steven, Radostina, or anyone else") — the signed-in
     // Access identity, stamped once at creation and never rewritten by a later editor.
     if(!b.by){ var me=meName(); if(me)b.by=me; }
-    if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; }   // KWCal moment tie (set once, kept through later edits)
+    if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; if(window.__kwMkt)b.kwm=window.__kwMkt; window.__kwMkt=null; }   // KWCal moment tie (set once, kept through later edits)
     if(window.__gpId){ b.gp=window.__gpId; window.__gpId=null; }   // Golden Record action-plan tie: the audit reads this ticket's stage back onto its task
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
     if(o.f.source==='email'){ adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1); b.taskKey=o.f.client+'|'+o.f.task; }
@@ -5300,6 +5303,18 @@ aside.ck[hidden]{display:none}
      panel already on this page (the Playbook rail). Ray, 17 Sep 2026, wants a new-product cohort
      "briefed directly in into Intake" — a full page reload to hand ourselves a query string would
      throw away the rail, the board's filters and the scroll position to reach the same function. */
+  /* THE BRIEF'S MARKET IS THE MODULE'S (Ray, 19 Nov 2026: "ensure that each market and each feed type is read correctly"):
+     the composer's Market box started on "gb" and no module set it, so a Reiss CA brief went out coded …-gb — and the
+     code's last segment is what the Gmail recovery files the ticket's market from. A payload that names its market
+     (mkt / market) wins; else the house task name "… - <Brand> <MKT> - MMYY" every module writes says it; else gb. */
+  function moduleMkt(j){
+    var m=String((j&&(j.mkt||j.market))||'').toLowerCase().replace(/-fb$/,'').replace(/[^a-z0-9-]/g,'');
+    if(m)return m.slice(0,6);
+    var t=String((j&&j.task)||''), c=String((j&&j.client)||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    var r=c?new RegExp('(?:^|\\s)'+c+'\\s+([A-Z]{2,3}(?:-[A-Z]{2})?)(?:\\s*·[^-]*)?\\s+-\\s+\\d{4}\\s*$','i').exec(t):null;
+    return r?r[1].toLowerCase():'gb';
+  }
+  window.__wfModuleMkt=moduleMkt;
   function briefFromModule(j){
     if(!j||!j.task)return;
     if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
@@ -5313,7 +5328,8 @@ aside.ck[hidden]{display:none}
       window.__linkKey=null;   // prefill assumes an intake-row opener — a deep link has NO row yet; a phantom tie here blocked row-creation on save
       // Keyword Calendar: carry the moment's id onto the brief so the calendar's status chip
       // tracks THIS ticket for life — renaming the moment can never break the tie (Ray, 11 Sep 2026)
-      if(j.kw)window.__kwId=String(j.kw).slice(0,60);
+      if(j.kw){ window.__kwId=String(j.kw).slice(0,60); window.__kwMkt=String(j.mkt||'').toLowerCase().slice(0,6)||null; }
+      var bm=document.getElementById('bg-market'); if(bm){ bm.value=moduleMkt(j); try{ bm.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){} }
       // Golden Record action plan: the task's own key, so the next audit run reads this ticket's stage back onto it
       if(j.gp)window.__gpId=String(j.gp).slice(0,160);
       pinClient(j.client||null);   // …and the brand it names can never be swapped for another
@@ -6059,10 +6075,18 @@ aside.ck[hidden]{display:none}
   }
   function pbMonthOf(d){ var m=/^(\d{4})-(\d{2})/.exec(String(d||'')); return m?m[1]+'-'+m[2]:''; }
   /* the month of the most recent title or keyword task in the brand's plan, or '' if there is none */
-  function pbLastOpt(tasks,ov){
-    var best='';
+  /* PER MARKET (19 Nov 2026): a title / keyword task that NAMES a market ("… - Reiss GB - 1026") answers for that market
+     only — GB's October work used to clear US's and CA's backlog too. A task naming no market stays brand-wide. */
+  function pbTaskMkt(t){
+    var m=/\s([A-Z]{2,3}(?:-[A-Z]{2})?)\s+-\s+\d{4}\s*$/.exec(String(t||''));
+    if(!m)return '';
+    var x=m[1].toLowerCase().replace(/[^a-z0-9]/g,''); return x==='uk'?'gb':x;
+  }
+  function pbLastOpt(tasks,ov,mkt){
+    var best='', want=String(mkt||'').toLowerCase().replace(/-fb$/,'').replace(/[^a-z0-9]/g,'');
     (tasks||[]).forEach(function(t){
       if(!t||!t.d)return;
+      var tm=want?pbTaskMkt(t.t):''; if(tm&&tm!==want)return;
       var mo=pbMonthOf(t.d); if(!mo||mo<=best)return;
       var k=pbClassify(t.t,ov);
       if(k==='title'||k==='keyword')best=mo;
@@ -6076,7 +6100,7 @@ aside.ck[hidden]{display:none}
     var cur=d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2);
     var floorD=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()-PB_BACKLOG_MONTHS,1));
     var floor=floorD.getUTCFullYear()+'-'+('0'+(floorD.getUTCMonth()+1)).slice(-2);
-    var since=pbLastOpt(tasks,ov);
+    var since=pbLastOpt(tasks,ov,feed.mkt);
     var months=Object.keys(dob.m).filter(function(k){
       return /^\d{4}-\d{2}$/.test(k) && k<cur && k>=floor && (!since||k>since);
     }).sort();
@@ -6824,9 +6848,9 @@ aside.ck[hidden]{display:none}
     var mk=arrOf(brand).filter(function(f){return f.dob;}).map(function(f){return f.mkt;});
     var i=0;
     (function next(){
-      if(i>=mk.length)return;
+      if(i>=mk.length||BRAND!==brand)return;   // another brand is on the rail — its boxes share these ids
       var mkt=mk[i++],box=document.getElementById('mix-'+mkt);
-      var paint=function(){ var b=document.getElementById('mix-'+mkt); if(b&&!b.hidden)b.innerHTML=mixHtml(CATMIX[brand+'|'+mkt]); next(); };
+      var paint=function(){ if(BRAND!==brand)return; var b=document.getElementById('mix-'+mkt); if(b&&!b.hidden)b.innerHTML=mixHtml(CATMIX[brand+'|'+mkt]); next(); };
       if(CATMIX[brand+'|'+mkt])return paint();
       if(box&&!box.hidden)box.innerHTML='<div class="ck-mix"><div class="ck-none">Reading the feed history…</div></div>';
       loadMix(brand,mkt,paint);
@@ -7580,7 +7604,7 @@ aside.ck[hidden]{display:none}
     });
     if((d.rest||[]).length)h+='<div class="ck-cwm"><span class="tag">'+esc((d.rest||[]).length+' smaller market'+((d.rest||[]).length===1?'':'s')+' not read here: '+(d.rest||[]).map(function(x){return x.toUpperCase();}).join(', '))+'</span></div>';
     if((d.quiet||[]).length)h+='<div class="ck-cwm"><span class="tag">'+esc((d.quiet||[]).length+' market'+((d.quiet||[]).length===1?'':'s')+' carried no spend in the window')+'</span></div>';
-    h+='<p class="ck-h">These are the cuts FeedHero reports. For a field it does not cut — pattern, material, size, anything in the feed — the <a href="/breakdown?brand='+encodeURIComponent(brand)+(mk.length?'&market='+encodeURIComponent(mk[0].market):'')+'" class="ck-lnk" target="_blank" rel="noopener">Field Breakdown</a> reads the feed itself and pivots spend and ROAS against any of them \u2014 that is where the pattern reading above came from.</p></div>';
+    h+='<p class="ck-h">These are the cuts FeedHero reports. For a field it does not cut — pattern, material, size, anything in the feed — the <a href="/breakdown?brand='+encodeURIComponent(brand)+(mk.length?'&market='+encodeURIComponent(String(mk[0].market).toLowerCase()):'')+'" class="ck-lnk" target="_blank" rel="noopener">Field Breakdown</a> reads the feed itself and pivots spend and ROAS against any of them \u2014 that is where the pattern reading above came from.</p></div>';
     if(also.length){
       h+='<div class="ck-actfoot"><button type="button" class="ck-brief" id="ck-sl-more" aria-expanded="'+(SLMORE[brand]?'true':'false')+'">'+(SLMORE[brand]?'▾ Fewer':'▸ '+also.length+' more on other cuts')+'</button></div>';
       if(SLMORE[brand])h+='<ul class="ck-tlmore">'+also.map(function(f){

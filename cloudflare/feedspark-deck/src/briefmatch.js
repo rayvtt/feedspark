@@ -663,6 +663,9 @@ export function matchGmailToBriefs(briefs, messages, opts) {
 // shape never survives contact with the real email).
 const KWR_SUBJ_RE = /^\s*(?:(?:fwd?|re)\s*:\s*)*(.+?)\s+x\s+feed\s*spark\s*[\s-–—:]+(.+?)[\s-–—:]+keyword\s*optimi[sz]ation\b/i;
 const KWR_MKT_RE = /\b(GB|UK|IE|US|USA|DE|FR|NL|AU|CA|EU|UAE|Global)\.?\s*$/i;
+// every other market the roster runs (ES, IT, DK, CH-DE, BE-FR …) — a trailing UPPER-CASE code, case-sensitive so a
+// brand's own word is never read as one (19 Nov 2026: "Reiss ES x Feedspark" parsed as brand "Reiss ES", no market)
+const KWR_MKT_ANY = /\s([A-Z]{2}(?:-[A-Z]{2})?)\.?\s*$/;
 const KWR_METRIC_RE = /(click|impression|\bctr\b|conv|\bcpc\b|\bcpa\b|roas|revenue|cost|session|traffic|uplift|\bcvr\b|\baov\b|sales?\b|spend|orders?\b)/i;
 // Metrics where DOWN is the win. Without this a "-18% CPC" reads as a bad month, which is the
 // one way an automated verdict can be confidently, embarrassingly wrong in front of a client.
@@ -775,7 +778,7 @@ export function parseKwResult(msg) {
   if (!hit) return null;
   const m = hit.m;
   let brand = m[1].trim(), period = m[2].trim(), mkt = '';
-  const mk = KWR_MKT_RE.exec(brand);
+  const mk = /\s([A-Z]{2}-[A-Z]{2})\.?\s*$/.exec(brand) || KWR_MKT_RE.exec(brand) || KWR_MKT_ANY.exec(brand);   // a compound (BE-FR) first, or "FR" is read off its end
   if (mk) { mkt = mk[1].toLowerCase(); brand = brand.slice(0, mk.index).trim(); }
   if (mkt === 'uk') mkt = 'gb';
   if (mkt === 'usa') mkt = 'us';

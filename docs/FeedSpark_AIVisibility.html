@@ -682,6 +682,8 @@ function pickBrand(b) {
   });
 }
 function pickMarket(m) {
+  // the matched catalogue is one market's products — another market starts unmatched (19 Nov 2026)
+  if (m !== S.mkt) { S.prod = null; S.prodSt = ''; }
   S.mkt = m; closeAp();
   try { document.dispatchEvent(new CustomEvent('fcc-aiv-market')); } catch (e) {}
   S.ctx = E.brandCtx(S.brand, { aliases: S.cfg.alias, domains: S.cfg.doms, comps: S.cfg.comps });
@@ -1243,7 +1245,7 @@ function matchFeed() {
     });
   }).then(function (rows) {
     btn.disabled = false;
-    if (b !== S.brand || m !== S.mkt) return;
+    if (b !== S.brand || m !== S.mkt) return;   // pickMarket / pickBrand already cleared the read state
     S.prod = E.prodIndex(rows, S.ctx); S.prodSt = 'done';
     // the feed's own product host is the brand's own site too
     var hosts = {}; rows.slice(0, 200).forEach(function (r) { var h = E.regDomain(E.hostOf(r.l)); if (h) hosts[h] = (hosts[h] || 0) + 1; });
