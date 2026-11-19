@@ -592,7 +592,9 @@ const DEFAULT_FEEDS = {
     'uae-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/reiss_uae/d40ef3a59bdd49e250da9f7f1507d4a4/reiss_uae_fb_output.xml' },
   },
 };
-const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
+// a market key is kept whole up to 12 characters (19 Nov 2026): at 6, a Meta key like "befr-fb" or "de-en-fb" lost its
+// "-fb" and read as a GOOGLE market on every Google-only guard
+const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 12) || 'gb';
 const sheetRef = (u) => {
   const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
   if (!m) return null;
@@ -3496,7 +3498,9 @@ async function route(request, env, ctx) {
         });
         // the market asked for (even one with no census yet — the page says so), else the first with a census
         const want = url.searchParams.get('market');
-        const pick = mk.find((m) => m.market === want) || mk.find((m) => m.census) || null;
+        // a market that is asked for and not on the roster answers nothing — never another market's census (19 Nov 2026)
+        const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const pick = want ? (mk.find((m) => m.market === want) || mk.find((m) => norm(m.market) === norm(want)) || null) : (mk.find((m) => m.census) || null);
         const census = pick && pick.census ? await env.EDITS.get('mastersize:' + pick.cmpid, 'json') : null;
         Object.assign(out, { brand, markets: mk, market: pick ? pick.market : null, cmpid: pick ? pick.cmpid : null, census });
       }

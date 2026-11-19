@@ -138,6 +138,7 @@ echo "   ✓ readings, off plan, modes + periods, switch list + brief, suggestio
 
 echo "── validating: Catalogue (master → feed lineage engine, ROAS placement rules, lifted master-file helpers)"
 node tools/test_catalog.mjs >/dev/null
+node tools/test_marketreads.mjs >/dev/null
 echo "   ✓ header keys, the join read off the data, every lineage status, completeness, spec, segment placement, worker scope, wiring hold"
 
 echo "── validating: Test Lab (the test library, the book-wide evidence table, the competitor Shopping read, the lifted /api/testlab + /api/compwatch routes)"

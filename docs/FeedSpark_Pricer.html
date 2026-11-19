@@ -1608,7 +1608,9 @@ function onStreamFail(key,client,mkt,e2){
 function loadClientVolume(force){
   CLIENT=$('#pz-client').value;MKROWS={};MARKET='';VOL_MANUAL=false;
   $('#pz-mkt-wrap').hidden=true;$('#pz-count').hidden=true;volSrc('');
+  var c=CLIENT;
   fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+    if(c!==CLIENT)return;   // a slower answer for the client before is dropped (19 Nov 2026)
     var mk=(d&&d.markets)||{};
     // every wired/attached market lists, scanned or not — the live count fills the rest
     Object.keys(mk).forEach(function(k){MKROWS[k]=(mk[k]&&mk[k].rows)||0});
@@ -2279,7 +2281,11 @@ function exLoad(c,force){
 }
 // a stored Spark AI example is the example — the page never asks Spark AI for it again
 function exSeed(c){var M=EXS[c]||{};Object.keys(M).forEach(function(m){((M[m]||{}).products||[]).forEach(function(it){
-  if(it&&it.p&&it.ex&&it.src==='ai'&&!(PV.ex[it.p.id]&&PV.ex[it.p.id].st==='ok'))PV.ex[it.p.id]={st:'ok',v:it.ex,pre:1}})})}
+  var k=it&&it.p?exK(c,m,it.p.id):'';
+  if(k&&it.ex&&it.src==='ai'&&!(PV.ex[k]&&PV.ex[k].st==='ok'))PV.ex[k]={st:'ok',v:it.ex,pre:1}})})}
+// an example belongs to ONE brand's ONE market — the same product id in another market's feed is another product's
+// copy, in another language (19 Nov 2026)
+function exK(c,m,id){return c+'|'+m+'|'+id}
 // the products the card steps through: the prepared five for this market, else the live read's
 function pvList(a){
   var st=SV.mode!=='file'?(EXS[a.client]||{})[a.mkt]:null;
@@ -2288,8 +2294,8 @@ function pvList(a){
   return ps&&ps.length?{src:'live',list:ps}:null;
 }
 function exPut(c,mkt,list){
-  return Promise.all(list.map(function(P){return pvExample(P)})).then(function(){
-    var products=list.slice(0,5).map(function(P){var X=PV.ex[P.id];return {p:P,ex:X&&X.st==='ok'?X.v:null,src:X&&X.st==='ok'?'ai':'derived'}});
+  return Promise.all(list.map(function(P){return pvExample(P,c,mkt)})).then(function(){
+    var products=list.slice(0,5).map(function(P){var X=PV.ex[exK(c,mkt,P.id)];return {p:P,ex:X&&X.st==='ok'?X.v:null,src:X&&X.st==='ok'?'ai':'derived'}});
     return fetch('/api/pricer/examples',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({client:c,mkt:mkt,products:products})})
       .then(function(r){return r.json()}).then(function(d){if(!d||!d.ok)throw new Error((d&&d.error)||'not saved');EXS[c]=EXS[c]||{};EXS[c][mkt]=d.rec;return d.rec});
   });
@@ -2353,10 +2359,11 @@ function pvClean(o){
   if(qa.length)out.question_and_answer=qa;
   return out;
 }
-function pvExample(P){
+function pvExample(P,c,m){
   if(!P||!P.id)return Promise.resolve();
-  if(PV.ex[P.id])return PV.ex[P.id].p||Promise.resolve();
-  var X=PV.ex[P.id]={st:'wait'};
+  var k=exK(c,m,P.id);
+  if(PV.ex[k])return PV.ex[k].p||Promise.resolve();
+  var X=PV.ex[k]={st:'wait'};
   var data={};['title','brand','description','google_product_category','product_type','color','material','pattern','gender','age_group','size','price','item_group_title'].forEach(function(k){if(P[k])data[k]=P[k]});
   if(P.hlv&&P.hlv.length)data.product_highlight=P.hlv;
   var txt='Product data from the client\'s feed (JSON):\n'+JSON.stringify(data)+'\n\nWrite the example values now. JSON only.';
@@ -2545,8 +2552,8 @@ function renderPreview(){
     +(fileLane?'':'<button type="button" class="btn sm" data-pvx="brand"'+(EXP.busy?' disabled':'')+' title="Keep five of this market\'s products and their examples, ready for a client meeting">⟳ Prepare examples</button>'
       +'<button type="button" class="btn sm" data-pvx="all"'+(EXP.busy?' disabled':'')+' title="Prepare five products for every brand\'s lead market — one after another; a brand prepared in the last 14 days is kept">Prepare every brand</button>')
     +'<span class="pv-pre-s" aria-live="polite">'+esc(EXP.msg)+'</span>';
-  if(P&&PV.opt!=='now')pvExample(P);
-  var EX=P&&PV.ex[P.id],DER=P?pvDerive(P,a.mkt):{};
+  if(P&&PV.opt!=='now')pvExample(P,a.client,a.mkt);
+  var EX=P&&PV.ex[exK(a.client,a.mkt,P.id)],DER=P?pvDerive(P,a.mkt):{};
   // the product card — the client's own product, its fields filling in by tier
   var BK=pvBank(),BSIG=pvBankSig(),pp=host.querySelector('.pv-prod'),pk=key+'|'+(P?P.id:'')+'|'+BSIG;
   if(pp.getAttribute('data-k')!==pk){

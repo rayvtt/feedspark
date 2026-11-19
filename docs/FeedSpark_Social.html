@@ -670,13 +670,18 @@ window.addEventListener('load',restore);
   function setState(t, pip) { $('#mstate').textContent = t; $('#pip').className = 'pip ' + (pip || 'off'); }
 
   function openDemo() {
+    S.gen = (S.gen || 0) + 1; LOOK = {}; S.pickTok = null; $('#ads').disabled = false;
     S.demo = true; S.brand = ''; S.mkt = ''; $('#brand').value = ''; $('#demo').classList.add('on');
     S.rows = demoRows(); S.hdr = Object.keys(S.rows[0]); S.sum = STU.summon(S.hdr, S.rows, {}); S.ads = null; S.adsSt = 'idle';
     renderMkts(); loadSetup('Demo');
     setState('Demo products — drawn here, every figure a demo value. Pick a brand to design on its live feed.', 'warn');
     buildSamples(); pick(0);
   }
+  // ONE MARKET AT A TIME (Ray, 19 Nov 2026: "go across the whole FCC dashboard to ensure that each market and each feed
+  // type is read correctly"): every read is tied to the brand + market it was asked for (S.gen) — a feed sample, a
+  // Google Ads read or a logo lookup that answers after a switch is dropped, never drawn under the market now on screen
   function loadBrand() {
+    var g = S.gen = (S.gen || 0) + 1; LOOK = {}; S.pickTok = null; $('#ads').disabled = false;
     S.demo = false; $('#demo').classList.remove('on'); S.ads = null; S.adsSt = 'idle'; S.samp = []; S.row = null;
     remember('fcc-soc-brand', S.brand); remember('fcc-soc-mkt', S.mkt);
     history.replaceState(null, '', location.pathname + '?brand=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt));
@@ -684,16 +689,17 @@ window.addEventListener('load',restore);
     if (!FA) { setState('The feed parser did not load — showing the demo products instead.', 'warn'); return openDemo(); }
     var who = S.brand + ' ' + mktLbl(S.mkt);
     setState(who + ' — reading a sample of the live feed…', 'warn');
-    stream(S.brand, S.mkt, function (n) { setState(who + ' — ' + n0(n) + ' products read…', 'warn'); }).then(function (d) {
+    stream(S.brand, S.mkt, function (n) { if (g === S.gen) setState(who + ' — ' + n0(n) + ' products read…', 'warn'); }, g).then(function (d) {
+      if (g !== S.gen) return;
       if (!d.rows.length) throw new Error('the feed read back no products');
       S.hdr = d.hdr; S.rows = d.rows; S.sum = STU.summon(S.hdr, S.rows, {});
       buildSamples();
       if (!S.samp.length) throw new Error('no product in the sample carries a readable image');
       setState(who + ' — ' + n0(S.rows.length) + ' products sampled from the live feed. Press ⚡ Google Ads for the real 30-day clicks.', '');
       pick(0);
-    }).catch(function (e) { setState(who + ' — could not read this feed (' + ((e && e.message) || e) + '). Showing the demo products.', 'warn'); openDemo(); });
+    }).catch(function (e) { if (g !== S.gen) return; setState(who + ' — could not read this feed (' + ((e && e.message) || e) + '). Showing the demo products.', 'warn'); openDemo(); });
   }
-  function stream(client, mkt, onProg) {
+  function stream(client, mkt, onProg, g) {
     var CAP = 400;
     return new Promise(function (res, rej) {
       var hdr = null, rows = [], parser = null, n = 0, reader = null, done = false;
@@ -709,6 +715,7 @@ window.addEventListener('load',restore);
         reader = resp.body.getReader(); var dec = new TextDecoder();
         function step() { return reader.read().then(function (x) {
           if (done) return;
+          if (g != null && g !== S.gen) return finish();   // the market moved on — stop reading this one
           if (x.done) { if (parser) { parser.push(dec.decode()); parser.end(); } return finish(); }
           var chunk = dec.decode(x.value, { stream: true });
           if (!parser) { if (!chunk.trim()) return step(); parser = /^\s*</.test(chunk) ? FA.createXmlParser(onRow) : FA.createParser(onRow); }
@@ -774,7 +781,8 @@ window.addEventListener('load',restore);
     $$('#strip .pc').forEach(function (e) { e.classList.toggle('on', +e.getAttribute('data-k') === k); });
     S.res = STU.resolveFacts(S.row, S.sum, null, null, { mainImg: x.urls[0] });
     seedNums(k);
-    Promise.all(x.urls.map(loadImg)).then(function (ims) { S.imgs = ims; renderSlots(); render(); });
+    var tok = S.pickTok = {};
+    Promise.all(x.urls.map(loadImg)).then(function (ims) { if (S.pickTok !== tok) return; S.imgs = ims; renderSlots(); render(); });
     renderSlots(); render();
   }
   // the product's own numbers for the schedule: Google Ads where it was read, demo where it was not
@@ -1249,8 +1257,10 @@ window.addEventListener('load',restore);
   function lookUp(net) {
     var id = ident(), h = net === 'tt' ? id.tt : net === 'pin' ? id.pin : net === 'fb' ? id.fb : '';
     if (S.demo || !S.brand) return toast('Pick a brand — the demo products have no real pages to read');
+    var g = S.gen;
     LOOK[net] = { busy: true, h: h }; renderIdent();
     api('/api/social/logo?info=1&fresh=1&client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(S.mkt) + '&net=' + net + (h && net !== 'site' ? '&h=' + encodeURIComponent(h) : '')).then(function (j) {
+      if (g !== S.gen) return;   // another brand or market is on screen now
       LOOK[net] = { h: h, ok: !!(j && j.ok), name: (j && j.name) || '', verified: !!(j && j.verified), why: (j && (j.why || j.error)) || 'not read', t: Date.now() };
       renderIdent(); render();
     });
@@ -1362,7 +1372,9 @@ window.addEventListener('load',restore);
     var gm = S.mkt.replace(/-fb$/, ''), tries = 0, who = S.brand + ' ' + gm.toUpperCase();
     if ((S.roster[S.brand] || []).indexOf(gm) < 0) return toast(S.brand + ' has no Google market wired for ' + gm.toUpperCase() + ' — Google Ads cannot be read for it');
     S.adsSt = 'busy'; $('#ads').disabled = true; setState(who + ' — reading 30 days of Google Ads, product by product…', 'warn');
+    var g = S.gen, stale = function () { return g !== S.gen; };
     function step() {
+      if (stale()) return Promise.resolve(null);
       return api('/api/catalog/ads?client=' + encodeURIComponent(S.brand) + '&market=' + encodeURIComponent(gm) + '&period=30_days').then(function (j) {
         if (j.__s === 202) { if (++tries > 20) throw new Error('FeedHero is still preparing the report — try again in a minute'); return wait(4000).then(step); }
         if (!j.ok) throw new Error(j.error || 'Google Ads unavailable');
@@ -1372,13 +1384,14 @@ window.addEventListener('load',restore);
       });
     }
     step().then(function (j) {
+      if (!j || stale()) return;
       var map = {}; Object.keys(j.rows || {}).forEach(function (k) { var a = j.rows[k] || []; map[String(k).toLowerCase()] = { impr: +a[0] || 0, clicks: +a[1] || 0, conv: +a[3] || 0 }; });
       S.ads = map; S.adsWin = j.range || '30 days'; S.adsSt = 'done';
       var hit = S.samp.filter(function (x) { return map[String(x.id).toLowerCase()]; }).length;
       setState(who + ' — Google Ads read (' + S.adsWin + '): ' + hit + ' of ' + S.samp.length + ' sampled products carry traffic.', '');
       var k = 0; S.samp.forEach(function (x, i) { if (x.id === S.pid) k = i; }); seedNums(k); render();
-    }).catch(function (e) { S.adsSt = 'idle'; setState(who + ' — ' + ((e && e.message) || e), 'warn'); })
-      .then(function () { $('#ads').disabled = false; });
+    }).catch(function (e) { if (stale()) return; S.adsSt = 'idle'; setState(who + ' — ' + ((e && e.message) || e), 'warn'); })
+      .then(function () { if (!stale()) $('#ads').disabled = false; });
   }
 
   // ---- play the week ----

@@ -499,6 +499,7 @@ table.st-rt td.nt{color:var(--ink-2)}
   var ROWCAP=80000;
 
   /* ---------- bootstrap: estate roster ∪ scanned index in one call ---------- */
+  var DEEP=(function(){ try{ var q=new URLSearchParams(location.search),c=q.get('client'); return c?{c:c,m:String(q.get('market')||'').toLowerCase()}:null; }catch(e){ return null; } })();
   function loadEstate(keepSel){
     return fetch('/api/overlays').then(function(r){return r.json()}).then(function(d){
       FEEDS=(d&&d.feeds)||[];
@@ -513,6 +514,9 @@ table.st-rt td.nt{color:var(--ink-2)}
       cs.sort(function(a,b){ var ha=FEEDS.some(function(f){return f.client===a&&f.scan&&f.scan.ovl}),hb=FEEDS.some(function(f){return f.client===b&&f.scan&&f.scan.ovl}); if(ha!==hb)return ha?-1:1; return a.localeCompare(b); });
       var sel=$('#brand'); sel.innerHTML=cs.map(function(c){ var hot=FEEDS.some(function(f){return f.client===c&&f.scan&&f.scan.ovl}); return '<option value="'+esc(c)+'">'+esc(c)+(hot?' ●':'')+'</option>'; }).join('');
       if(!keepSel||!CLIENT||cs.indexOf(CLIENT)<0){ CLIENT=cs[0]||''; MKT=''; }
+      // a link that names a brand + market (the Golden Record's Meta audit → "Open in Image Overlays") opens on THAT
+      // feed, once — never on whichever brand sorts first (19 Nov 2026)
+      if(DEEP){ var dq=DEEP; DEEP=null; if(cs.indexOf(dq.c)>=0){ CLIENT=dq.c; MKT=dq.m||''; } }
       sel.value=CLIENT;
       renderMkts(); renderEstate();
       return d;
@@ -913,7 +917,7 @@ table.st-rt td.nt{color:var(--ink-2)}
           .then(function(r){return r.json()}).catch(function(){return null})
           .then(function(d){
             if(!d||!d.ok){ /* the worker refused the save — still show the live reading */
-              DATA={ok:true,snap:cap,hist:(DATA&&DATA.hist)||[],kind:(DATA&&DATA.kind)||null}; if(client===CLIENT&&mkt===MKT)render();
+              if(client===CLIENT&&mkt===MKT){ DATA={ok:true,snap:cap,hist:(DATA&&DATA.hist)||[],kind:(DATA&&DATA.kind)||null}; render(); }
               setState(who+' — scanned live (not saved: '+((d&&d.error)||'worker unavailable')+')'); return; }
             setState(who+' — scanned: '+fmt(cap.ovl)+' overlay'+(cap.ovl===1?'':'s')+' across '+fmt(cap.types.length)+' type'+(cap.types.length===1?'':'s')+'.');
             return loadEstate(true);
@@ -996,20 +1000,21 @@ table.st-rt td.nt{color:var(--ink-2)}
 
   /* ---------- Google Ads per product (a chunk a call, as the route serves it) ---------- */
   function stAdsLoad(){
-    var tries=0;
+    var tries=0,ac=ST.client,am=ST.mkt,stale=function(){ return ST.client!==ac||ST.mkt!==am; };
     function step(){
-      return fetch('/api/catalog/ads?client='+encodeURIComponent(ST.client)+'&market='+encodeURIComponent(ST.mkt)+'&period='+encodeURIComponent(ST.adsPer||'7_days'))
+      if(stale())return Promise.resolve(null);
+      return fetch('/api/catalog/ads?client='+encodeURIComponent(ac)+'&market='+encodeURIComponent(am)+'&period='+encodeURIComponent(ST.adsPer||'7_days'))
         .then(function(r){ return r.json().catch(function(){return{}}).then(function(j){ j.__s=r.status; return j; }); })
         .then(function(j){
           if(j.__s===202){ if(++tries>15)throw new Error('Google Ads is still downloading this report — try again in a minute'); stState('Google Ads — FeedHero is downloading this report from Google…'); return wait(4000).then(step); }
           if(!j.ok)throw new Error(j.error||('Google Ads unavailable ('+j.__s+')'));
-          if(j.missing){ ST.ads=null; ST.adsCov=0; ST.adsNote=j.note||'Google Ads returned no traffic for this account'; return null; }
+          if(j.missing){ if(stale())return null; ST.ads=null; ST.adsCov=0; ST.adsNote=j.note||'Google Ads returned no traffic for this account'; return null; }
           if(!j.done){ if(++tries>60)throw new Error('the Google Ads read did not finish'); stState('Google Ads — '+fmt(j.got)+' of '+fmt(j.total)+' products read…'); return step(); }
           return j;
         });
     }
     return step().then(function(j){
-      if(!j)return;
+      if(!j||stale())return;
       var map={}; var rw=j.rows||{};
       Object.keys(rw).forEach(function(k){ var a=rw[k]||[]; map[String(k).toLowerCase()]={impr:+a[0]||0,clicks:+a[1]||0,cost:+a[2]||0,conv:+a[3]||0,value:+a[4]||0}; });
       ST.ads=map; ST.adsWin=j.range||String(j.period||'').replace(/_/g,' ');
@@ -1069,18 +1074,20 @@ table.st-rt td.nt{color:var(--ink-2)}
     stState(who+' — reading a sample of the live feed…');
     return stStream(ST.client,ST.mkt,function(n){ stState(who+' — '+fmt(n)+' products read…'); })
       .then(function(d){
+        if(ST.client!==CLIENT||ST.mkt!==MKT)throw new Error('STALE');
         ST.hdr=d.hdr; ST.rows=d.rows;
         if(!ST.rows.length)throw new Error('the feed read back no products');
         return stMasterLoad();
       })
       .then(function(){
+        if(ST.client!==CLIENT||ST.mkt!==MKT)throw new Error('STALE');   // another feed is on screen now — never open this one under it
         stSummon(); ST.read=true;
         $('#st-wrap').hidden=false;
         stState(who+' — '+ST.cols()+' columns read off '+fmt(ST.rows.length)+' products. '+STU.readiness(ST.sum).verdict+'.');
         stRail();
         return stAuto();
       })
-      .catch(function(e){ stState(who+' — could not read this feed: '+((e&&e.message)||e)); })
+      .catch(function(e){ if(e&&e.message==='STALE'){ stState('Showing '+CLIENT+' '+mktLbl(MKT)+' — read this feed’s fields to design on it.'); return; } stState(who+' — could not read this feed: '+((e&&e.message)||e)); })
       .then(function(){ ST.busy=false; $('#st-read').disabled=false; });
   }
   ST.cols=function(){ return ST.hdr?ST.hdr.length:0; };

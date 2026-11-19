@@ -160,7 +160,7 @@
        IS the live-by day, so it travels with the brief; the board still FILES the work by brief-by
        (date − LEAD_DAYS), which is a different question and unchanged. */
     var dd=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(e.date||''));
-    var o={client:brand,task:kwTask(brand,e,bmkt),cat:'keyword',scope:lines.join('\n'),kw:e.id};
+    var o={client:brand,task:kwTask(brand,e,bmkt),cat:'keyword',scope:lines.join('\n'),kw:e.id,mkt:bmkt};   // the market it is briefed for (19 Nov 2026)
     if(dd)o.due=e.date;
     return o;
   }
@@ -215,7 +215,8 @@
       for(var i=0;i<mine.length;i++) if(mine[i].id===e.wf&&!taken[mine[i].id]){ assign(e,mine[i],'linked'); return; } });
 
     // 1-3 — the calendar's own evidence, strongest first, every moment before the next rung
-    [['kw',   function(e,b){ return b.kw&&String(b.kw)===String(e.id); }],
+    // a ticket stamped with the market it was briefed for (b.kwm) belongs to that market's board only (19 Nov 2026)
+    [['kw',   function(e,b){ return b.kw&&String(b.kw)===String(e.id)&&(!b.kwm||b.kwm===evMkt(e,mkt||'gb')); }],
      ['task', function(e,b){ return normTask(b.task)===normTask(kwTask(brand,e,mkt)); }],
      ['name', function(e,b){ var tk=normTask(b.task),
          p1=normTask('Keywords Optimisation - '+e.name), p2=normTask('AI Keyword Optimisation - '+e.name);

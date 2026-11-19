@@ -1968,7 +1968,7 @@ function roundRes(brand,e){
      The tie is the moment's own `date`. */
   var mk=evMkt(brand,e), t=new Date(e.date+'T12:00:00Z').getTime(), out=null;
   for(var i=0;i<rs.length;i++){ var r=rs[i];
-    if(r.mkt&&String(r.mkt).toLowerCase()!==mk)continue;   // a batch whose subject named no market rides the board's
+    if(r.mkt&&String(r.mkt).toLowerCase().replace(/[^a-z0-9]/g,'')!==String(mk||'').replace(/[^a-z0-9]/g,''))continue;   // a batch whose subject named no market rides the board's
     var w=r.__w; if(!w)continue;
     if(t>=w.a&&t<=w.b&&(!out||(r.when||0)>(out.when||0)))out=r; }
   return out;
@@ -1982,9 +1982,9 @@ function resPop(btn,brand,e,r){
   var when=esc(new Date(r.when||Date.now()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
   d.innerHTML='<b>📈 '+esc(e.name)+' — result</b>'
     +(r.own
-      ? '<div class="pm">'+esc(resLbl(r))+' · '+esc((r.mkt||evMkt(brand,e)).toUpperCase())
+      ? '<div class="pm">'+esc(resLbl(r))+' · '+esc(r.mkt?String(r.mkt).toUpperCase():'market not named')
         +' · from its own ticket <b>'+esc(r.id)+'</b> · reported '+when+'</div>'
-      : '<div class="pm">'+esc(resLbl(r))+' · '+esc((r.mkt||evMkt(brand,e)).toUpperCase())+' batch '+esc(w?w.label:(r.period||''))
+      : '<div class="pm">'+esc(resLbl(r))+' · '+esc(r.mkt?String(r.mkt).toUpperCase():'market not named')+' batch '+esc(w?w.label:(r.period||''))
         +' · reported '+when+'</div>')
     +(ms.length?'<div class="rlines">'+ms.map(function(l){return '<div>'+esc(l)+'</div>'}).join('')+'</div>'
       :'<div class="pm">No metric lines parsed from the report — open the archive for the full email.</div>')
@@ -2272,9 +2272,12 @@ function renderMkts(){
     +(MKTALL&&MKTLIST.length>MKT_SHOW?'<button type="button" class="mkc mkc-more" data-mkall="0">Show fewer</button>':'')
     +(MKTFB?'<span class="mkc-note" title="Optimised keywords land in the numbered g:product_type slots, which the Meta catalogue spec does not have — so scope, volumes and saturation cannot be measured on a Meta feed. They stay on Feed Lab and Overlays.">'+MKTFB+' Meta feed'+(MKTFB===1?'':'s')+' not shown</span>':'');
 }
-function loadMkts(){
-  MKT='gb'; MKTLIST=['gb']; MKTFB=0;
+// the market a link or an import names is kept when the brand carries it (19 Nov 2026: a CC suggestion for US used to
+// land on GB), and an answer for the brand before is dropped
+function loadMkts(want){
+  MKT=want||'gb'; MKTLIST=[MKT]; MKTFB=0; var c=CLIENT;
   fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+    if(c!==CLIENT)return;
     // GOOGLE SHOPPING FEEDS ONLY (Ray, 21 Sep 2026: "the list of market should be cleaned up").
     // /api/feed/markets serves every WIRED feed, which is right for Feed Lab and Overlays and
     // wrong here: optimised keywords land in the numbered g:product_type slots, a field the
@@ -2286,7 +2289,7 @@ function loadMkts(){
     var ks=all.filter(function(m){ return !/-fb$/i.test(m); });
     MKTFB=all.length-ks.length;
     if(ks.length){ MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)});
-      if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST[0]; }
+      if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST.indexOf('gb')>=0?'gb':MKTLIST[0]; }
     if(CLIENT!=='*')render();
   });
 }
@@ -2324,7 +2327,7 @@ function importEvents(data){ // merge events from the JSON Claude returns after 
   // land ON the brand you just imported into — "imported 15 events" over an empty board is the
   // same silence as importing nothing, which is exactly how the mis-filing above stayed invisible
   IMPTGT=tgt;
-  if(n){ save(); if(tgt!==CLIENT){ CLIENT=tgt; $('#brand').value=tgt; MKT=dmkt||MKT; loadMkts(); } render(); }
+  if(n){ save(); if(tgt!==CLIENT){ CLIENT=tgt; $('#brand').value=tgt; loadMkts(dmkt||MKT); } render(); }
   return n;
 }
 function resolveBrand(name){ // roster match, case/space-insensitive — never invents a brand
@@ -3249,10 +3252,10 @@ function syncPT(){
   hideErr();
   if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — syncing needs the live worker.'); return; }
   var E=evs(); var mkts={}; mkts[MKT]=1; E.forEach(function(e){ if(e.mkt)mkts[e.mkt]=1; });
-  var list=Object.keys(mkts), mi=0;
+  var list=Object.keys(mkts), mi=0, brand=CLIENT;   // the brand synced is the brand written — never the one on screen when it lands
   MEASURING=true; $('#measure').disabled=true;
   function nextMkt(){
-    if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
+    if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; if(brand===CLIENT)$('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
     var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0, satId=0, aCols={};
     var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
@@ -3298,7 +3301,7 @@ function syncPT(){
     }
     function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     $('#mstate').textContent='streaming the live '+mkt.toUpperCase()+' feed…';
-    fetch('/api/feed/proxy?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(mkt)).then(function(res){
+    fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(mkt)).then(function(res){
       if(!res.ok)return res.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('feed proxy said '+res.status))});
       var reader=res.body.getReader(),dec=new TextDecoder();
       function step(){ return reader.read().then(function(x){
@@ -3306,8 +3309,9 @@ function syncPT(){
           var map={}, best=-1, wci=0; // the populated candidate wins (FeedHero empty-input columns lose)
           cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2;wci=ci} });
           var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
-          SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1],c[2],c[3]]})};
-          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now(),sat:{n:satN,cols:kwc.length,v:SAT_V,id:satId}};
+          SKUC[brand+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1],c[2],c[3]]})};
+          if(!STORE[brand])STORE[brand]={events:[]};
+          var r=STORE[brand]; r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now(),sat:{n:satN,cols:kwc.length,v:SAT_V,id:satId}};
           if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
             err('Synced '+fmt(rows)+' '+mkt.toUpperCase()+' products but no product_type column matched. Type-ish headers seen: '+(suspects.join(', ')||'(none)')+' — tell Claude and it will map this client.'); }
@@ -3508,7 +3512,7 @@ function boot(){
     $('#brand').value=CLIENT;
     try{ localStorage.setItem('fcc-kw-client',CLIENT); }catch(e){}
     var qm=/[?&]market=([^&]+)/.exec(location.search); if(qm)MKT=decodeURIComponent(qm[1]).toLowerCase();
-    syncNote(); if(CLIENT!=='*')loadMkts(); render();
+    syncNote(); if(CLIENT!=='*')loadMkts(qm?MKT:''); render();
     liveTick(); startLive();   // results + any stage that moved since the boot fetch, then every 90s
   });
 }

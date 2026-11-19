@@ -133,7 +133,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
     ok('the tiers show actual example values — pattern "Plain", 10+ keyword strings — labelled as Spark AI examples', v2.ex.pattern && v2.ex.pattern.v === 'Plain' && /ex/.test(v2.ex.pattern.c) && v2.ex.keywords && /^1\d strings: /.test(v2.ex.keywords.v), v2.ex);
     ok('fields built in FeedHero show HOW, never a generated value; no size is ever generated', (!v2.ex.popularity_rank || /how/.test(v2.ex.popularity_rank.c)) && (!v2.ex.size || !/ex/.test(v2.ex.size.c)), [v2.ex.popularity_rank, v2.ex.size]);
     // without the Claude connection every brand still sees real values, built from its own product row
-    const off = await p.evaluate(() => { const X = window.__PZX, P = [].concat(X.LIVE['Northwind|gb'].ps)[0]; X.pv().ex[P.id] = { st: 'off' }; X.preview();
+    const off = await p.evaluate(() => { const X = window.__PZX, P = [].concat(X.LIVE['Northwind|gb'].ps)[0]; X.pv().ex['Northwind|gb|' + P.id] = { st: 'off' }; X.preview();
       const rows = Object.fromEntries(Array.from(document.querySelectorAll('#svc-prev .pv-fr.on:not(.pv-sv)')).map((r) => [r.getAttribute('data-k'), { v: r.querySelector('.fv').textContent, c: r.querySelector('.fv').className }]));
       const d = X.derive({ id: 'x', title: 'Northwind Wide Leg Trousers', brand: 'Northwind', description: 'Wide leg trousers in a soft crepe. 95% Polyester, 5% Elastane. Machine wash.', product_type: 'Women > Clothing > Trousers', product_detail: '<g:section_name>Care</g:section_name><g:attribute_name>Washing</g:attribute_name><g:attribute_value>Machine wash</g:attribute_value>' }, 'gb');
       const img = document.querySelector('#svc-prev .pv-img img'), ib = img.getBoundingClientRect();

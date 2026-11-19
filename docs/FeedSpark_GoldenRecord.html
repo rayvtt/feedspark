@@ -2401,6 +2401,7 @@ window.addEventListener('load',restore);
       .then(function (d) {
         grpDrop(k);   // a fresh load is the catalogue's — any group read is out of date
         CACHE[k] = d;
+        if (SEL !== k) return;   // another market was picked while this one loaded (19 Nov 2026)
         if (!d.snapshot || (Date.now() - d.snapshot.t) > STALE_MS) { scan(k, true); }
         else renderDetail(k);
         // the stored content-quality reading (non-blocking; the section fills in when it lands)
@@ -2473,10 +2474,10 @@ window.addEventListener('load',restore);
   function scan(k, thenRender) {
     var p = parts(k);
     var who = esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase());
-    var st = function (m) { $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>' + who + ' — ' + esc(m) + '</span>'; };
+    var st = function (m) { if (SEL !== k) return; $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>' + who + ' — ' + esc(m) + '</span>'; };
     st('scanning live feed (Google is aggregating the counts)…');
     var after = function (d) {
-      if (!d || d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(maskText((d && d.error) || 'no response')) + '</span>'; return refreshEstate(); }
+      if (!d || d.error) { if (SEL === k) $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(maskText((d && d.error) || 'no response')) + '</span>'; return refreshEstate(); }
       return fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (r) { return r.json(); })
         .then(function (full) {
@@ -2485,7 +2486,7 @@ window.addEventListener('load',restore);
           delete CL[k]; loadCL(k);   // the same scan re-read the custom labels
           // a scan can add a reading to the history — re-read it when this feed's card is in play
           var hl = (HIST[k] !== undefined || SEL === k) ? loadHistory(k) : Promise.resolve();
-          return hl.then(function () { if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+          return hl.then(function () { if (thenRender !== false && SEL === k) renderDetail(k); return refreshEstate(); });
         });
     };
     return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
@@ -2498,7 +2499,7 @@ window.addEventListener('load',restore);
         }
         return after(d);
       })
-      .catch(function () { $('det-panel').innerHTML = '<span class="muted">Scan failed — network.</span>'; });
+      .catch(function () { if (SEL === k) $('det-panel').innerHTML = '<span class="muted">Scan failed — network.</span>'; });
   }
 
   function ack(k, btn) {
@@ -3695,7 +3696,8 @@ window.addEventListener('load',restore);
     var p = parts(k);
     PDP.open = true;
     var old = $('pdpm'); if (old) old.parentNode.removeChild(old);
-    var m = document.createElement('div'); m.className = 'pdpm'; m.id = 'pdpm';
+    var m = document.createElement('div'); m.className = 'pdpm'; m.id = 'pdpm'; m.setAttribute('data-k', k);
+    if (PDP.run && PDP.run.k !== k) PDP.run = null;   // another market's scan never paints into this market's modal (19 Nov 2026)
     m.innerHTML = '<div class="pdp-box" role="dialog" aria-label="PDP recovery scan">' +
       '<div class="pdp-h"><h3>🔎 PDP recovery scan</h3><span class="muted">' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</span>' +
       '<span style="margin-left:auto;display:flex;gap:8px"><button class="btn" id="pdp-x" title="Close">✕</button></span></div>' +
@@ -3831,6 +3833,7 @@ window.addEventListener('load',restore);
   }
   function pdpPaint() {
     var R = PDP.run, box = $('pdp-body'); if (!R || !box) return;
+    var mo = $('pdpm'); if (mo && mo.getAttribute('data-k') !== R.k) return;
     var P = window.PdpHarvest, p = parts(R.k);
     if (!R.done) {
       var n = R.results.filter(function (r) { return r && !r.pending; }).length;
@@ -4194,7 +4197,7 @@ window.addEventListener('load',restore);
   }
   function segFsig(f) { return JSON.stringify(Object.keys(f || {}).sort().map(function (dk) { return [dk, (f[dk] || []).slice().sort()]; }).filter(function (x) { return x[1].length; })); }
   function segProgress(k) {
-    var st = SEG[k], el = $('sg-prog'); if (!st || !el) return;
+    var st = SEG[k], el = $('sg-prog'); if (!st || !el || SEL !== k) return;
     el.textContent = 'Reading the feed… ' + (st.got / 1048576).toFixed(1) + ' MB' +
       (st.total ? ' of ' + (st.total / 1048576).toFixed(1) + ' MB' : '') + ' · ' + fmt(st.n || 0) + ' products';
   }
@@ -4663,14 +4666,15 @@ window.addEventListener('load',restore);
   function wireQuality(k) {
     var btn = $('qz-run');
     if (btn) btn.onclick = function () {
-      if (QRUN) return;
+      if (QRUN) { if (QRUN !== k && $('qz-msg')) $('qz-msg').textContent = 'Another market is being analysed (' + QRUN.replace('|', ' ').toUpperCase() + ') — this one can run once it finishes.'; return; }
       QRUN = k;
       btn.disabled = true;
       if ($('qz-msg')) $('qz-msg').innerHTML = '<span class="spin"></span>reading every product — this takes as long as the feed takes';
-      qualityRun(k, drawScan)
+      qualityRun(k, function (st) { if (SEL === k) drawScan(st); })   // progress belongs to the market it reads (19 Nov 2026)
         .then(function () { QRUN = null; if (SEL === k) renderDetail(k); })
         .catch(function (e) {
           QRUN = null;
+          if (SEL !== k) return;
           if ($('qz-scan')) $('qz-scan').className = 'qz-scan';
           if ($('qz-msg')) $('qz-msg').textContent = '✗ ' + (e && e.message ? e.message : 'analysis failed');
           if ($('qz-run')) $('qz-run').disabled = false;
@@ -5324,6 +5328,7 @@ window.addEventListener('load',restore);
       MTRUN = true; b.disabled = true;
       var scanEl = $('mt-scan'); if (scanEl) scanEl.classList.add('on');
       metaRun(k, function (st) {
+        if (SEL !== k) return;
         var f = $('mt-pfill'), t = $('mt-ptxt'), e = $('mt-peta');
         var pc = st.total ? Math.min(100, st.got / st.total * 100) : 0;
         if (f) { f.style.width = (st.total ? pc : 100) + '%'; f.parentNode.classList.toggle('indet', !st.total); }
@@ -5331,7 +5336,7 @@ window.addEventListener('load',restore);
           (st.total ? Math.round(pc) + '% · ' : '') + (st.got / 1048576).toFixed(1) + ' MB' + (st.total ? ' of ' + (st.total / 1048576).toFixed(1) + ' MB' : ' · size not declared') + ' · ' + fmt(st.rows) + ' products read';
         if (e) { var el = (Date.now() - st.t0) / 1000; e.textContent = st.total && pc > 2 && el > 1.5 ? '~' + Math.max(1, Math.round(el * (100 - pc) / pc)) + 's left' : ''; }
       }).then(function () { MTRUN = false; if (SEL === k) renderDetail(k); })
-        .catch(function (er) { MTRUN = false; b.disabled = false; if (scanEl) scanEl.classList.remove('on'); var mm = $('mt-msg'); if (mm) mm.textContent = '⚠ ' + (er && er.message || 'the Meta feed could not be read'); });
+        .catch(function (er) { MTRUN = false; if (SEL !== k) return; b.disabled = false; if (scanEl) scanEl.classList.remove('on'); var mm = $('mt-msg'); if (mm) mm.textContent = '⚠ ' + (er && er.message || 'the Meta feed could not be read'); });
     };
   }
   function reconcileSection(k) {
@@ -7160,7 +7165,7 @@ window.addEventListener('load',restore);
     var html = '<!doctype html>\n' + doc.outerHTML;
     // and put the page back exactly as it was
     Object.keys(was).forEach(function (kk) { if (was[kk]) QOPEN[kk] = true; else delete QOPEN[kk]; });
-    renderDetail(k);
+    renderDetail(SEL || k);   // the page goes back to the market on screen — a market picked during the capture included
     return { html: html, p: p, s: s };
   }
 
@@ -7575,7 +7580,7 @@ window.addEventListener('load',restore);
     var blob = new Blob([out.join('\n')], { type: 'text/csv' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'goldenrecord_' + s.client.replace(/\W+/g, '') + '_' + (s.market || 'gb') + '_' + new Date(s.t).toISOString().slice(0, 10) + '.csv';
+    a.download = 'goldenrecord_' + s.client.replace(/\W+/g, '') + '_' + parts(k).mkt + '_' + new Date(s.t).toISOString().slice(0, 10) + '.csv';
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 

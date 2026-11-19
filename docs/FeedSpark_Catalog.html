@@ -1066,6 +1066,9 @@ window.addEventListener('load',restore);
     if (qp('tab') && TABS.some(function (t) { return t[0] === qp('tab'); })) S.tab = qp('tab');
     if (!c || !S.roster[c]) { c = last && S.roster[last.c] ? last.c : null; m = c ? last.m : null; }
     if (!c) { var names = Object.keys(S.roster).sort(); c = names.filter(function (n) { return S.roster[n].some(function (e) { return e.kind === 'xml'; }); })[0] || names[0]; }
+    // framed in the Golden Record for one market, a market the Catalogue does not carry is SAID — never another
+    // market's modules under this one's heading (19 Nov 2026)
+    if (EMB && c && m && !(S.roster[c] || []).some(function (e) { return e.mkt === m && e.kind !== 'none'; })) { gwMsg('·', 'The Catalogue has no ' + c + ' ' + String(m).toUpperCase() + ' feed wired, so no module is shown for it.'); return; }
     if (c) choose(c, m);
   }
   function mktsOf(c, ch) { return (S.roster[c] || []).filter(function (e) { return e.channel === ch && e.kind !== 'none'; }); }
@@ -2642,6 +2645,8 @@ window.addEventListener('load',restore);
   // product, so the market reads "at least") × spend per product per day × the scenario share × 30 days
   function stkWhy() { var k = S.stk; return k.st === 'loading' || k.st === 'idle' ? 'Reading the stock rules…' : k.st === 'error' ? 'Stock rules unavailable — ' + k.why + '.' : k.why; }
   function keptD() {
+    // Google Ads money on a Meta catalogue would be another channel's spend (19 Nov 2026) — every Ads card here refuses it
+    if (S.chan === 'meta') return { why: 'Ad spend kept off is sized on Google Ads, which is read for the Google feed — switch the channel to Google.' };
     if (S.stk.st !== 'ok') return { why: stkWhy() };
     var m = S.stk.m, a = m.ads, best = null;
     (m.stock || []).forEach(function (r) { var h = r.hb; if (h && h.kind === 'blocked' && h.n > 0 && (!best || h.n > best.n)) best = { n: h.n, rule: r.n }; });
@@ -2797,6 +2802,7 @@ window.addEventListener('load',restore);
     var K = S.kwr || { st: 'loading' };
     if (K.st === 'loading') { modEmpty('kwr-body', 'Reading the keyword test results…'); return; }
     if (K.st === 'error') { modEmpty('kwr-body', 'Keyword test results unavailable — ' + K.why + '.'); return; }
+    if (S.chan === 'meta') { modEmpty('kwr-body', 'Keyword tests run on the Google Shopping feed — switch the channel to Google to see them.'); return; }
     var all = scAll(), mk = String(S.mkt || '').replace(/-fb$/, '').toLowerCase();
     var rs = K.rs.filter(function (r) { var x = String(r.mkt || '').toLowerCase(); return all || !x || x === mk || (x === 'uk' && mk === 'gb') || (x === 'gb' && mk === 'uk'); });
     rs.sort(function (a, b) { return kwrWhen(b) - kwrWhen(a); });
