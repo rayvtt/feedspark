@@ -622,8 +622,31 @@ only(T('s2', 'Gifting', { status: 'progress' }));
 is('a one-word ticket goes to the moment it names exactly', wfFor('Reiss', R.gift)?.id, 's2');
 is('not to the longer name that merely contains the word', wfFor('Reiss', R.winter), null);
 
+/* A WORD TWO MOMENTS SHARE NAMES NEITHER (Ray, 19 Nov 2026, over a new Reiss moment taking the
+ * ticket of the one above it: "this team overtook the ticket that was assigned to gifting or
+ * accessories. (status is stolen too)"). "Party" sits in Event/Party AND in
+ * Winterwear/Gifting/Party, so the shorter name used to win it purely for having fewer words left
+ * over. It is the Atelier rule one step on: a claim needs a word of the winner's OWN, or a ticket
+ * that accounts for the winner's whole name. This assertion read 's3' until that day. */
 only(T('s3', 'Keyword optimisation - Party'));
-is('a closer fit wins outright', wfFor('Reiss', R.party)?.id, 's3');
+is('a word two moments share claims neither', wfFor('Reiss', R.party), null);
+is('…and is surfaced rather than guessed', api.looseKw('Reiss').map((b) => b.id), ['s3']);
+only(T('s3b', 'Keyword optimisation - Event/Party'));
+is('…while a ticket naming the moment outright still wins', wfFor('Reiss', R.party)?.id, 's3b');
+
+// Ray's own pair, as the board had them: the new moment must not take the older one's ticket,
+// and £150 — the one word saying what that moment is — must survive into the reading.
+ROSTER = [ev('gacc', 'Gifting (all Accessories)', '2026-11-01'), ev('g150', 'Gifting <\u00a3150', '2026-12-05')];
+only(T('g1', 'Keywords Optimisation - Gifting - Marketing Planner - 1126'));
+is('a bare "Gifting" ticket is taken by neither gifting moment',
+  ROSTER.map((e) => wfFor('Reiss', e)).filter(Boolean).length, 0);
+only(T('g2', 'Keywords Optimisation - Gifting (all Accessories) - Marketing Planner - 1126'));
+is('…while the moment it names keeps its own', wfFor('Reiss', ROSTER[0])?.id, 'g2');
+only(T('g3', 'Gifting under 150'));
+is('…and the price names the other', wfFor('Reiss', ROSTER[1])?.id, 'g3');
+is('a four-digit date stamp is still not a word', KWE.sigWords('Keywords Optimisation - Gifting - 1126'), ['gifting']);
+is('…but a price is', KWE.sigWords('Gifting <\u00a3150'), ['gifting', '150']);
+ROSTER = Object.values(R);
 
 only(T('s4', 'Atelier refresh'));
 is('a ticket two moments fit EQUALLY is claimed by neither (1)', wfFor('Reiss', R.atel1), null);
